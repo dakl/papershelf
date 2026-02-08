@@ -16,8 +16,4 @@ mac:
       arch: universal
     - target: zip
       arch: universal
-  hardenedRuntime: true
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.inherit.plist
-  notarize:
-    teamId: ${env.APPLE_TEAM_ID}
+  identity: null
