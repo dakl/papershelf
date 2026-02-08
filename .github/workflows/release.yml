@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install setuptools for node-gyp
+        run: pip install setuptools
+
       - name: Package
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
