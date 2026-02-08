@@ -45,6 +45,17 @@ export interface Tag {
   createdAt: string;
 }
 
+export interface McpServerStatus {
+  running: boolean;
+  port: number;
+}
+
+export interface McpToolInfo {
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
 export interface PaperFilter {
   view: 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
   collectionId?: string;
@@ -87,6 +98,13 @@ export interface ElectronAPI {
   addTagToPaper: (paperId: string, tagId: string) => Promise<void>;
   removeTagFromPaper: (paperId: string, tagId: string) => Promise<void>;
   getPaperTags: (paperId: string) => Promise<Tag[]>;
+
+  // MCP Server
+  getMcpStatus: () => Promise<McpServerStatus>;
+  startMcpServer: (port: number) => Promise<void>;
+  stopMcpServer: () => Promise<void>;
+  getMcpTools: () => Promise<McpToolInfo[]>;
+  setMcpToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
 }
 
 declare global {

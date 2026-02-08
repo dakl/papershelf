@@ -46,7 +46,9 @@ if (isMcpMode) {
       registerIpcHandlers();
       createWindow();
       const { startMcpHttpServer } = await import('./mcp/http-server.js');
-      startMcpHttpServer();
+      startMcpHttpServer().catch((err: unknown) => {
+        console.warn('MCP HTTP server failed to start:', err instanceof Error ? err.message : err);
+      });
 
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {

@@ -31,6 +31,13 @@ const api: ElectronAPI = {
   addTagToPaper: (paperId, tagId) => ipcRenderer.invoke('tags:addToPaper', paperId, tagId),
   removeTagFromPaper: (paperId, tagId) => ipcRenderer.invoke('tags:removeFromPaper', paperId, tagId),
   getPaperTags: (paperId) => ipcRenderer.invoke('tags:forPaper', paperId),
+
+  // MCP Server
+  getMcpStatus: () => ipcRenderer.invoke('mcp:getStatus'),
+  startMcpServer: (port) => ipcRenderer.invoke('mcp:start', port),
+  stopMcpServer: () => ipcRenderer.invoke('mcp:stop'),
+  getMcpTools: () => ipcRenderer.invoke('mcp:getTools'),
+  setMcpToolEnabled: (toolName, enabled) => ipcRenderer.invoke('mcp:setToolEnabled', toolName, enabled),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

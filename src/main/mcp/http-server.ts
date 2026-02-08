@@ -1,13 +1,21 @@
-import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from 'http';
+import { createServer as createHttpServer, type IncomingMessage, type ServerResponse, type Server } from 'http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createServer } from './server';
 
-const PORT = 3847;
+const DEFAULT_PORT = 3847;
 
-export async function startMcpHttpServer(): Promise<void> {
+let httpServer: Server | null = null;
+let activeSessions = new Map<string, StreamableHTTPServerTransport>();
+let currentPort = DEFAULT_PORT;
+
+export async function startMcpHttpServer(port?: number): Promise<void> {
+  if (httpServer) return;
+
+  currentPort = port ?? DEFAULT_PORT;
   const sessions = new Map<string, StreamableHTTPServerTransport>();
+  activeSessions = sessions;
 
-  const httpServer = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
+  const server = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
     if (req.url !== '/mcp') {
       res.writeHead(404);
       res.end('Not found');
@@ -32,8 +40,8 @@ export async function startMcpHttpServer(): Promise<void> {
         if (sid) sessions.delete(sid);
       };
 
-      const server = createServer();
-      await server.connect(transport);
+      const mcpServer = createServer();
+      await mcpServer.connect(transport);
 
       if (transport.sessionId) {
         sessions.set(transport.sessionId, transport);
@@ -64,7 +72,41 @@ export async function startMcpHttpServer(): Promise<void> {
     }
   });
 
-  httpServer.listen(PORT, '127.0.0.1', () => {
-    console.log(`MCP HTTP server listening on http://127.0.0.1:${PORT}/mcp`);
+  httpServer = server;
+
+  return new Promise((resolve, reject) => {
+    server.on('error', (err: Error) => {
+      httpServer = null;
+      reject(err);
+    });
+    server.listen(currentPort, '127.0.0.1', () => {
+      console.log(`MCP HTTP server listening on http://127.0.0.1:${currentPort}/mcp`);
+      resolve();
+    });
   });
+}
+
+export async function stopMcpHttpServer(): Promise<void> {
+  if (!httpServer) return;
+
+  for (const transport of activeSessions.values()) {
+    try {
+      await transport.close();
+    } catch {
+      // ignore close errors
+    }
+  }
+  activeSessions.clear();
+
+  return new Promise((resolve) => {
+    httpServer!.close(() => {
+      httpServer = null;
+      console.log('MCP HTTP server stopped');
+      resolve();
+    });
+  });
+}
+
+export function getMcpHttpServerStatus(): { running: boolean; port: number } {
+  return { running: httpServer !== null, port: currentPort };
 }

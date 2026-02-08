@@ -1,6 +1,9 @@
 import { ipcMain } from 'electron';
 import { searchArxiv } from './arxiv-client';
 import { downloadAndExtractPdf } from './pdf-processor';
+import { startMcpHttpServer, stopMcpHttpServer, getMcpHttpServerStatus } from './mcp/http-server';
+import { TOOL_METADATA } from './mcp/tools';
+import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
 import type { ArxivPaper, PaperFilter, SavePaperResult } from '../shared/types';
 import * as db from './database';
 
@@ -131,5 +134,44 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('tags:forPaper', (_event, paperId: string) => {
     return db.getTagsForPaper(paperId);
+  });
+
+  // --- MCP Server ---
+  ipcMain.handle('mcp:getStatus', () => {
+    return getMcpHttpServerStatus();
+  });
+
+  ipcMain.handle('mcp:start', async (_event, port: number) => {
+    await startMcpHttpServer(port);
+  });
+
+  ipcMain.handle('mcp:stop', async () => {
+    await stopMcpHttpServer();
+  });
+
+  ipcMain.handle('mcp:getTools', () => {
+    const disabled = new Set(getDisabledTools());
+    return TOOL_METADATA.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      enabled: !disabled.has(tool.name),
+    }));
+  });
+
+  ipcMain.handle('mcp:setToolEnabled', async (_event, toolName: string, enabled: boolean) => {
+    const disabled = new Set(getDisabledTools());
+    if (enabled) {
+      disabled.delete(toolName);
+    } else {
+      disabled.add(toolName);
+    }
+    setDisabledTools([...disabled]);
+
+    // Restart server so new sessions pick up the change
+    const status = getMcpHttpServerStatus();
+    if (status.running) {
+      await stopMcpHttpServer();
+      await startMcpHttpServer(status.port);
+    }
   });
 }

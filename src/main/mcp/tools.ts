@@ -43,9 +43,24 @@ function generateBibtex(paper: LibraryPaper): string {
   ].join('\n');
 }
 
-export function registerTools(server: McpServer): void {
+export const TOOL_METADATA: { name: string; description: string }[] = [
+  { name: 'search_arxiv', description: 'Search arXiv for papers by keyword, author, or topic' },
+  { name: 'search_library', description: 'Full-text search across saved papers' },
+  { name: 'get_paper', description: 'Get detailed info about a paper by ID' },
+  { name: 'list_papers', description: 'List papers in the library' },
+  { name: 'save_paper', description: 'Save an arXiv paper to the library' },
+  { name: 'fetch_paper_html', description: 'Fetch full HTML content of an arXiv paper' },
+  { name: 'get_bibtex', description: 'Generate a BibTeX citation for a paper' },
+  { name: 'list_collections', description: 'List all collections' },
+  { name: 'list_tags', description: 'List all tags' },
+  { name: 'list_categories', description: 'List all arXiv categories' },
+];
+
+export function registerTools(server: McpServer, disabledTools: Set<string> = new Set()): void {
+  const isEnabled = (name: string) => !disabledTools.has(name);
+
   // 1. search_arxiv
-  server.tool(
+  if (isEnabled('search_arxiv')) server.tool(
     'search_arxiv',
     'Search arXiv for papers by keyword, author, or topic',
     {
@@ -81,7 +96,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 2. search_library
-  server.tool(
+  if (isEnabled('search_library')) server.tool(
     'search_library',
     'Full-text search across papers saved in the PaperShelf library',
     {
@@ -100,7 +115,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 3. get_paper
-  server.tool(
+  if (isEnabled('get_paper')) server.tool(
     'get_paper',
     'Get detailed information about a paper by library ID or arXiv ID. Fetches from arXiv if not in library.',
     {
@@ -141,7 +156,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 4. list_papers
-  server.tool(
+  if (isEnabled('list_papers')) server.tool(
     'list_papers',
     'List papers in the PaperShelf library, optionally filtered by view',
     {
@@ -163,7 +178,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 5. save_paper
-  server.tool(
+  if (isEnabled('save_paper')) server.tool(
     'save_paper',
     'Save an arXiv paper to the PaperShelf library (downloads PDF and extracts text)',
     {
@@ -212,7 +227,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 6. fetch_paper_html
-  server.tool(
+  if (isEnabled('fetch_paper_html')) server.tool(
     'fetch_paper_html',
     'Fetch the full HTML content of an arXiv paper as markdown (when available)',
     {
@@ -230,7 +245,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 7. get_bibtex
-  server.tool(
+  if (isEnabled('get_bibtex')) server.tool(
     'get_bibtex',
     'Generate a BibTeX citation for a paper (by library ID or arXiv ID)',
     {
@@ -271,7 +286,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 8. list_collections
-  server.tool(
+  if (isEnabled('list_collections')) server.tool(
     'list_collections',
     'List all collections in the PaperShelf library',
     {},
@@ -291,7 +306,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 9. list_tags
-  server.tool(
+  if (isEnabled('list_tags')) server.tool(
     'list_tags',
     'List all tags in the PaperShelf library',
     {},
@@ -311,7 +326,7 @@ export function registerTools(server: McpServer): void {
   );
 
   // 10. list_categories
-  server.tool(
+  if (isEnabled('list_categories')) server.tool(
     'list_categories',
     'List all arXiv categories (useful for filtering searches)',
     {},

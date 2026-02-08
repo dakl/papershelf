@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { ArxivPaper } from '../../shared/types';
 
-export type SidebarView = 'search' | 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
+export type SidebarView = 'search' | 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag' | 'settings';
 
 interface UIState {
   sidebarView: SidebarView;

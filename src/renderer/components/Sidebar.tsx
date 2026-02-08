@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUIStore, type SidebarView } from '../stores/uiStore';
 import { usePaperStore } from '../stores/paperStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import { CollectionManager } from './CollectionManager';
 import { TagManager } from './TagManager';
 
@@ -14,13 +15,15 @@ const NAV_ITEMS: { id: SidebarView; label: string; icon: string }[] = [
 export function Sidebar() {
   const { sidebarView, setSidebarView, navigateToCollection, navigateToTag, selectedCollectionId, selectedTagId } = useUIStore();
   const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
+  const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
 
   useEffect(() => {
     loadCollections();
     loadTags();
-  }, [loadCollections, loadTags]);
+    loadMcpStatus();
+  }, [loadCollections, loadTags, loadMcpStatus]);
 
   return (
     <aside className="w-[220px] flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent">
@@ -118,6 +121,33 @@ export function Sidebar() {
           </button>
         ))}
       </nav>
+
+      {/* Footer bar */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
+        <button
+          onClick={() => toggleMcpServer(mcpStatus.port)}
+          disabled={mcpLoading}
+          className={`no-drag flex items-center gap-1.5 text-mac-small transition-colors ${
+            mcpLoading ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer'
+          } text-gray-500 dark:text-gray-400`}
+          title={mcpStatus.running ? 'Stop MCP server' : 'Start MCP server'}
+        >
+          <span className={`w-2 h-2 rounded-full ${mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'}`} />
+          <span>MCP</span>
+        </button>
+        <button
+          onClick={() => setSidebarView('settings')}
+          className={`no-drag text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
+            sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
+          }`}
+          title="Settings"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
+            <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
+          </svg>
+        </button>
+      </div>
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
       {showNewTag && <TagManager onClose={() => setShowNewTag(false)} />}
