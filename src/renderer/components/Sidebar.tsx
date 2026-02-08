@@ -23,7 +23,8 @@ export function Sidebar() {
     loadCollections();
     loadTags();
     loadMcpStatus();
-  }, [loadCollections, loadTags, loadMcpStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <aside className="w-[220px] flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent">

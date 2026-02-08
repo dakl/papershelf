@@ -28,7 +28,8 @@ export function SettingsPanel() {
   useEffect(() => {
     loadMcpStatus();
     loadMcpTools();
-  }, [loadMcpStatus, loadMcpTools]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setPortInput(String(mcpStatus.port));

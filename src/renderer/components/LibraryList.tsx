@@ -17,7 +17,8 @@ export function LibraryList() {
       filter.tagId = selectedTagId;
     }
     loadPapers(filter);
-  }, [sidebarView, selectedCollectionId, selectedTagId, loadPapers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sidebarView, selectedCollectionId, selectedTagId]);
 
   if (loading) {
     return (
