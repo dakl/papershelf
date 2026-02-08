@@ -18,15 +18,19 @@
     "test:watch": "npm run rebuild:node && vitest"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "better-sqlite3": "^12.6.2",
     "fast-xml-parser": "^4.3.4",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "turndown": "^7.2.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
+    "@types/turndown": "^5.0.6",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
     "concurrently": "^8.2.2",

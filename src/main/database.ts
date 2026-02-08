@@ -1,13 +1,13 @@
 import Database from 'better-sqlite3';
-import { app } from 'electron';
 import path from 'path';
 import crypto from 'crypto';
+import { getDataDir } from './paths';
 import type { LibraryPaper, Collection, Tag, PaperFilter } from '../shared/types';
 
 let db: Database.Database;
 
 export function initDatabase(customPath?: string): void {
-  const dbPath = customPath ?? path.join(app.getPath('userData'), 'papershelf.db');
+  const dbPath = customPath ?? path.join(getDataDir(), 'papershelf.db');
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');

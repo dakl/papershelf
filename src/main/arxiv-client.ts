@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import type { ArxivPaper } from '../shared/types';
+import { rateLimitedFetch } from './arxiv/rate-limiter';
 
 const ARXIV_API_URL = 'https://export.arxiv.org/api/query';
 
@@ -22,17 +23,19 @@ function cleanText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
-export async function searchArxiv(query: string, maxResults = 20): Promise<ArxivPaper[]> {
-  const url = `${ARXIV_API_URL}?search_query=all:${encodeURIComponent(query)}&start=0&max_results=${maxResults}`;
+export type ArxivSortBy = 'relevance' | 'lastUpdatedDate' | 'submittedDate';
+export type ArxivSortOrder = 'ascending' | 'descending';
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`ArXiv API error: ${response.status}`);
-  }
+export interface SearchArxivOptions {
+  query: string;
+  maxResults?: number;
+  sortBy?: ArxivSortBy;
+  sortOrder?: ArxivSortOrder;
+  categories?: string[];
+}
 
-  const xml = await response.text();
+function parseEntries(xml: string): ArxivPaper[] {
   const parsed = parser.parse(xml);
-
   const entries = toArray(parsed?.feed?.entry);
   if (entries.length === 0) return [];
 
@@ -58,4 +61,41 @@ export async function searchArxiv(query: string, maxResults = 20): Promise<Arxiv
       pdfUrl: pdfLink ? (pdfLink['@_href'] as string) : '',
     };
   });
+}
+
+export async function searchArxiv(queryOrOptions: string | SearchArxivOptions, maxResults = 20): Promise<ArxivPaper[]> {
+  let query: string;
+  let max: number;
+  let sortBy: ArxivSortBy | undefined;
+  let sortOrder: ArxivSortOrder | undefined;
+  let categories: string[] | undefined;
+
+  if (typeof queryOrOptions === 'string') {
+    query = queryOrOptions;
+    max = maxResults;
+  } else {
+    query = queryOrOptions.query;
+    max = queryOrOptions.maxResults ?? 20;
+    sortBy = queryOrOptions.sortBy;
+    sortOrder = queryOrOptions.sortOrder;
+    categories = queryOrOptions.categories;
+  }
+
+  let searchQuery = `all:${encodeURIComponent(query)}`;
+  if (categories && categories.length > 0) {
+    const catQuery = categories.map((c) => `cat:${c}`).join('+OR+');
+    searchQuery = `${searchQuery}+AND+%28${catQuery}%29`;
+  }
+
+  let url = `${ARXIV_API_URL}?search_query=${searchQuery}&start=0&max_results=${max}`;
+  if (sortBy) url += `&sortBy=${sortBy}`;
+  if (sortOrder) url += `&sortOrder=${sortOrder}`;
+
+  const response = await rateLimitedFetch(url);
+  if (!response.ok) {
+    throw new Error(`ArXiv API error: ${response.status}`);
+  }
+
+  const xml = await response.text();
+  return parseEntries(xml);
 }

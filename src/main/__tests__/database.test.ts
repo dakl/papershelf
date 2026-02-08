@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-vi.mock('electron', () => ({
-  app: { getPath: () => '' },
+vi.mock('../paths', () => ({
+  getDataDir: () => '',
 }));
 
 import {

@@ -1,9 +1,9 @@
-import { app } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { getDataDir } from './paths';
 
 function getPapersDir(): string {
-  const dir = path.join(app.getPath('userData'), 'papers');
+  const dir = path.join(getDataDir(), 'papers');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
