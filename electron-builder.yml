@@ -10,6 +10,7 @@ asarUnpack:
   - "**/node_modules/better-sqlite3/**"
   - "**/node_modules/bindings/**"
   - "**/node_modules/file-uri-to-path/**"
+icon: resources/icon.icns
 mac:
   target:
     - target: dmg
