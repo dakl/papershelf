@@ -32,8 +32,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Setup Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install setuptools for node-gyp
-        run: pip install setuptools
+        run: python -m pip install setuptools
 
       - name: Package
         env:
