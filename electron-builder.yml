@@ -1,0 +1,23 @@
+appId: com.danielklevebring.papershelf
+productName: PaperShelf
+directories:
+  output: release
+files:
+  - dist/main/**/*
+  - dist/renderer/**/*
+  - package.json
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+  - "**/node_modules/bindings/**"
+  - "**/node_modules/file-uri-to-path/**"
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  notarize:
+    teamId: ${env.APPLE_TEAM_ID}

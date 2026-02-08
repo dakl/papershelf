@@ -1,7 +1,9 @@
 {
   "name": "papershelf",
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "productName": "PaperShelf",
   "description": "A native-feeling Mac desktop app for searching arXiv, organizing research papers, annotating PDFs, and chatting with your paper library using RAG.",
+  "author": "Daniel Klevebring",
   "main": "dist/main/main/index.js",
   "scripts": {
     "dev": "npm run build:main && concurrently -k -n main,renderer,electron -c blue,green,yellow \"npm run dev:main\" \"npm run dev:renderer\" \"npm run dev:electron\"",
@@ -15,7 +17,9 @@
     "rebuild:node": "npm rebuild better-sqlite3",
     "rebuild:electron": "npx @electron/rebuild",
     "test": "npm run rebuild:node && vitest run && npm run rebuild:electron",
-    "test:watch": "npm run rebuild:node && vitest"
+    "test:watch": "npm run rebuild:node && vitest",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
@@ -35,6 +39,7 @@
     "autoprefixer": "^10.4.17",
     "concurrently": "^8.2.2",
     "electron": "^28.0.0",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.33",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
