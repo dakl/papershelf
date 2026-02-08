@@ -18,3 +18,4 @@ mac:
     - target: zip
       arch: arm64
   identity: null
+afterPack: ./scripts/ad-hoc-sign.js
