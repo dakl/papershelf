@@ -48,7 +48,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npx electron-builder --mac --universal --publish never
+        run: npx electron-builder --mac --arm64 --publish never
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
