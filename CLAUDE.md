@@ -59,6 +59,34 @@ export const useStore = create<StoreState>((set, get) => ({
 - **Test file location**: `src/main/__tests__/`
 - **Run**: `npm run test` (rebuilds native modules before/after)
 
+### Adding a New DB Domain
+
+1. Create `src/main/db/<domain>.ts` with query/mutation functions
+2. Re-export from `src/main/db/index.ts`
+3. Re-export from `src/main/database.ts` (keeps backward-compat imports working)
+
+### Adding a New IPC Channel
+
+All three files must be updated together:
+
+1. **Handler** — `src/main/ipc-handlers.ts`: add `ipcMain.handle('<domain>:<action>', ...)`
+2. **Preload bridge** — `src/main/preload.ts`: add method to the `api` object
+3. **Type** — `src/shared/types.ts`: add method signature to `ElectronAPI` interface
+
+### Adding a New MCP Tool
+
+1. Add the tool handler to the appropriate `register*Tools()` function in `src/main/mcp/tools/`
+2. Add an entry to `TOOL_METADATA` in `src/main/mcp/tools/index.ts` (drives the Settings UI)
+3. Tool calls are automatically instrumented (logged to `tool_call_log`) via the Proxy in `registerTools()`
+
+### Exposing Backend Data to the UI
+
+The full path for surfacing new backend data in the renderer:
+
+1. DB function (`src/main/db/`) → re-export chain → IPC handler → preload bridge → `ElectronAPI` type
+2. Zustand store action calls `window.electronAPI.newMethod()` and sets state
+3. Component reads from store and calls the load action on mount
+
 ### Key Constants
 
 - `DEFAULT_COLOR`: `#007AFF` (macOS system blue)
