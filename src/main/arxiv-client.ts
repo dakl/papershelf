@@ -27,11 +27,38 @@ export type ArxivSortBy = 'relevance' | 'lastUpdatedDate' | 'submittedDate';
 export type ArxivSortOrder = 'ascending' | 'descending';
 
 export interface SearchArxivOptions {
-  query: string;
+  query?: string;
+  author?: string;
+  title?: string;
   maxResults?: number;
   sortBy?: ArxivSortBy;
   sortOrder?: ArxivSortOrder;
   categories?: string[];
+}
+
+export function buildSearchQuery(options: {
+  query?: string;
+  author?: string;
+  title?: string;
+  categories?: string[];
+}): string {
+  const parts: string[] = [];
+  if (options.query) parts.push(`all:${encodeURIComponent(options.query)}`);
+  if (options.author) parts.push(`au:${encodeURIComponent(options.author)}`);
+  if (options.title) parts.push(`ti:${encodeURIComponent(options.title)}`);
+
+  if (parts.length === 0) {
+    throw new Error('At least one of query, author, or title is required');
+  }
+
+  let searchQuery = parts.join('+AND+');
+
+  if (options.categories && options.categories.length > 0) {
+    const catQuery = options.categories.map((c) => `cat:${c}`).join('+OR+');
+    searchQuery = `${searchQuery}+AND+%28${catQuery}%29`;
+  }
+
+  return searchQuery;
 }
 
 function parseEntries(xml: string): ArxivPaper[] {
@@ -40,11 +67,13 @@ function parseEntries(xml: string): ArxivPaper[] {
   if (entries.length === 0) return [];
 
   return entries.map((entry: Record<string, unknown>): ArxivPaper => {
-    const authors = toArray(entry.author as Record<string, string> | Record<string, string>[])
-      .map((a: Record<string, string>) => a.name);
+    const authors = toArray(entry.author as Record<string, string> | Record<string, string>[]).map(
+      (a: Record<string, string>) => a.name,
+    );
 
-    const categories = toArray(entry.category as Record<string, string> | Record<string, string>[])
-      .map((c: Record<string, string>) => c['@_term']);
+    const categories = toArray(entry.category as Record<string, string> | Record<string, string>[]).map(
+      (c: Record<string, string>) => c['@_term'],
+    );
 
     const links = toArray(entry.link as Record<string, string> | Record<string, string>[]);
     const pdfLink = links.find((l: Record<string, string>) => l['@_title'] === 'pdf');
@@ -64,27 +93,19 @@ function parseEntries(xml: string): ArxivPaper[] {
 }
 
 export async function searchArxiv(queryOrOptions: string | SearchArxivOptions, maxResults = 20): Promise<ArxivPaper[]> {
-  let query: string;
+  let searchQuery: string;
   let max: number;
   let sortBy: ArxivSortBy | undefined;
   let sortOrder: ArxivSortOrder | undefined;
-  let categories: string[] | undefined;
 
   if (typeof queryOrOptions === 'string') {
-    query = queryOrOptions;
+    searchQuery = buildSearchQuery({ query: queryOrOptions });
     max = maxResults;
   } else {
-    query = queryOrOptions.query;
+    searchQuery = buildSearchQuery(queryOrOptions);
     max = queryOrOptions.maxResults ?? 20;
     sortBy = queryOrOptions.sortBy;
     sortOrder = queryOrOptions.sortOrder;
-    categories = queryOrOptions.categories;
-  }
-
-  let searchQuery = `all:${encodeURIComponent(query)}`;
-  if (categories && categories.length > 0) {
-    const catQuery = categories.map((c) => `cat:${c}`).join('+OR+');
-    searchQuery = `${searchQuery}+AND+%28${catQuery}%29`;
   }
 
   let url = `${ARXIV_API_URL}?search_query=${searchQuery}&start=0&max_results=${max}`;

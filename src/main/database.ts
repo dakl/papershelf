@@ -1,8 +1,16 @@
 import Database from 'better-sqlite3';
-import path from 'path';
 import crypto from 'crypto';
+import path from 'path';
+import type {
+  CitationEdge,
+  CitationGraphData,
+  CitationNode,
+  Collection,
+  LibraryPaper,
+  PaperFilter,
+  Tag,
+} from '../shared/types';
 import { getDataDir } from './paths';
-import type { LibraryPaper, Collection, Tag, PaperFilter, CitationNode, CitationEdge, CitationGraphData } from '../shared/types';
 
 let db: Database.Database;
 
@@ -263,20 +271,24 @@ export function getPapers(filter: PaperFilter): LibraryPaper[] {
       rows = db.prepare('SELECT * FROM papers ORDER BY created_at DESC LIMIT 50').all() as PaperRow[];
       break;
     case 'collection':
-      rows = db.prepare(`
+      rows = db
+        .prepare(`
         SELECT p.* FROM papers p
         JOIN paper_collections pc ON p.id = pc.paper_id
         WHERE pc.collection_id = ?
         ORDER BY p.created_at DESC
-      `).all(filter.collectionId) as PaperRow[];
+      `)
+        .all(filter.collectionId) as PaperRow[];
       break;
     case 'tag':
-      rows = db.prepare(`
+      rows = db
+        .prepare(`
         SELECT p.* FROM papers p
         JOIN paper_tags pt ON p.id = pt.paper_id
         WHERE pt.tag_id = ?
         ORDER BY p.created_at DESC
-      `).all(filter.tagId) as PaperRow[];
+      `)
+        .all(filter.tagId) as PaperRow[];
       break;
     default:
       rows = [];
@@ -304,7 +316,9 @@ export function toggleFavorite(id: string): boolean {
 export function checkPapersInLibrary(arxivIds: string[]): string[] {
   if (arxivIds.length === 0) return [];
   const placeholders = arxivIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT arxiv_id FROM papers WHERE arxiv_id IN (${placeholders})`).all(...arxivIds) as { arxiv_id: string }[];
+  const rows = db.prepare(`SELECT arxiv_id FROM papers WHERE arxiv_id IN (${placeholders})`).all(...arxivIds) as {
+    arxiv_id: string;
+  }[];
   return rows.map((r) => r.arxiv_id);
 }
 
@@ -315,12 +329,14 @@ export function updatePaperPdf(id: string, pdfPath: string, fullText: string | n
 // --- FTS5 Search ---
 
 export function searchLibrary(query: string): LibraryPaper[] {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT p.* FROM papers p
     JOIN papers_fts fts ON p.rowid = fts.rowid
     WHERE papers_fts MATCH ?
     ORDER BY rank
-  `).all(query) as PaperRow[];
+  `)
+    .all(query) as PaperRow[];
 
   return rows.map((row) => {
     const collections = getCollectionsForPaper(row.id);
@@ -331,14 +347,29 @@ export function searchLibrary(query: string): LibraryPaper[] {
 
 // --- Collections ---
 
+export function getCollectionByName(name: string): Collection | null {
+  const row = db
+    .prepare(`
+    SELECT c.*, COUNT(pc.paper_id) as paper_count
+    FROM collections c
+    LEFT JOIN paper_collections pc ON c.id = pc.collection_id
+    WHERE c.name = ?
+    GROUP BY c.id
+  `)
+    .get(name) as CollectionRow | undefined;
+  return row ? rowToCollection(row) : null;
+}
+
 export function getCollections(): Collection[] {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT c.*, COUNT(pc.paper_id) as paper_count
     FROM collections c
     LEFT JOIN paper_collections pc ON c.id = pc.collection_id
     GROUP BY c.id
     ORDER BY c.name
-  `).all() as CollectionRow[];
+  `)
+    .all() as CollectionRow[];
   return rows.map(rowToCollection);
 }
 
@@ -350,13 +381,15 @@ export function createCollection(name: string, color: string): Collection {
 
 export function updateCollection(id: string, name: string, color: string): Collection {
   db.prepare('UPDATE collections SET name = ?, color = ? WHERE id = ?').run(name, color, id);
-  const row = db.prepare(`
+  const row = db
+    .prepare(`
     SELECT c.*, COUNT(pc.paper_id) as paper_count
     FROM collections c
     LEFT JOIN paper_collections pc ON c.id = pc.collection_id
     WHERE c.id = ?
     GROUP BY c.id
-  `).get(id) as CollectionRow;
+  `)
+    .get(id) as CollectionRow;
   return rowToCollection(row);
 }
 
@@ -365,7 +398,10 @@ export function deleteCollection(id: string): void {
 }
 
 export function addPaperToCollection(paperId: string, collectionId: string): void {
-  db.prepare('INSERT OR IGNORE INTO paper_collections (paper_id, collection_id) VALUES (?, ?)').run(paperId, collectionId);
+  db.prepare('INSERT OR IGNORE INTO paper_collections (paper_id, collection_id) VALUES (?, ?)').run(
+    paperId,
+    collectionId,
+  );
 }
 
 export function removePaperFromCollection(paperId: string, collectionId: string): void {
@@ -373,27 +409,44 @@ export function removePaperFromCollection(paperId: string, collectionId: string)
 }
 
 export function getCollectionsForPaper(paperId: string): Collection[] {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT c.*, COUNT(pc2.paper_id) as paper_count
     FROM collections c
     JOIN paper_collections pc ON c.id = pc.collection_id
     LEFT JOIN paper_collections pc2 ON c.id = pc2.collection_id
     WHERE pc.paper_id = ?
     GROUP BY c.id
-  `).all(paperId) as CollectionRow[];
+  `)
+    .all(paperId) as CollectionRow[];
   return rows.map(rowToCollection);
 }
 
 // --- Tags ---
 
+export function getTagByName(name: string): Tag | null {
+  const row = db
+    .prepare(`
+    SELECT t.*, COUNT(pt.paper_id) as paper_count
+    FROM tags t
+    LEFT JOIN paper_tags pt ON t.id = pt.tag_id
+    WHERE t.name = ?
+    GROUP BY t.id
+  `)
+    .get(name) as TagRow | undefined;
+  return row ? rowToTag(row) : null;
+}
+
 export function getTags(): Tag[] {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT t.*, COUNT(pt.paper_id) as paper_count
     FROM tags t
     LEFT JOIN paper_tags pt ON t.id = pt.tag_id
     GROUP BY t.id
     ORDER BY t.name
-  `).all() as TagRow[];
+  `)
+    .all() as TagRow[];
   return rows.map(rowToTag);
 }
 
@@ -405,13 +458,15 @@ export function createTag(name: string, color: string): Tag {
 
 export function updateTag(id: string, name: string, color: string): Tag {
   db.prepare('UPDATE tags SET name = ?, color = ? WHERE id = ?').run(name, color, id);
-  const row = db.prepare(`
+  const row = db
+    .prepare(`
     SELECT t.*, COUNT(pt.paper_id) as paper_count
     FROM tags t
     LEFT JOIN paper_tags pt ON t.id = pt.tag_id
     WHERE t.id = ?
     GROUP BY t.id
-  `).get(id) as TagRow;
+  `)
+    .get(id) as TagRow;
   return rowToTag(row);
 }
 
@@ -428,14 +483,16 @@ export function removeTagFromPaper(paperId: string, tagId: string): void {
 }
 
 export function getTagsForPaper(paperId: string): Tag[] {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT t.*, COUNT(pt2.paper_id) as paper_count
     FROM tags t
     JOIN paper_tags pt ON t.id = pt.tag_id
     LEFT JOIN paper_tags pt2 ON t.id = pt2.tag_id
     WHERE pt.paper_id = ?
     GROUP BY t.id
-  `).all(paperId) as TagRow[];
+  `)
+    .all(paperId) as TagRow[];
   return rows.map(rowToTag);
 }
 
@@ -570,29 +627,25 @@ export function getCitationGraph(): CitationGraphData {
 }
 
 export function getCitationFetchTime(arxivId: string): string | null {
-  const row = db.prepare('SELECT fetched_at FROM citation_fetch_log WHERE arxiv_id = ?').get(arxivId) as { fetched_at: string } | undefined;
+  const row = db.prepare('SELECT fetched_at FROM citation_fetch_log WHERE arxiv_id = ?').get(arxivId) as
+    | { fetched_at: string }
+    | undefined;
   return row?.fetched_at ?? null;
 }
 
 export function isCitationNodeExpanded(s2Id: string): boolean {
-  const row = db.prepare(
-    'SELECT 1 FROM citation_edges WHERE citing_s2_id = ? OR cited_s2_id = ? LIMIT 1',
-  ).get(s2Id, s2Id);
-  // Check if there are edges where this node is the center (i.e., we fetched its data)
-  // A more precise check: did we fetch this paper's own citations?
-  // Use the s2 paper's arxiv_id to check fetch log, or check if edges originate from it
-  const edgeCount = db.prepare(
-    'SELECT COUNT(*) as cnt FROM citation_edges WHERE citing_s2_id = ?',
-  ).get(s2Id) as { cnt: number };
+  const edgeCount = db.prepare('SELECT COUNT(*) as cnt FROM citation_edges WHERE citing_s2_id = ?').get(s2Id) as {
+    cnt: number;
+  };
   return edgeCount.cnt > 0;
 }
 
 export function getS2IdsByArxivIds(arxivIds: string[]): string[] {
   if (arxivIds.length === 0) return [];
   const placeholders = arxivIds.map(() => '?').join(',');
-  const rows = db.prepare(
-    `SELECT s2_id FROM semantic_scholar_papers WHERE arxiv_id IN (${placeholders})`,
-  ).all(...arxivIds) as { s2_id: string }[];
+  const rows = db
+    .prepare(`SELECT s2_id FROM semantic_scholar_papers WHERE arxiv_id IN (${placeholders})`)
+    .all(...arxivIds) as { s2_id: string }[];
   return rows.map((r) => r.s2_id);
 }
 
@@ -602,10 +655,12 @@ export function getCitationSubgraph(centerS2Ids: string[]): CitationGraphData {
   const placeholders = centerS2Ids.map(() => '?').join(',');
 
   // 1-hop edges: at least one end is in centerS2Ids
-  const edgeRows = db.prepare(`
+  const edgeRows = db
+    .prepare(`
     SELECT citing_s2_id, cited_s2_id FROM citation_edges
     WHERE citing_s2_id IN (${placeholders}) OR cited_s2_id IN (${placeholders})
-  `).all(...centerS2Ids, ...centerS2Ids) as { citing_s2_id: string; cited_s2_id: string }[];
+  `)
+    .all(...centerS2Ids, ...centerS2Ids) as { citing_s2_id: string; cited_s2_id: string }[];
 
   const edges: CitationEdge[] = edgeRows.map((row) => ({
     source: row.citing_s2_id,
@@ -627,9 +682,9 @@ export function getCitationSubgraph(centerS2Ids: string[]): CitationGraphData {
   if (allNodeIds.length === 0) return { nodes: [], edges: [] };
 
   const nodePlaceholders = allNodeIds.map(() => '?').join(',');
-  const s2Rows = db.prepare(
-    `SELECT * FROM semantic_scholar_papers WHERE s2_id IN (${nodePlaceholders})`,
-  ).all(...allNodeIds) as {
+  const s2Rows = db
+    .prepare(`SELECT * FROM semantic_scholar_papers WHERE s2_id IN (${nodePlaceholders})`)
+    .all(...allNodeIds) as {
     s2_id: string;
     arxiv_id: string | null;
     title: string;
