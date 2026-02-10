@@ -44,11 +44,13 @@ export async function fetchPaper(arxivId: string): Promise<ArxivPaper | null> {
     return null;
   }
 
-  const authors = toArray(entry.author as Record<string, string> | Record<string, string>[])
-    .map((a: Record<string, string>) => a.name);
+  const authors = toArray(entry.author as Record<string, string> | Record<string, string>[]).map(
+    (a: Record<string, string>) => a.name,
+  );
 
-  const categories = toArray(entry.category as Record<string, string> | Record<string, string>[])
-    .map((c: Record<string, string>) => c['@_term']);
+  const categories = toArray(entry.category as Record<string, string> | Record<string, string>[]).map(
+    (c: Record<string, string>) => c['@_term'],
+  );
 
   const links = toArray(entry.link as Record<string, string> | Record<string, string>[]);
   const pdfLink = links.find((l: Record<string, string>) => l['@_title'] === 'pdf');

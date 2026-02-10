@@ -1,5 +1,5 @@
-import { createServer as createHttpServer, type IncomingMessage, type ServerResponse, type Server } from 'http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { createServer as createHttpServer, type IncomingMessage, type Server, type ServerResponse } from 'http';
 import { createServer } from './server';
 
 const PROD_PORT = 3847;

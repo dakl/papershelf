@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useUIStore } from '../stores/uiStore';
-import { usePaperStore } from '../stores/paperStore';
 import type { Collection, Tag } from '../../shared/types';
+import { usePaperStore } from '../stores/paperStore';
+import { useUIStore } from '../stores/uiStore';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -13,7 +13,16 @@ function formatDate(dateStr: string): string {
 
 export function PaperDetail() {
   const { sidebarView, selectedPaper } = useUIStore();
-  const { selectedLibraryPaper, toggleFavorite, collections, tags, addPaperToCollection, removePaperFromCollection, addTagToPaper, removeTagFromPaper } = usePaperStore();
+  const {
+    selectedLibraryPaper,
+    toggleFavorite,
+    collections,
+    tags,
+    addPaperToCollection,
+    removePaperFromCollection,
+    addTagToPaper,
+    removeTagFromPaper,
+  } = usePaperStore();
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
 
@@ -91,7 +100,9 @@ export function PaperDetail() {
 
         <div className="mt-2 flex items-center gap-3 text-mac-small text-gray-500">
           <span>{formatDate(paper.publishedDate)}</span>
-          <span>arXiv: {'arxivId' in paper ? (paper as { arxivId: string }).arxivId : (paper as { id: string }).id}</span>
+          <span>
+            arXiv: {'arxivId' in paper ? (paper as { arxivId: string }).arxivId : (paper as { id: string }).id}
+          </span>
         </div>
 
         <div className="mt-2 flex flex-wrap gap-1">
@@ -130,7 +141,10 @@ export function PaperDetail() {
             {/* Pickers */}
             <div className="relative">
               <button
-                onClick={() => { setShowCollectionPicker(!showCollectionPicker); setShowTagPicker(false); }}
+                onClick={() => {
+                  setShowCollectionPicker(!showCollectionPicker);
+                  setShowTagPicker(false);
+                }}
                 className="no-drag px-1.5 py-0.5 rounded text-[11px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 + Collection
@@ -157,7 +171,10 @@ export function PaperDetail() {
 
             <div className="relative">
               <button
-                onClick={() => { setShowTagPicker(!showTagPicker); setShowCollectionPicker(false); }}
+                onClick={() => {
+                  setShowTagPicker(!showTagPicker);
+                  setShowCollectionPicker(false);
+                }}
                 className="no-drag px-1.5 py-0.5 rounded text-[11px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 + Tag
@@ -208,9 +225,7 @@ export function PaperDetail() {
 
         <div className="mt-4 pt-4 border-t border-mac-separator">
           <h2 className="text-mac-emphasis font-semibold mb-2">Abstract</h2>
-          <p className="text-mac-body leading-relaxed text-gray-700 dark:text-gray-300 select-text">
-            {paper.abstract}
-          </p>
+          <p className="text-mac-body leading-relaxed text-gray-700 dark:text-gray-300 select-text">{paper.abstract}</p>
         </div>
       </div>
     </div>

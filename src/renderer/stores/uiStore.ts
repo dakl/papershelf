@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import type { ArxivPaper } from '../../shared/types';
 
-export type SidebarView = 'search' | 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag' | 'citations' | 'settings';
+export type SidebarView =
+  | 'search'
+  | 'all-papers'
+  | 'favorites'
+  | 'recent'
+  | 'collection'
+  | 'tag'
+  | 'citations'
+  | 'settings';
 
 interface UIState {
   sidebarView: SidebarView;
@@ -22,9 +30,18 @@ export const useUIStore = create<UIState>((set) => ({
   selectedCollectionId: null,
   selectedTagId: null,
   citationSeedArxivIds: [],
-  setSidebarView: (view) => set({ sidebarView: view, selectedPaper: null, selectedCollectionId: null, selectedTagId: null, citationSeedArxivIds: [] }),
+  setSidebarView: (view) =>
+    set({
+      sidebarView: view,
+      selectedPaper: null,
+      selectedCollectionId: null,
+      selectedTagId: null,
+      citationSeedArxivIds: [],
+    }),
   setSelectedPaper: (paper) => set({ selectedPaper: paper }),
-  navigateToCollection: (collectionId) => set({ sidebarView: 'collection', selectedCollectionId: collectionId, selectedPaper: null }),
+  navigateToCollection: (collectionId) =>
+    set({ sidebarView: 'collection', selectedCollectionId: collectionId, selectedPaper: null }),
   navigateToTag: (tagId) => set({ sidebarView: 'tag', selectedTagId: tagId, selectedPaper: null }),
-  navigateToCitations: (arxivIds) => set({ sidebarView: 'citations', citationSeedArxivIds: arxivIds, selectedPaper: null }),
+  navigateToCitations: (arxivIds) =>
+    set({ sidebarView: 'citations', citationSeedArxivIds: arxivIds, selectedPaper: null }),
 }));

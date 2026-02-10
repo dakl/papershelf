@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CitationNode, CitationEdge } from '../../shared/types';
+import type { CitationEdge, CitationNode } from '../../shared/types';
 
 interface CitationState {
   seedArxivIds: string[];
@@ -65,9 +65,7 @@ export const useCitationStore = create<CitationState>((set, get) => ({
     }
 
     const { expandedS2Ids } = get();
-    const newExpanded = expandedS2Ids.includes(s2Id)
-      ? expandedS2Ids
-      : [...expandedS2Ids, s2Id];
+    const newExpanded = expandedS2Ids.includes(s2Id) ? expandedS2Ids : [...expandedS2Ids, s2Id];
     set({ expandedS2Ids: newExpanded });
 
     await get().reloadSubgraph();

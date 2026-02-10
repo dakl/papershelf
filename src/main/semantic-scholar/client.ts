@@ -1,5 +1,6 @@
 const S2_API_BASE = 'https://api.semanticscholar.org/graph/v1/paper';
-const FIELDS = 'paperId,externalIds,title,authors,year,references.paperId,references.externalIds,references.title,references.authors,references.year,citations.paperId,citations.externalIds,citations.title,citations.authors,citations.year';
+const FIELDS =
+  'paperId,externalIds,title,authors,year,references.paperId,references.externalIds,references.title,references.authors,references.year,citations.paperId,citations.externalIds,citations.title,citations.authors,citations.year';
 const REQUEST_INTERVAL_MS = 350; // ~3 req/sec
 
 let lastRequestTime = 0;
@@ -74,13 +75,9 @@ export async function fetchCitationData(arxivId: string): Promise<CitationData |
   const paper = mapPaper(data);
   if (!paper) return null;
 
-  const references = data.references
-    .map(mapPaper)
-    .filter((p): p is S2Paper => p !== null);
+  const references = data.references.map(mapPaper).filter((p): p is S2Paper => p !== null);
 
-  const citations = data.citations
-    .map(mapPaper)
-    .filter((p): p is S2Paper => p !== null);
+  const citations = data.citations.map(mapPaper).filter((p): p is S2Paper => p !== null);
 
   return { paper, references, citations };
 }
@@ -98,13 +95,9 @@ export async function fetchCitationDataByS2Id(s2Id: string): Promise<CitationDat
   const paper = mapPaper(data);
   if (!paper) return null;
 
-  const references = data.references
-    .map(mapPaper)
-    .filter((p): p is S2Paper => p !== null);
+  const references = data.references.map(mapPaper).filter((p): p is S2Paper => p !== null);
 
-  const citations = data.citations
-    .map(mapPaper)
-    .filter((p): p is S2Paper => p !== null);
+  const citations = data.citations.map(mapPaper).filter((p): p is S2Paper => p !== null);
 
   return { paper, references, citations };
 }

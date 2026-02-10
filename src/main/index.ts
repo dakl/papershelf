@@ -1,10 +1,12 @@
 const isMcpMode = process.argv.includes('--mcp-mode');
 
 if (isMcpMode) {
-  import('./mcp/bridge.js').then(({ startBridge }) => startBridge()).catch((err: unknown) => {
-    console.error('MCP bridge failed:', err instanceof Error ? err.message : err);
-    process.exit(1);
-  });
+  import('./mcp/bridge.js')
+    .then(({ startBridge }) => startBridge())
+    .catch((err: unknown) => {
+      console.error('MCP bridge failed:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    });
 } else {
   // Dynamic import so Electron is not required in --mcp-mode
   import('electron').then(({ app, BrowserWindow }) => {

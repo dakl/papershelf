@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerTools } from './tools';
 import { getDisabledTools } from './tool-config';
+import { registerTools } from './tools';
 
 export function createServer(): McpServer {
   const server = new McpServer({

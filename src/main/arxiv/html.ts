@@ -8,11 +8,7 @@ const turndown = new TurndownService({
 // Preserve math expressions
 turndown.addRule('math', {
   filter: (node) => {
-    return (
-      node.nodeName === 'MATH' ||
-      node.classList?.contains('ltx_Math') ||
-      node.classList?.contains('ltx_equation')
-    );
+    return node.nodeName === 'MATH' || node.classList?.contains('ltx_Math') || node.classList?.contains('ltx_equation');
   },
   replacement: (_content, node) => {
     const el = node as HTMLElement;

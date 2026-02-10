@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ArxivPaper, LibraryPaper } from '../../shared/types';
 
 export type SearchMode = 'arxiv' | 'library';

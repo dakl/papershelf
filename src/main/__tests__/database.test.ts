@@ -1,38 +1,39 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { vi } from 'vitest';
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../paths', () => ({
   getDataDir: () => '',
 }));
 
 import {
-  initDatabase,
-  closeDatabase,
-  insertPaper,
-  getPaperById,
-  getPaperByArxivId,
-  getPapers,
-  deletePaper,
-  toggleFavorite,
-  checkPapersInLibrary,
-  searchLibrary,
-  getCollections,
-  createCollection,
-  updateCollection,
-  deleteCollection,
   addPaperToCollection,
-  removePaperFromCollection,
-  getCollectionsForPaper,
-  getTags,
-  createTag,
-  updateTag,
-  deleteTag,
   addTagToPaper,
-  removeTagFromPaper,
+  checkPapersInLibrary,
+  closeDatabase,
+  createCollection,
+  createTag,
+  deleteCollection,
+  deletePaper,
+  deleteTag,
+  getCollectionByName,
+  getCollections,
+  getCollectionsForPaper,
+  getPaperByArxivId,
+  getPaperById,
+  getPapers,
+  getTagByName,
+  getTags,
   getTagsForPaper,
+  initDatabase,
+  insertPaper,
+  removePaperFromCollection,
+  removeTagFromPaper,
+  searchLibrary,
+  toggleFavorite,
+  updateCollection,
+  updateTag,
 } from '../database';
 
 let dbPath: string;
@@ -42,7 +43,8 @@ function makePaper(overrides: Partial<Parameters<typeof insertPaper>[0]> = {}) {
     arxivId: '2401.00001',
     title: 'Attention Is All You Need',
     authors: ['Ashish Vaswani', 'Noam Shazeer'],
-    abstract: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks.',
+    abstract:
+      'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks.',
     publishedDate: '2017-06-12T00:00:00Z',
     updatedDate: '2017-06-12T00:00:00Z',
     categories: ['cs.CL', 'cs.AI'],
@@ -120,10 +122,12 @@ describe('papers', () => {
   });
 
   it('stores and retrieves pdf path and full text', () => {
-    const paper = insertPaper(makePaper({
-      pdfPath: '/path/to/paper.pdf',
-      fullText: 'Full text of the paper goes here.',
-    }));
+    const paper = insertPaper(
+      makePaper({
+        pdfPath: '/path/to/paper.pdf',
+        fullText: 'Full text of the paper goes here.',
+      }),
+    );
 
     expect(paper.pdfPath).toBe('/path/to/paper.pdf');
     expect(paper.fullText).toBe('Full text of the paper goes here.');
@@ -475,5 +479,67 @@ describe('papers with relations', () => {
     expect(results).toHaveLength(1);
     expect(results[0].collections).toHaveLength(1);
     expect(results[0].tags).toHaveLength(1);
+  });
+});
+
+// --- Name-based lookups ---
+
+describe('getCollectionByName', () => {
+  it('finds a collection by name', () => {
+    createCollection('Machine Learning', '#FF0000');
+
+    const found = getCollectionByName('Machine Learning');
+    expect(found).not.toBeNull();
+    expect(found!.name).toBe('Machine Learning');
+  });
+
+  it('returns null for non-existent name', () => {
+    expect(getCollectionByName('nonexistent')).toBeNull();
+  });
+
+  it('returns correct paper count', () => {
+    const col = createCollection('ML', '#FF0000');
+    const paper = insertPaper(makePaper());
+    addPaperToCollection(paper.id, col.id);
+
+    const found = getCollectionByName('ML');
+    expect(found!.paperCount).toBe(1);
+  });
+
+  it('is case-sensitive', () => {
+    createCollection('Machine Learning', '#FF0000');
+
+    expect(getCollectionByName('machine learning')).toBeNull();
+    expect(getCollectionByName('MACHINE LEARNING')).toBeNull();
+  });
+});
+
+describe('getTagByName', () => {
+  it('finds a tag by name', () => {
+    createTag('important', '#FF0000');
+
+    const found = getTagByName('important');
+    expect(found).not.toBeNull();
+    expect(found!.name).toBe('important');
+  });
+
+  it('returns null for non-existent name', () => {
+    expect(getTagByName('nonexistent')).toBeNull();
+  });
+
+  it('returns correct paper count', () => {
+    const tag = createTag('to-read', '#00FF00');
+    const paper = insertPaper(makePaper());
+    addTagToPaper(paper.id, tag.id);
+
+    const found = getTagByName('to-read');
+    expect(found!.paperCount).toBe(1);
+  });
+
+  it('is case-sensitive', () => {
+    createTag('Important', '#FF0000');
+
+    expect(getTagByName('important')).toBeNull();
+    expect(getTagByName('IMPORTANT')).toBeNull();
   });
 });

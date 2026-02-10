@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { LibraryPaper, Collection, Tag, PaperFilter, ArxivPaper, SavePaperResult } from '../../shared/types';
+import type { ArxivPaper, Collection, LibraryPaper, PaperFilter, SavePaperResult, Tag } from '../../shared/types';
 
 interface PaperState {
   papers: LibraryPaper[];

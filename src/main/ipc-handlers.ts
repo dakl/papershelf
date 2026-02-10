@@ -1,12 +1,12 @@
 import { ipcMain } from 'electron';
-import { searchArxiv } from './arxiv-client';
-import { downloadAndExtractPdf } from './pdf-processor';
-import { startMcpHttpServer, stopMcpHttpServer, getMcpHttpServerStatus } from './mcp/http-server';
-import { TOOL_METADATA } from './mcp/tools';
-import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
-import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
 import type { ArxivPaper, PaperFilter, SavePaperResult } from '../shared/types';
+import { searchArxiv } from './arxiv-client';
 import * as db from './database';
+import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
+import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
+import { TOOL_METADATA } from './mcp/tools';
+import { downloadAndExtractPdf } from './pdf-processor';
+import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
 
 export function registerIpcHandlers(): void {
   // --- ArXiv ---

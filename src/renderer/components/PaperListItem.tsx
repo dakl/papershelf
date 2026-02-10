@@ -38,9 +38,7 @@ export function PaperListItem({
     <button
       onClick={onClick}
       className={`w-full text-left px-3 py-2.5 border-b border-mac-separator transition-colors ${
-        isSelected
-          ? 'bg-mac-selection'
-          : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03]'
+        isSelected ? 'bg-mac-selection' : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03]'
       }`}
     >
       <div className="flex items-start gap-2">
@@ -49,13 +47,9 @@ export function PaperListItem({
             {isFavorite && <span className="mr-1">⭐</span>}
             {title}
           </h3>
-          <p className="text-mac-small text-gray-500 mt-0.5">
-            {truncateAuthors(authors)}
-          </p>
+          <p className="text-mac-small text-gray-500 mt-0.5">{truncateAuthors(authors)}</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-mac-small text-gray-400">
-              {formatDate(date)}
-            </span>
+            <span className="text-mac-small text-gray-400">{formatDate(date)}</span>
             {inLibrary && (
               <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">
                 In Library

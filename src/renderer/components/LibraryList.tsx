@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
+import type { PaperFilter } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { useUIStore } from '../stores/uiStore';
 import { PaperListItem } from './PaperListItem';
-import type { PaperFilter } from '../../shared/types';
 
 export function LibraryList() {
   const { sidebarView, selectedCollectionId, selectedTagId } = useUIStore();

@@ -45,9 +45,7 @@ export function CitationNodePanel({ node }: CitationNodePanelProps) {
             {node.authors.slice(0, 5).join(', ')}
             {node.authors.length > 5 && ` +${node.authors.length - 5} more`}
           </p>
-          {node.year && (
-            <p className="text-mac-small text-gray-400 dark:text-gray-500 mt-0.5">{node.year}</p>
-          )}
+          {node.year && <p className="text-mac-small text-gray-400 dark:text-gray-500 mt-0.5">{node.year}</p>}
         </div>
 
         <div className="flex gap-3 text-mac-small text-gray-500 dark:text-gray-400">

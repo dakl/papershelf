@@ -60,9 +60,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setToolEnabled: async (toolName: string, enabled: boolean) => {
     // Optimistic update
     set((state) => ({
-      mcpTools: state.mcpTools.map((t) =>
-        t.name === toolName ? { ...t, enabled } : t
-      ),
+      mcpTools: state.mcpTools.map((t) => (t.name === toolName ? { ...t, enabled } : t)),
     }));
     await window.electronAPI.setMcpToolEnabled(toolName, enabled);
     await get().loadMcpStatus();

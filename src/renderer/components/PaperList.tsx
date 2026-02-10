@@ -1,12 +1,18 @@
-import { useUIStore } from '../stores/uiStore';
-import { usePaperStore } from '../stores/paperStore';
 import { useSearch } from '../hooks/useSearch';
-import { SearchBar } from './SearchBar';
-import { SearchResults } from './SearchResults';
+import { usePaperStore } from '../stores/paperStore';
+import { useUIStore } from '../stores/uiStore';
 import { LibraryList } from './LibraryList';
 import { LibrarySearchResults } from './LibrarySearchResults';
+import { SearchBar } from './SearchBar';
+import { SearchResults } from './SearchResults';
 
-function getViewTitle(view: string, collections: { id: string; name: string }[], tags: { id: string; name: string }[], collectionId: string | null, tagId: string | null): string {
+function getViewTitle(
+  view: string,
+  collections: { id: string; name: string }[],
+  tags: { id: string; name: string }[],
+  collectionId: string | null,
+  tagId: string | null,
+): string {
   switch (view) {
     case 'collection': {
       const col = collections.find((c) => c.id === collectionId);
@@ -42,9 +48,7 @@ export function PaperList() {
         )}
       </div>
 
-      {error && (
-        <div className="px-3 py-2 text-mac-small text-red-500">{error}</div>
-      )}
+      {error && <div className="px-3 py-2 text-mac-small text-red-500">{error}</div>}
 
       {isSearch && mode === 'arxiv' && results.length === 0 && !loading && (
         <div className="flex-1 flex items-center justify-center text-gray-400 text-mac-body px-6 text-center">
@@ -59,11 +63,7 @@ export function PaperList() {
       )}
 
       {isSearch && mode === 'arxiv' && (
-        <SearchResults
-          results={results}
-          selectedPaperId={selectedPaper?.id ?? null}
-          onSelectPaper={setSelectedPaper}
-        />
+        <SearchResults results={results} selectedPaperId={selectedPaper?.id ?? null} onSelectPaper={setSelectedPaper} />
       )}
 
       {isSearch && mode === 'library' && libraryResults.length > 0 && (

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { useCitationStore } from '../stores/citationStore';
 
@@ -127,17 +127,14 @@ export function CitationForceGraph() {
   );
 
   // Large hit area for reliable clicking
-  const nodePointerAreaPaint = useCallback(
-    (node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
-      const x = node.x ?? 0;
-      const y = node.y ?? 0;
-      ctx.beginPath();
-      ctx.arc(x, y, 16, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
-      ctx.fill();
-    },
-    [],
-  );
+  const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
+    const x = node.x ?? 0;
+    const y = node.y ?? 0;
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }, []);
 
   const linkColor = useCallback(() => 'rgba(156, 163, 175, 0.3)', []);
 

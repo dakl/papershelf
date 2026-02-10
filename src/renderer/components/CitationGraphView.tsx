@@ -1,12 +1,13 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCitationStore } from '../stores/citationStore';
-import { useUIStore } from '../stores/uiStore';
 import { usePaperStore } from '../stores/paperStore';
+import { useUIStore } from '../stores/uiStore';
 import { CitationForceGraph } from './CitationForceGraph';
 import { CitationNodePanel } from './CitationNodePanel';
 
 export function CitationGraphView() {
-  const { nodes, seedArxivIds, selectedNodeId, loading, fetchProgress, error, startSession, resetSession } = useCitationStore();
+  const { nodes, seedArxivIds, selectedNodeId, loading, fetchProgress, error, startSession, resetSession } =
+    useCitationStore();
   const citationSeedArxivIds = useUIStore((s) => s.citationSeedArxivIds);
   const { papers, loadPapers } = usePaperStore();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
@@ -35,22 +36,19 @@ export function CitationGraphView() {
     };
   }, []);
 
-  const selectedNode = selectedNodeId
-    ? nodes.find((n) => n.semanticScholarId === selectedNodeId) ?? null
-    : null;
+  const selectedNode = selectedNodeId ? (nodes.find((n) => n.semanticScholarId === selectedNodeId) ?? null) : null;
 
   const libraryNodeCount = nodes.filter((n) => n.inLibrary).length;
   const externalNodeCount = nodes.length - libraryNodeCount;
 
-  const filteredPapers = papers.filter((p) =>
-    p.title.toLowerCase().includes(seedSearch.toLowerCase()) ||
-    p.arxivId.toLowerCase().includes(seedSearch.toLowerCase()),
+  const filteredPapers = papers.filter(
+    (p) =>
+      p.title.toLowerCase().includes(seedSearch.toLowerCase()) ||
+      p.arxivId.toLowerCase().includes(seedSearch.toLowerCase()),
   );
 
   const togglePickerItem = (arxivId: string) => {
-    setPickerSelection((prev) =>
-      prev.includes(arxivId) ? prev.filter((id) => id !== arxivId) : [...prev, arxivId],
-    );
+    setPickerSelection((prev) => (prev.includes(arxivId) ? prev.filter((id) => id !== arxivId) : [...prev, arxivId]));
   };
 
   const handleExploreFromPicker = () => {
@@ -162,7 +160,9 @@ export function CitationGraphView() {
                 style={{ width: `${(fetchProgress.done / fetchProgress.total) * 100}%` }}
               />
             </div>
-            <span>{fetchProgress.done}/{fetchProgress.total}</span>
+            <span>
+              {fetchProgress.done}/{fetchProgress.total}
+            </span>
           </div>
         )}
 
@@ -172,10 +172,7 @@ export function CitationGraphView() {
           </span>
         )}
 
-        {error && (
-          <span className="text-mac-small text-red-500">{error}</span>
-        )}
-
+        {error && <span className="text-mac-small text-red-500">{error}</span>}
       </div>
 
       {/* Content */}
@@ -192,7 +189,10 @@ export function CitationGraphView() {
               </p>
               <div className="relative inline-block">
                 <button
-                  onClick={() => { setPickerSelection([]); setShowSeedPicker(true); }}
+                  onClick={() => {
+                    setPickerSelection([]);
+                    setShowSeedPicker(true);
+                  }}
                   disabled={papers.length === 0}
                   className={`px-4 py-2 rounded-md text-mac-body font-medium transition-colors ${
                     papers.length === 0
@@ -239,7 +239,16 @@ interface SeedPickerDropdownProps {
   buttonLabel: string;
 }
 
-function SeedPickerDropdown({ papers, seedSearch, onSearchChange, selection, onToggle, onExplore, onClose, buttonLabel }: SeedPickerDropdownProps) {
+function SeedPickerDropdown({
+  papers,
+  seedSearch,
+  onSearchChange,
+  selection,
+  onToggle,
+  onExplore,
+  onClose,
+  buttonLabel,
+}: SeedPickerDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -279,11 +288,11 @@ function SeedPickerDropdown({ papers, seedSearch, onSearchChange, selection, onT
                 onClick={() => onToggle(paper.arxivId)}
                 className="w-full text-left px-3 py-2 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-start gap-2"
               >
-                <span className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center text-[10px] ${
-                  isSelected
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}>
+                <span
+                  className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center text-[10px] ${
+                    isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
                   {isSelected && '\u2713'}
                 </span>
                 <span className="flex-1 leading-snug">{paper.title}</span>

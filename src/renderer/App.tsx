@@ -1,8 +1,8 @@
-import { Sidebar } from './components/Sidebar';
-import { PaperList } from './components/PaperList';
-import { PaperDetail } from './components/PaperDetail';
-import { SettingsPanel } from './components/SettingsPanel';
 import { CitationGraphView } from './components/CitationGraphView';
+import { PaperDetail } from './components/PaperDetail';
+import { PaperList } from './components/PaperList';
+import { SettingsPanel } from './components/SettingsPanel';
+import { Sidebar } from './components/Sidebar';
 import { useUIStore } from './stores/uiStore';
 
 export function App() {

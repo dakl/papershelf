@@ -7,9 +7,7 @@ function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onCha
       onClick={onChange}
       disabled={disabled}
       className={`relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
-        enabled
-          ? 'bg-green-500'
-          : 'bg-gray-300 dark:bg-gray-600'
+        enabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
@@ -22,7 +20,16 @@ function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onCha
 }
 
 export function SettingsPanel() {
-  const { mcpStatus, mcpLoading, mcpTools, loadMcpStatus, startMcpServer, stopMcpServer, loadMcpTools, setToolEnabled } = useSettingsStore();
+  const {
+    mcpStatus,
+    mcpLoading,
+    mcpTools,
+    loadMcpStatus,
+    startMcpServer,
+    stopMcpServer,
+    loadMcpTools,
+    setToolEnabled,
+  } = useSettingsStore();
   const [portInput, setPortInput] = useState('3847');
 
   useEffect(() => {
@@ -87,11 +94,7 @@ export function SettingsPanel() {
 
             {/* Status line */}
             <div className="flex items-center gap-2 text-mac-small">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'
-                }`}
-              />
+              <span className={`w-2 h-2 rounded-full ${mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'}`} />
               <span className="text-gray-500 dark:text-gray-400">
                 {mcpLoading
                   ? 'Updating...'

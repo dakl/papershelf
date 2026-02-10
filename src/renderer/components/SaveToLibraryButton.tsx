@@ -13,11 +13,7 @@ export function SaveToLibraryButton({ paper, alreadySaved }: SaveToLibraryButton
   const savePaper = usePaperStore((s) => s.savePaper);
 
   if (saved) {
-    return (
-      <span className="px-2 py-1 rounded text-[11px] text-green-600 dark:text-green-400 font-medium">
-        Saved
-      </span>
-    );
+    return <span className="px-2 py-1 rounded text-[11px] text-green-600 dark:text-green-400 font-medium">Saved</span>;
   }
 
   const handleSave = async (e: React.MouseEvent) => {
@@ -36,11 +32,7 @@ export function SaveToLibraryButton({ paper, alreadySaved }: SaveToLibraryButton
       disabled={saving}
       className="no-drag px-2 py-1 rounded text-[11px] font-medium bg-mac-accent text-white hover:bg-blue-600 disabled:opacity-50 transition-colors"
     >
-      {saving ? (
-        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      ) : (
-        'Save'
-      )}
+      {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Save'}
     </button>
   );
 }

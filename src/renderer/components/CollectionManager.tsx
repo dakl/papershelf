@@ -28,13 +28,8 @@ export function CollectionManager({ onClose, editId, editName, editColor }: Coll
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-72 p-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-mac-emphasis font-semibold mb-3">
-          {editId ? 'Edit Collection' : 'New Collection'}
-        </h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-72 p-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-mac-emphasis font-semibold mb-3">{editId ? 'Edit Collection' : 'New Collection'}</h3>
         <form onSubmit={handleSubmit}>
           <input
             type="text"

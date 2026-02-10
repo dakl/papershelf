@@ -1,11 +1,11 @@
-import net from 'net';
-import { spawn } from 'child_process';
-import path from 'path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { spawn } from 'child_process';
+import net from 'net';
+import path from 'path';
 import { getMcpPort, isPackaged } from './http-server';
 
 function probePort(port: number): Promise<boolean> {
@@ -57,10 +57,7 @@ export async function startBridge(): Promise<void> {
   const httpTransport = new StreamableHTTPClientTransport(serverUrl);
   await httpClient.connect(httpTransport);
 
-  const stdioServer = new Server(
-    { name: 'papershelf', version: '1.0.0' },
-    { capabilities: { tools: {} } },
-  );
+  const stdioServer = new Server({ name: 'papershelf', version: '1.0.0' }, { capabilities: { tools: {} } });
 
   stdioServer.setRequestHandler(ListToolsRequestSchema, async () => {
     return await httpClient.listTools();

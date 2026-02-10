@@ -20,7 +20,8 @@ const api: ElectronAPI = {
   updateCollection: (id, name, color) => ipcRenderer.invoke('collections:update', id, name, color),
   deleteCollection: (id) => ipcRenderer.invoke('collections:delete', id),
   addPaperToCollection: (paperId, collectionId) => ipcRenderer.invoke('collections:addPaper', paperId, collectionId),
-  removePaperFromCollection: (paperId, collectionId) => ipcRenderer.invoke('collections:removePaper', paperId, collectionId),
+  removePaperFromCollection: (paperId, collectionId) =>
+    ipcRenderer.invoke('collections:removePaper', paperId, collectionId),
   getPaperCollections: (paperId) => ipcRenderer.invoke('collections:forPaper', paperId),
 
   // Tags
@@ -36,7 +37,8 @@ const api: ElectronAPI = {
   fetchCitations: (arxivId) => ipcRenderer.invoke('citations:fetch', arxivId),
   fetchCitationsBatch: (arxivIds) => ipcRenderer.invoke('citations:fetchBatch', arxivIds),
   getCitationGraph: () => ipcRenderer.invoke('citations:getGraph'),
-  getCitationSubgraph: (seedArxivIds, expandedS2Ids) => ipcRenderer.invoke('citations:getSubgraph', seedArxivIds, expandedS2Ids),
+  getCitationSubgraph: (seedArxivIds, expandedS2Ids) =>
+    ipcRenderer.invoke('citations:getSubgraph', seedArxivIds, expandedS2Ids),
   expandCitationNode: (s2Id) => ipcRenderer.invoke('citations:expandNode', s2Id),
 
   // MCP Server

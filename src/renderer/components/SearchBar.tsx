@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SearchMode } from '../hooks/useSearch';
 
 interface SearchBarProps {
@@ -17,7 +17,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
       e.preventDefault();
       onSearch(query);
     },
-    [query, onSearch]
+    [query, onSearch],
   );
 
   useEffect(() => {
@@ -37,9 +37,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
         <button
           onClick={() => onModeChange('arxiv')}
           className={`flex-1 px-2 py-1 rounded text-mac-small font-medium transition-colors ${
-            mode === 'arxiv'
-              ? 'bg-white dark:bg-gray-700 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            mode === 'arxiv' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           arXiv
@@ -47,9 +45,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
         <button
           onClick={() => onModeChange('library')}
           className={`flex-1 px-2 py-1 rounded text-mac-small font-medium transition-colors ${
-            mode === 'library'
-              ? 'bg-white dark:bg-gray-700 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            mode === 'library' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Library
