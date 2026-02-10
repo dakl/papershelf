@@ -10,6 +10,7 @@ const NAV_ITEMS: { id: SidebarView; label: string; icon: string }[] = [
   { id: 'all-papers', label: 'All Papers', icon: '📄' },
   { id: 'favorites', label: 'Favorites', icon: '⭐' },
   { id: 'recent', label: 'Recently Added', icon: '🕐' },
+  { id: 'citations', label: 'Citations', icon: '🔗' },
 ];
 
 export function Sidebar() {

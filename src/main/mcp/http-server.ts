@@ -2,16 +2,25 @@ import { createServer as createHttpServer, type IncomingMessage, type ServerResp
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createServer } from './server';
 
-const DEFAULT_PORT = 3847;
+const PROD_PORT = 3847;
+const DEV_PORT = 13847;
+
+export function isPackaged(): boolean {
+  return __dirname.includes('.app/') || __dirname.includes('.asar');
+}
+
+export function getMcpPort(): number {
+  return isPackaged() ? PROD_PORT : DEV_PORT;
+}
 
 let httpServer: Server | null = null;
 let activeSessions = new Map<string, StreamableHTTPServerTransport>();
-let currentPort = DEFAULT_PORT;
+let currentPort = DEV_PORT;
 
 export async function startMcpHttpServer(port?: number): Promise<void> {
   if (httpServer) return;
 
-  currentPort = port ?? DEFAULT_PORT;
+  currentPort = port ?? getMcpPort();
   const sessions = new Map<string, StreamableHTTPServerTransport>();
   activeSessions = sessions;
 
@@ -42,12 +51,12 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
 
       const mcpServer = createServer();
       await mcpServer.connect(transport);
+      await transport.handleRequest(req, res);
 
+      // sessionId is generated during handleRequest when processing the initialize request
       if (transport.sessionId) {
         sessions.set(transport.sessionId, transport);
       }
-
-      await transport.handleRequest(req, res);
     } else if (req.method === 'GET') {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
       if (sessionId && sessions.has(sessionId)) {

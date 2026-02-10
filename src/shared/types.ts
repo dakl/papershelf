@@ -68,6 +68,27 @@ export interface SavePaperResult {
   error?: string;
 }
 
+// --- Citation Graph ---
+
+export interface CitationNode {
+  semanticScholarId: string;
+  arxivId: string | null;
+  title: string;
+  authors: string[];
+  year: number | null;
+  inLibrary: boolean;
+}
+
+export interface CitationEdge {
+  source: string; // citing s2 id
+  target: string; // cited s2 id
+}
+
+export interface CitationGraphData {
+  nodes: CitationNode[];
+  edges: CitationEdge[];
+}
+
 export interface ElectronAPI {
   // ArXiv search
   searchArxiv: (query: string) => Promise<ArxivPaper[]>;
@@ -98,6 +119,13 @@ export interface ElectronAPI {
   addTagToPaper: (paperId: string, tagId: string) => Promise<void>;
   removeTagFromPaper: (paperId: string, tagId: string) => Promise<void>;
   getPaperTags: (paperId: string) => Promise<Tag[]>;
+
+  // Citations
+  fetchCitations: (arxivId: string) => Promise<{ success: boolean; error?: string }>;
+  fetchCitationsBatch: (arxivIds: string[]) => Promise<{ fetched: number; failed: number }>;
+  getCitationGraph: () => Promise<CitationGraphData>;
+  getCitationSubgraph: (seedArxivIds: string[], expandedS2Ids: string[]) => Promise<CitationGraphData>;
+  expandCitationNode: (s2Id: string) => Promise<{ success: boolean; error?: string }>;
 
   // MCP Server
   getMcpStatus: () => Promise<McpServerStatus>;

@@ -193,6 +193,17 @@ export function PaperDetail() {
           >
             Open on arXiv
           </a>
+          {isLibraryPaper && (
+            <button
+              onClick={() => {
+                const arxivId = 'arxivId' in paper ? (paper as { arxivId: string }).arxivId : '';
+                if (arxivId) useUIStore.getState().navigateToCitations([arxivId]);
+              }}
+              className="no-drag px-3 py-1 rounded-md text-mac-small font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Explore Citations
+            </button>
+          )}
         </div>
 
         <div className="mt-4 pt-4 border-t border-mac-separator">

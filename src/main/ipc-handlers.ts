@@ -4,6 +4,7 @@ import { downloadAndExtractPdf } from './pdf-processor';
 import { startMcpHttpServer, stopMcpHttpServer, getMcpHttpServerStatus } from './mcp/http-server';
 import { TOOL_METADATA } from './mcp/tools';
 import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
+import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
 import type { ArxivPaper, PaperFilter, SavePaperResult } from '../shared/types';
 import * as db from './database';
 
@@ -172,6 +173,86 @@ export function registerIpcHandlers(): void {
     if (status.running) {
       await stopMcpHttpServer();
       await startMcpHttpServer(status.port);
+    }
+  });
+
+  // --- Citations ---
+
+  const CACHE_TTL_DAYS = 30;
+
+  ipcMain.handle('citations:fetch', async (_event, arxivId: string) => {
+    try {
+      const fetchedAt = db.getCitationFetchTime(arxivId);
+      if (fetchedAt) {
+        const age = Date.now() - new Date(fetchedAt + 'Z').getTime();
+        if (age < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
+          return { success: true };
+        }
+      }
+
+      const data = await fetchCitationData(arxivId);
+      if (!data) {
+        return { success: false, error: 'Paper not found on Semantic Scholar' };
+      }
+
+      db.saveCitationBatch(data.paper, data.references, data.citations, arxivId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch citations' };
+    }
+  });
+
+  ipcMain.handle('citations:fetchBatch', async (_event, arxivIds: string[]) => {
+    let fetched = 0;
+    let failed = 0;
+
+    for (const arxivId of arxivIds) {
+      try {
+        const fetchedAt = db.getCitationFetchTime(arxivId);
+        if (fetchedAt) {
+          const age = Date.now() - new Date(fetchedAt + 'Z').getTime();
+          if (age < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
+            fetched++;
+            continue;
+          }
+        }
+
+        const data = await fetchCitationData(arxivId);
+        if (data) {
+          db.saveCitationBatch(data.paper, data.references, data.citations, arxivId);
+          fetched++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    return { fetched, failed };
+  });
+
+  ipcMain.handle('citations:getGraph', () => {
+    return db.getCitationGraph();
+  });
+
+  ipcMain.handle('citations:getSubgraph', async (_event, seedArxivIds: string[], expandedS2Ids: string[]) => {
+    const seedS2Ids = db.getS2IdsByArxivIds(seedArxivIds);
+    const allCenterIds = [...new Set([...seedS2Ids, ...expandedS2Ids])];
+    return db.getCitationSubgraph(allCenterIds);
+  });
+
+  ipcMain.handle('citations:expandNode', async (_event, s2Id: string) => {
+    try {
+      const data = await fetchCitationDataByS2Id(s2Id);
+      if (!data) {
+        return { success: false, error: 'Paper not found on Semantic Scholar' };
+      }
+
+      db.saveCitationBatchByS2Id(data.paper, data.references, data.citations);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to expand node' };
     }
   });
 }

@@ -32,6 +32,13 @@ const api: ElectronAPI = {
   removeTagFromPaper: (paperId, tagId) => ipcRenderer.invoke('tags:removeFromPaper', paperId, tagId),
   getPaperTags: (paperId) => ipcRenderer.invoke('tags:forPaper', paperId),
 
+  // Citations
+  fetchCitations: (arxivId) => ipcRenderer.invoke('citations:fetch', arxivId),
+  fetchCitationsBatch: (arxivIds) => ipcRenderer.invoke('citations:fetchBatch', arxivIds),
+  getCitationGraph: () => ipcRenderer.invoke('citations:getGraph'),
+  getCitationSubgraph: (seedArxivIds, expandedS2Ids) => ipcRenderer.invoke('citations:getSubgraph', seedArxivIds, expandedS2Ids),
+  expandCitationNode: (s2Id) => ipcRenderer.invoke('citations:expandNode', s2Id),
+
   // MCP Server
   getMcpStatus: () => ipcRenderer.invoke('mcp:getStatus'),
   startMcpServer: (port) => ipcRenderer.invoke('mcp:start', port),

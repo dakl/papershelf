@@ -1,10 +1,10 @@
-import { initDatabase } from './database.js';
-
 const isMcpMode = process.argv.includes('--mcp-mode');
 
 if (isMcpMode) {
-  initDatabase();
-  import('./mcp/server.js').then(({ startMcpStdioServer }) => startMcpStdioServer());
+  import('./mcp/bridge.js').then(({ startBridge }) => startBridge()).catch((err: unknown) => {
+    console.error('MCP bridge failed:', err instanceof Error ? err.message : err);
+    process.exit(1);
+  });
 } else {
   // Dynamic import so Electron is not required in --mcp-mode
   import('electron').then(({ app, BrowserWindow }) => {
@@ -41,6 +41,7 @@ if (isMcpMode) {
     }
 
     app.whenReady().then(async () => {
+      const { initDatabase } = await import('./database.js');
       initDatabase();
       const { registerIpcHandlers } = await import('./ipc-handlers.js');
       registerIpcHandlers();

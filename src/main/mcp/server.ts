@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerTools } from './tools';
 import { getDisabledTools } from './tool-config';
 
@@ -13,10 +12,4 @@ export function createServer(): McpServer {
   registerTools(server, disabledTools);
 
   return server;
-}
-
-export async function startMcpStdioServer(): Promise<void> {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
 }

@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import crypto from 'crypto';
 import { getDataDir } from './paths';
-import type { LibraryPaper, Collection, Tag, PaperFilter } from '../shared/types';
+import type { LibraryPaper, Collection, Tag, PaperFilter, CitationNode, CitationEdge, CitationGraphData } from '../shared/types';
 
 let db: Database.Database;
 
@@ -85,6 +85,26 @@ function createSchema(): void {
       INSERT INTO papers_fts(rowid, title, abstract, full_text, authors)
       VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
     END;
+
+    CREATE TABLE IF NOT EXISTS semantic_scholar_papers (
+      s2_id TEXT PRIMARY KEY,
+      arxiv_id TEXT,
+      title TEXT NOT NULL,
+      authors TEXT NOT NULL,
+      year INTEGER,
+      fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS citation_edges (
+      citing_s2_id TEXT NOT NULL,
+      cited_s2_id TEXT NOT NULL,
+      PRIMARY KEY (citing_s2_id, cited_s2_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS citation_fetch_log (
+      arxiv_id TEXT PRIMARY KEY,
+      fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
@@ -417,4 +437,218 @@ export function getTagsForPaper(paperId: string): Tag[] {
     GROUP BY t.id
   `).all(paperId) as TagRow[];
   return rows.map(rowToTag);
+}
+
+// --- Citations ---
+
+interface S2PaperInput {
+  s2Id: string;
+  arxivId: string | null;
+  title: string;
+  authors: string[];
+  year: number | null;
+}
+
+export function saveCitationBatch(
+  paper: S2PaperInput,
+  references: S2PaperInput[],
+  citations: S2PaperInput[],
+  arxivId: string,
+): void {
+  const upsertPaper = db.prepare(`
+    INSERT INTO semantic_scholar_papers (s2_id, arxiv_id, title, authors, year)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(s2_id) DO UPDATE SET
+      arxiv_id = COALESCE(excluded.arxiv_id, semantic_scholar_papers.arxiv_id),
+      title = excluded.title,
+      authors = excluded.authors,
+      year = excluded.year,
+      fetched_at = datetime('now')
+  `);
+
+  const insertEdge = db.prepare(`
+    INSERT OR IGNORE INTO citation_edges (citing_s2_id, cited_s2_id) VALUES (?, ?)
+  `);
+
+  const markFetched = db.prepare(`
+    INSERT INTO citation_fetch_log (arxiv_id) VALUES (?)
+    ON CONFLICT(arxiv_id) DO UPDATE SET fetched_at = datetime('now')
+  `);
+
+  const transaction = db.transaction(() => {
+    // Upsert the center paper
+    upsertPaper.run(paper.s2Id, paper.arxivId, paper.title, serializeArray(paper.authors), paper.year);
+
+    // Upsert references and create edges (this paper cites them)
+    for (const ref of references) {
+      upsertPaper.run(ref.s2Id, ref.arxivId, ref.title, serializeArray(ref.authors), ref.year);
+      insertEdge.run(paper.s2Id, ref.s2Id);
+    }
+
+    // Upsert citations and create edges (they cite this paper)
+    for (const cit of citations) {
+      upsertPaper.run(cit.s2Id, cit.arxivId, cit.title, serializeArray(cit.authors), cit.year);
+      insertEdge.run(cit.s2Id, paper.s2Id);
+    }
+
+    markFetched.run(arxivId);
+  });
+
+  transaction();
+}
+
+export function saveCitationBatchByS2Id(
+  paper: S2PaperInput,
+  references: S2PaperInput[],
+  citations: S2PaperInput[],
+): void {
+  const upsertPaper = db.prepare(`
+    INSERT INTO semantic_scholar_papers (s2_id, arxiv_id, title, authors, year)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(s2_id) DO UPDATE SET
+      arxiv_id = COALESCE(excluded.arxiv_id, semantic_scholar_papers.arxiv_id),
+      title = excluded.title,
+      authors = excluded.authors,
+      year = excluded.year,
+      fetched_at = datetime('now')
+  `);
+
+  const insertEdge = db.prepare(`
+    INSERT OR IGNORE INTO citation_edges (citing_s2_id, cited_s2_id) VALUES (?, ?)
+  `);
+
+  const transaction = db.transaction(() => {
+    upsertPaper.run(paper.s2Id, paper.arxivId, paper.title, serializeArray(paper.authors), paper.year);
+
+    for (const ref of references) {
+      upsertPaper.run(ref.s2Id, ref.arxivId, ref.title, serializeArray(ref.authors), ref.year);
+      insertEdge.run(paper.s2Id, ref.s2Id);
+    }
+
+    for (const cit of citations) {
+      upsertPaper.run(cit.s2Id, cit.arxivId, cit.title, serializeArray(cit.authors), cit.year);
+      insertEdge.run(cit.s2Id, paper.s2Id);
+    }
+  });
+
+  transaction();
+}
+
+export function getCitationGraph(): CitationGraphData {
+  const s2Rows = db.prepare('SELECT * FROM semantic_scholar_papers').all() as {
+    s2_id: string;
+    arxiv_id: string | null;
+    title: string;
+    authors: string;
+    year: number | null;
+  }[];
+
+  const libraryArxivIds = new Set(
+    (db.prepare('SELECT arxiv_id FROM papers').all() as { arxiv_id: string }[]).map((r) => r.arxiv_id),
+  );
+
+  const nodes: CitationNode[] = s2Rows.map((row) => ({
+    semanticScholarId: row.s2_id,
+    arxivId: row.arxiv_id,
+    title: row.title,
+    authors: deserializeArray(row.authors),
+    year: row.year,
+    inLibrary: row.arxiv_id !== null && libraryArxivIds.has(row.arxiv_id),
+  }));
+
+  const edgeRows = db.prepare('SELECT * FROM citation_edges').all() as {
+    citing_s2_id: string;
+    cited_s2_id: string;
+  }[];
+
+  const edges: CitationEdge[] = edgeRows.map((row) => ({
+    source: row.citing_s2_id,
+    target: row.cited_s2_id,
+  }));
+
+  return { nodes, edges };
+}
+
+export function getCitationFetchTime(arxivId: string): string | null {
+  const row = db.prepare('SELECT fetched_at FROM citation_fetch_log WHERE arxiv_id = ?').get(arxivId) as { fetched_at: string } | undefined;
+  return row?.fetched_at ?? null;
+}
+
+export function isCitationNodeExpanded(s2Id: string): boolean {
+  const row = db.prepare(
+    'SELECT 1 FROM citation_edges WHERE citing_s2_id = ? OR cited_s2_id = ? LIMIT 1',
+  ).get(s2Id, s2Id);
+  // Check if there are edges where this node is the center (i.e., we fetched its data)
+  // A more precise check: did we fetch this paper's own citations?
+  // Use the s2 paper's arxiv_id to check fetch log, or check if edges originate from it
+  const edgeCount = db.prepare(
+    'SELECT COUNT(*) as cnt FROM citation_edges WHERE citing_s2_id = ?',
+  ).get(s2Id) as { cnt: number };
+  return edgeCount.cnt > 0;
+}
+
+export function getS2IdsByArxivIds(arxivIds: string[]): string[] {
+  if (arxivIds.length === 0) return [];
+  const placeholders = arxivIds.map(() => '?').join(',');
+  const rows = db.prepare(
+    `SELECT s2_id FROM semantic_scholar_papers WHERE arxiv_id IN (${placeholders})`,
+  ).all(...arxivIds) as { s2_id: string }[];
+  return rows.map((r) => r.s2_id);
+}
+
+export function getCitationSubgraph(centerS2Ids: string[]): CitationGraphData {
+  if (centerS2Ids.length === 0) return { nodes: [], edges: [] };
+
+  const placeholders = centerS2Ids.map(() => '?').join(',');
+
+  // 1-hop edges: at least one end is in centerS2Ids
+  const edgeRows = db.prepare(`
+    SELECT citing_s2_id, cited_s2_id FROM citation_edges
+    WHERE citing_s2_id IN (${placeholders}) OR cited_s2_id IN (${placeholders})
+  `).all(...centerS2Ids, ...centerS2Ids) as { citing_s2_id: string; cited_s2_id: string }[];
+
+  const edges: CitationEdge[] = edgeRows.map((row) => ({
+    source: row.citing_s2_id,
+    target: row.cited_s2_id,
+  }));
+
+  // Collect all node IDs referenced by edges
+  const nodeIdSet = new Set<string>();
+  for (const edge of edgeRows) {
+    nodeIdSet.add(edge.citing_s2_id);
+    nodeIdSet.add(edge.cited_s2_id);
+  }
+  // Also include center IDs even if they have no edges yet
+  for (const id of centerS2Ids) {
+    nodeIdSet.add(id);
+  }
+
+  const allNodeIds = [...nodeIdSet];
+  if (allNodeIds.length === 0) return { nodes: [], edges: [] };
+
+  const nodePlaceholders = allNodeIds.map(() => '?').join(',');
+  const s2Rows = db.prepare(
+    `SELECT * FROM semantic_scholar_papers WHERE s2_id IN (${nodePlaceholders})`,
+  ).all(...allNodeIds) as {
+    s2_id: string;
+    arxiv_id: string | null;
+    title: string;
+    authors: string;
+    year: number | null;
+  }[];
+
+  const libraryArxivIds = new Set(
+    (db.prepare('SELECT arxiv_id FROM papers').all() as { arxiv_id: string }[]).map((r) => r.arxiv_id),
+  );
+
+  const nodes: CitationNode[] = s2Rows.map((row) => ({
+    semanticScholarId: row.s2_id,
+    arxivId: row.arxiv_id,
+    title: row.title,
+    authors: deserializeArray(row.authors),
+    year: row.year,
+    inLibrary: row.arxiv_id !== null && libraryArxivIds.has(row.arxiv_id),
+  }));
+
+  return { nodes, edges };
 }
