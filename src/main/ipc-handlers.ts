@@ -130,6 +130,10 @@ export function registerIpcHandlers(): void {
     }));
   });
 
+  ipcMain.handle('mcp:getToolStats', () => {
+    return db.getToolStats();
+  });
+
   ipcMain.handle('mcp:setToolEnabled', async (_event, toolName: string, enabled: boolean) => {
     const disabled = new Set(getDisabledTools());
     if (enabled) {

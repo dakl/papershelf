@@ -1,22 +1,25 @@
 import { create } from 'zustand';
-import type { McpServerStatus, McpToolInfo } from '../../shared/types';
+import type { McpServerStatus, McpToolInfo, ToolCallStats } from '../../shared/types';
 
 interface SettingsState {
   mcpStatus: McpServerStatus;
   mcpLoading: boolean;
   mcpTools: McpToolInfo[];
+  toolStats: ToolCallStats[];
   loadMcpStatus: () => Promise<void>;
   startMcpServer: (port: number) => Promise<void>;
   stopMcpServer: () => Promise<void>;
   toggleMcpServer: (port: number) => Promise<void>;
   loadMcpTools: () => Promise<void>;
   setToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
+  loadToolStats: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   mcpStatus: { running: false, port: 3847 },
   mcpLoading: false,
   mcpTools: [],
+  toolStats: [],
 
   loadMcpStatus: async () => {
     const status = await window.electronAPI.getMcpStatus();
@@ -64,5 +67,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }));
     await window.electronAPI.setMcpToolEnabled(toolName, enabled);
     await get().loadMcpStatus();
+  },
+
+  loadToolStats: async () => {
+    const toolStats = await window.electronAPI.getToolStats();
+    set({ toolStats });
   },
 }));

@@ -47,6 +47,7 @@ const api: ElectronAPI = {
   stopMcpServer: () => ipcRenderer.invoke('mcp:stop'),
   getMcpTools: () => ipcRenderer.invoke('mcp:getTools'),
   setMcpToolEnabled: (toolName, enabled) => ipcRenderer.invoke('mcp:setToolEnabled', toolName, enabled),
+  getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

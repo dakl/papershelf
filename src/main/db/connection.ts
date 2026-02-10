@@ -109,6 +109,16 @@ function createSchema(): void {
       arxiv_id TEXT PRIMARY KEY,
       fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS tool_call_log (
+      id TEXT PRIMARY KEY,
+      tool_name TEXT NOT NULL,
+      input_args TEXT NOT NULL DEFAULT '{}',
+      duration_ms INTEGER,
+      status TEXT NOT NULL DEFAULT 'success',
+      error_message TEXT,
+      called_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 

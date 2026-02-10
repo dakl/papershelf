@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { logToolCall } from '../../db/tool-stats';
 import { registerOrganizationTools } from './organization-tools';
 import { registerPaperTools } from './paper-tools';
 import { registerSearchTools } from './search-tools';
@@ -25,10 +26,42 @@ export const TOOL_METADATA: { name: string; description: string }[] = [
   { name: 'toggle_favorite', description: 'Toggle favorite status on a paper' },
 ];
 
+function createInstrumentedServer(server: McpServer): McpServer {
+  return new Proxy(server, {
+    get(target, prop, receiver) {
+      if (prop === 'tool') {
+        return (...toolArgs: unknown[]) => {
+          // server.tool has multiple overloads; the handler is always the last argument
+          const lastIndex = toolArgs.length - 1;
+          const originalHandler = toolArgs[lastIndex] as (...handlerArgs: unknown[]) => Promise<unknown>;
+          const toolName = toolArgs[0] as string;
+
+          toolArgs[lastIndex] = async (...handlerArgs: unknown[]) => {
+            const start = Date.now();
+            try {
+              const result = await originalHandler(...handlerArgs);
+              logToolCall(toolName, JSON.stringify(handlerArgs[0] ?? {}), Date.now() - start, 'success');
+              return result;
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              logToolCall(toolName, JSON.stringify(handlerArgs[0] ?? {}), Date.now() - start, 'error', message);
+              throw err;
+            }
+          };
+
+          return (target.tool as (...args: unknown[]) => unknown)(...toolArgs);
+        };
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
 export function registerTools(server: McpServer, disabledTools: Set<string> = new Set()): void {
   const isEnabled = (name: string) => !disabledTools.has(name);
+  const instrumented = createInstrumentedServer(server);
 
-  registerSearchTools(server, isEnabled);
-  registerPaperTools(server, isEnabled);
-  registerOrganizationTools(server, isEnabled);
+  registerSearchTools(instrumented, isEnabled);
+  registerPaperTools(instrumented, isEnabled);
+  registerOrganizationTools(instrumented, isEnabled);
 }

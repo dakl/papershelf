@@ -39,3 +39,4 @@ export {
   removeTagFromPaper,
   updateTag,
 } from './tags';
+export { getToolStats, logToolCall } from './tool-stats';

@@ -24,17 +24,20 @@ export function SettingsPanel() {
     mcpStatus,
     mcpLoading,
     mcpTools,
+    toolStats,
     loadMcpStatus,
     startMcpServer,
     stopMcpServer,
     loadMcpTools,
     setToolEnabled,
+    loadToolStats,
   } = useSettingsStore();
   const [portInput, setPortInput] = useState('3847');
 
   useEffect(() => {
     loadMcpStatus();
     loadMcpTools();
+    loadToolStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,6 +128,51 @@ export function SettingsPanel() {
           <p className="mt-2 text-mac-small text-gray-400 dark:text-gray-500">
             Toggling a tool restarts the server for new sessions.
           </p>
+        </section>
+
+        {/* Tool Usage Section */}
+        <section className="mb-8">
+          <h2 className="text-mac-body font-semibold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+            Tool Usage
+          </h2>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 overflow-hidden">
+            {toolStats.length === 0 ? (
+              <div className="px-4 py-6 text-center text-mac-small text-gray-400 dark:text-gray-500">
+                No usage data yet
+              </div>
+            ) : (
+              <table className="w-full text-mac-small">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-left">
+                    <th className="px-4 py-2 font-medium">Tool</th>
+                    <th className="px-4 py-2 font-medium text-right">Calls</th>
+                    <th className="px-4 py-2 font-medium text-right">Errors</th>
+                    <th className="px-4 py-2 font-medium text-right">Avg (ms)</th>
+                    <th className="px-4 py-2 font-medium text-right">Last called</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {toolStats.map((stat) => (
+                    <tr key={stat.toolName}>
+                      <td className="px-4 py-2 font-mono text-xs">{stat.toolName}</td>
+                      <td className="px-4 py-2 text-right">{stat.totalCalls}</td>
+                      <td className="px-4 py-2 text-right">
+                        {stat.errorCount > 0 ? (
+                          <span className="text-red-500">{stat.errorCount}</span>
+                        ) : (
+                          '0'
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-right">{stat.averageDurationMs}</td>
+                      <td className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">
+                        {stat.lastCalledAt ? new Date(stat.lastCalledAt).toLocaleString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </section>
       </div>
     </div>

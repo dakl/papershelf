@@ -56,6 +56,14 @@ export interface McpToolInfo {
   enabled: boolean;
 }
 
+export interface ToolCallStats {
+  toolName: string;
+  totalCalls: number;
+  lastCalledAt: string | null;
+  errorCount: number;
+  averageDurationMs: number;
+}
+
 export interface PaperFilter {
   view: 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
   collectionId?: string;
@@ -133,6 +141,7 @@ export interface ElectronAPI {
   stopMcpServer: () => Promise<void>;
   getMcpTools: () => Promise<McpToolInfo[]>;
   setMcpToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
+  getToolStats: () => Promise<ToolCallStats[]>;
 }
 
 declare global {
