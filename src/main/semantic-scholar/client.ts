@@ -1,15 +1,16 @@
+import { SEMANTIC_SCHOLAR_RATE_LIMIT_MS } from '../constants';
+
 const S2_API_BASE = 'https://api.semanticscholar.org/graph/v1/paper';
 const FIELDS =
   'paperId,externalIds,title,authors,year,references.paperId,references.externalIds,references.title,references.authors,references.year,citations.paperId,citations.externalIds,citations.title,citations.authors,citations.year';
-const REQUEST_INTERVAL_MS = 350; // ~3 req/sec
 
 let lastRequestTime = 0;
 
 async function rateLimitedFetch(url: string): Promise<Response> {
   const now = Date.now();
   const elapsed = now - lastRequestTime;
-  if (elapsed < REQUEST_INTERVAL_MS) {
-    await new Promise((resolve) => setTimeout(resolve, REQUEST_INTERVAL_MS - elapsed));
+  if (elapsed < SEMANTIC_SCHOLAR_RATE_LIMIT_MS) {
+    await new Promise((resolve) => setTimeout(resolve, SEMANTIC_SCHOLAR_RATE_LIMIT_MS - elapsed));
   }
   lastRequestTime = Date.now();
   return fetch(url);
@@ -62,8 +63,7 @@ function mapPaper(raw: S2PaperRef | S2ApiResponse): S2Paper | null {
   };
 }
 
-export async function fetchCitationData(arxivId: string): Promise<CitationData | null> {
-  const url = `${S2_API_BASE}/ARXIV:${arxivId}?fields=${FIELDS}`;
+async function fetchAndParseCitations(url: string): Promise<CitationData | null> {
   const response = await rateLimitedFetch(url);
 
   if (response.status === 404) return null;
@@ -76,28 +76,15 @@ export async function fetchCitationData(arxivId: string): Promise<CitationData |
   if (!paper) return null;
 
   const references = data.references.map(mapPaper).filter((p): p is S2Paper => p !== null);
-
   const citations = data.citations.map(mapPaper).filter((p): p is S2Paper => p !== null);
 
   return { paper, references, citations };
 }
 
+export async function fetchCitationData(arxivId: string): Promise<CitationData | null> {
+  return fetchAndParseCitations(`${S2_API_BASE}/ARXIV:${arxivId}?fields=${FIELDS}`);
+}
+
 export async function fetchCitationDataByS2Id(s2Id: string): Promise<CitationData | null> {
-  const url = `${S2_API_BASE}/${s2Id}?fields=${FIELDS}`;
-  const response = await rateLimitedFetch(url);
-
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`Semantic Scholar API error: ${response.status}`);
-  }
-
-  const data = (await response.json()) as S2ApiResponse;
-  const paper = mapPaper(data);
-  if (!paper) return null;
-
-  const references = data.references.map(mapPaper).filter((p): p is S2Paper => p !== null);
-
-  const citations = data.citations.map(mapPaper).filter((p): p is S2Paper => p !== null);
-
-  return { paper, references, citations };
+  return fetchAndParseCitations(`${S2_API_BASE}/${s2Id}?fields=${FIELDS}`);
 }

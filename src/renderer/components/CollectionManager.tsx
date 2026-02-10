@@ -1,7 +1,6 @@
 import { useState } from 'react';
+import { COLOR_PALETTE } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
-
-const COLORS = ['#007AFF', '#FF3B30', '#FF9500', '#34C759', '#AF52DE', '#FF2D55', '#5856D6', '#00C7BE'];
 
 interface CollectionManagerProps {
   onClose: () => void;
@@ -12,7 +11,7 @@ interface CollectionManagerProps {
 
 export function CollectionManager({ onClose, editId, editName, editColor }: CollectionManagerProps) {
   const [name, setName] = useState(editName ?? '');
-  const [color, setColor] = useState(editColor ?? COLORS[0]);
+  const [color, setColor] = useState(editColor ?? COLOR_PALETTE[0]);
   const { createCollection, updateCollection } = usePaperStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +39,7 @@ export function CollectionManager({ onClose, editId, editName, editColor }: Coll
             className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mac-accent/40 mb-3"
           />
           <div className="flex gap-2 mb-4">
-            {COLORS.map((c) => (
+            {COLOR_PALETTE.map((c) => (
               <button
                 key={c}
                 type="button"

@@ -1,12 +1,14 @@
 import { ipcMain } from 'electron';
 import type { ArxivPaper, PaperFilter, SavePaperResult } from '../shared/types';
 import { searchArxiv } from './arxiv-client';
+import { CITATION_CACHE_TTL_DAYS } from './constants';
 import * as db from './database';
 import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
 import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
-import { downloadAndExtractPdf } from './pdf-processor';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
+import { isCitationCacheFresh } from './services/citation-cache';
+import { savePaperFromArxivPaper } from './services/save-paper';
 
 export function registerIpcHandlers(): void {
   // --- ArXiv ---
@@ -17,39 +19,8 @@ export function registerIpcHandlers(): void {
   // --- Papers ---
   ipcMain.handle('papers:save', async (_event, paper: ArxivPaper): Promise<SavePaperResult> => {
     try {
-      const existing = db.getPaperByArxivId(paper.id);
-      if (existing) {
-        return { success: true, paper: existing };
-      }
-
-      let pdfPath: string | null = null;
-      let fullText: string | null = null;
-
-      if (paper.pdfUrl) {
-        try {
-          const result = await downloadAndExtractPdf(paper.pdfUrl, paper.id);
-          pdfPath = result.pdfPath;
-          fullText = result.fullText;
-        } catch {
-          // Save paper even if PDF download fails
-        }
-      }
-
-      const saved = db.insertPaper({
-        arxivId: paper.id,
-        title: paper.title,
-        authors: paper.authors,
-        abstract: paper.abstract,
-        publishedDate: paper.publishedDate,
-        updatedDate: paper.updatedDate,
-        categories: paper.categories,
-        arxivUrl: paper.arxivUrl,
-        pdfUrl: paper.pdfUrl,
-        pdfPath,
-        fullText,
-      });
-
-      return { success: true, paper: saved };
+      const result = await savePaperFromArxivPaper(paper);
+      return { success: true, paper: result.paper };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to save paper' };
     }
@@ -178,16 +149,10 @@ export function registerIpcHandlers(): void {
 
   // --- Citations ---
 
-  const CACHE_TTL_DAYS = 30;
-
   ipcMain.handle('citations:fetch', async (_event, arxivId: string) => {
     try {
-      const fetchedAt = db.getCitationFetchTime(arxivId);
-      if (fetchedAt) {
-        const age = Date.now() - new Date(fetchedAt + 'Z').getTime();
-        if (age < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
-          return { success: true };
-        }
+      if (isCitationCacheFresh(arxivId, CITATION_CACHE_TTL_DAYS)) {
+        return { success: true };
       }
 
       const data = await fetchCitationData(arxivId);
@@ -208,13 +173,9 @@ export function registerIpcHandlers(): void {
 
     for (const arxivId of arxivIds) {
       try {
-        const fetchedAt = db.getCitationFetchTime(arxivId);
-        if (fetchedAt) {
-          const age = Date.now() - new Date(fetchedAt + 'Z').getTime();
-          if (age < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
-            fetched++;
-            continue;
-          }
+        if (isCitationCacheFresh(arxivId, CITATION_CACHE_TTL_DAYS)) {
+          fetched++;
+          continue;
         }
 
         const data = await fetchCitationData(arxivId);
@@ -249,7 +210,7 @@ export function registerIpcHandlers(): void {
         return { success: false, error: 'Paper not found on Semantic Scholar' };
       }
 
-      db.saveCitationBatchByS2Id(data.paper, data.references, data.citations);
+      db.saveCitationBatch(data.paper, data.references, data.citations);
       return { success: true };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to expand node' };
