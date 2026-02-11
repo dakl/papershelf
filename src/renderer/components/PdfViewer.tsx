@@ -486,16 +486,35 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     fractionY: number;
     expectedWidth: number;
     expectedHeight: number;
+    pointerOffsetX?: number;
+    pointerOffsetY?: number;
   } | null>(null);
+  const scrollRestoreRef = useRef<{ scrollTop: number; scrollLeft: number } | null>(null);
+  const pointerPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const prevPaperIdRef = useRef(paperId);
 
   // Load PDF bytes — pdfVersion triggers re-fetch after annotation mutations
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pdfVersion intentionally triggers reload
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const paperChanged = paperId !== prevPaperIdRef.current;
+    prevPaperIdRef.current = paperId;
+
+    if (paperChanged) {
+      // Full reset only when switching papers
+      setLoading(true);
+      setPdfData(null);
+      setNumPages(0);
+    } else if (pdfVersion > 0) {
+      // Annotation reload — save scroll position, keep Document mounted
+      const container = containerRef.current;
+      if (container) {
+        scrollRestoreRef.current = {
+          scrollTop: container.scrollTop,
+          scrollLeft: container.scrollLeft,
+        };
+      }
+    }
     setError(null);
-    setPdfData(null);
-    setNumPages(0);
 
     window.electronAPI.getPdf(paperId).then((buffer) => {
       if (cancelled) return;
@@ -519,6 +538,17 @@ export function PdfViewer({ paperId }: { paperId: string }) {
   const reloadPdf = useCallback(() => {
     setPdfVersion((v) => v + 1);
   }, []);
+
+  // Restore scroll position after annotation reload
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pdfVersion triggers restore
+  useLayoutEffect(() => {
+    const saved = scrollRestoreRef.current;
+    const container = containerRef.current;
+    if (!saved || !container) return;
+    scrollRestoreRef.current = null;
+    container.scrollTop = saved.scrollTop;
+    container.scrollLeft = saved.scrollLeft;
+  }, [pdfData, pdfVersion]);
 
   const file = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData]);
 
@@ -580,19 +610,25 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
       if (container && finalScale !== scale) {
         const ratio = finalScale / scale;
+        const containerRect = container.getBoundingClientRect();
+        const pointer = pointerPosRef.current;
+        const pointerOffsetX = pointer ? pointer.clientX - containerRect.left : container.clientWidth / 2;
+        const pointerOffsetY = pointer ? pointer.clientY - containerRect.top : container.clientHeight / 2;
         const fractionX =
           container.scrollWidth > container.clientWidth
-            ? (container.scrollLeft + container.clientWidth / 2) / container.scrollWidth
+            ? (container.scrollLeft + pointerOffsetX) / container.scrollWidth
             : 0.5;
         const fractionY =
           container.scrollHeight > container.clientHeight
-            ? (container.scrollTop + container.clientHeight / 2) / container.scrollHeight
+            ? (container.scrollTop + pointerOffsetY) / container.scrollHeight
             : 0.5;
         pendingScrollRef.current = {
           fractionX,
           fractionY,
           expectedWidth: container.scrollWidth * ratio,
           expectedHeight: container.scrollHeight * ratio,
+          pointerOffsetX,
+          pointerOffsetY,
         };
       }
 
@@ -602,8 +638,11 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
     const handleWheel = (event: WheelEvent) => {
       if (!event.ctrlKey) return;
-      if (!containerRef.current?.contains(event.target as Node)) return;
+      const container = containerRef.current;
+      if (!container?.contains(event.target as Node)) return;
       event.preventDefault();
+
+      pointerPosRef.current = { clientX: event.clientX, clientY: event.clientY };
 
       const delta = -event.deltaY;
       const nextVisualScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, latestVisualScale + delta * 0.01));
@@ -614,7 +653,10 @@ export function PdfViewer({ paperId }: { paperId: string }) {
       if (contentRef.current) {
         const cssScale = nextVisualScale / scale;
         contentRef.current.style.transform = `scale(${cssScale})`;
-        contentRef.current.style.transformOrigin = 'top center';
+        const containerRect = container.getBoundingClientRect();
+        const originX = container.scrollLeft + (event.clientX - containerRect.left);
+        const originY = container.scrollTop + (event.clientY - containerRect.top);
+        contentRef.current.style.transformOrigin = `${originX}px ${originY}px`;
       }
 
       if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
@@ -641,8 +683,10 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     content.style.transform = '';
     content.style.transformOrigin = '';
 
-    container.scrollLeft = Math.max(0, pending.fractionX * pending.expectedWidth - container.clientWidth / 2);
-    container.scrollTop = Math.max(0, pending.fractionY * pending.expectedHeight - container.clientHeight / 2);
+    const offsetX = pending.pointerOffsetX ?? container.clientWidth / 2;
+    const offsetY = pending.pointerOffsetY ?? container.clientHeight / 2;
+    container.scrollLeft = Math.max(0, pending.fractionX * pending.expectedWidth - offsetX);
+    container.scrollTop = Math.max(0, pending.fractionY * pending.expectedHeight - offsetY);
   }, [scale]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: paired with useLayoutEffect above
