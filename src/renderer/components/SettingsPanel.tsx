@@ -157,11 +157,7 @@ export function SettingsPanel() {
                       <td className="px-4 py-2 font-mono text-xs">{stat.toolName}</td>
                       <td className="px-4 py-2 text-right">{stat.totalCalls}</td>
                       <td className="px-4 py-2 text-right">
-                        {stat.errorCount > 0 ? (
-                          <span className="text-red-500">{stat.errorCount}</span>
-                        ) : (
-                          '0'
-                        )}
+                        {stat.errorCount > 0 ? <span className="text-red-500">{stat.errorCount}</span> : '0'}
                       </td>
                       <td className="px-4 py-2 text-right">{stat.averageDurationMs}</td>
                       <td className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">

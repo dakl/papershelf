@@ -1,5 +1,11 @@
 import { ipcMain } from 'electron';
-import type { ArxivPaper, PaperFilter, SavePaperResult } from '../shared/types';
+import type {
+  ArxivPaper,
+  HighlightAnnotation,
+  PaperFilter,
+  SavePaperResult,
+  StickyNoteAnnotation,
+} from '../shared/types';
 import { searchArxiv } from './arxiv-client';
 import { CITATION_CACHE_TTL_DAYS } from './constants';
 import * as db from './database';
@@ -8,6 +14,13 @@ import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
 import { isCitationCacheFresh } from './services/citation-cache';
+import {
+  addHighlightAnnotation,
+  addStickyNoteAnnotation,
+  listAnnotations,
+  removeAnnotation,
+} from './services/pdf-annotator';
+import { readPdfForPaper } from './services/pdf-reader';
 import { savePaperFromArxivPaper } from './services/save-paper';
 
 export function registerIpcHandlers(): void {
@@ -48,6 +61,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('papers:search', (_event, query: string) => {
     return db.searchLibrary(query);
+  });
+
+  ipcMain.handle('papers:getPdf', (_event, paperId: string) => {
+    return readPdfForPaper(paperId);
   });
 
   // --- Collections ---
@@ -106,6 +123,57 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('tags:forPaper', (_event, paperId: string) => {
     return db.getTagsForPaper(paperId);
+  });
+
+  // --- Annotations ---
+  ipcMain.handle('annotations:list', async (_event, paperId: string, pageIndex: number) => {
+    try {
+      const paper = db.getPaperById(paperId);
+      if (!paper?.pdfPath) return [];
+      return await listAnnotations(paper.pdfPath, pageIndex);
+    } catch {
+      return [];
+    }
+  });
+
+  ipcMain.handle('annotations:addHighlight', async (_event, annotation: HighlightAnnotation) => {
+    try {
+      const paper = db.getPaperById(annotation.paperId);
+      if (!paper?.pdfPath) return { success: false, error: 'Paper has no PDF' };
+      await addHighlightAnnotation(paper.pdfPath, annotation.pageIndex, annotation.quadPoints, annotation.color);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add highlight' };
+    }
+  });
+
+  ipcMain.handle('annotations:addStickyNote', async (_event, annotation: StickyNoteAnnotation) => {
+    try {
+      const paper = db.getPaperById(annotation.paperId);
+      if (!paper?.pdfPath) return { success: false, error: 'Paper has no PDF' };
+      await addStickyNoteAnnotation(
+        paper.pdfPath,
+        annotation.pageIndex,
+        annotation.x,
+        annotation.y,
+        annotation.text,
+        annotation.color,
+      );
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add sticky note' };
+    }
+  });
+
+  ipcMain.handle('annotations:remove', async (_event, paperId: string, pageIndex: number, annotationName: string) => {
+    try {
+      const paper = db.getPaperById(paperId);
+      if (!paper?.pdfPath) return { success: false, error: 'Paper has no PDF' };
+      await removeAnnotation(paper.pdfPath, pageIndex, annotationName);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove annotation' };
+    }
   });
 
   // --- MCP Server ---

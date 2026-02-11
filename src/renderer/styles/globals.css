@@ -36,6 +36,22 @@
   }
 }
 
+/* PDF annotation layer: allow text selection in highlight mode */
+.annotate-highlight-mode .react-pdf__Page__annotations {
+  pointer-events: none;
+}
+
+/* Allow text selection inside PDF text layer */
+.react-pdf__Page__textContent {
+  user-select: text;
+}
+
+/* Clean up sticky note annotation popup appearance */
+.react-pdf__Page__annotations .popupWrapper {
+  max-width: 240px;
+  font-size: 12px;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     color: #f5f5f7;

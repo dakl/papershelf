@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { Collection, Tag } from '../../shared/types';
+import type { Collection, LibraryPaper, Tag } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { useUIStore } from '../stores/uiStore';
+import { PdfViewer } from './PdfViewer';
+
+type DetailTab = 'pdf' | 'abstract';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -25,15 +28,21 @@ export function PaperDetail() {
   } = usePaperStore();
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
+  const [activeTab, setActiveTab] = useState<DetailTab>('abstract');
 
   const isLibraryView = sidebarView !== 'search';
   const paper = isLibraryView ? selectedLibraryPaper : selectedPaper;
 
-  // Close pickers when paper changes
+  const isLibraryPaper = paper ? 'isFavorite' in paper : false;
+  const hasPdf = isLibraryPaper && (paper as LibraryPaper).pdfPath != null;
+  const paperIdentity = paper ? ('arxivId' in paper ? (paper as LibraryPaper).id : paper.id) : null;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset all state on paper change
   useEffect(() => {
     setShowCollectionPicker(false);
     setShowTagPicker(false);
-  }, [paper]);
+    setActiveTab(hasPdf ? 'pdf' : 'abstract');
+  }, [paperIdentity, hasPdf]);
 
   if (!paper) {
     return (
@@ -43,7 +52,6 @@ export function PaperDetail() {
     );
   }
 
-  const isLibraryPaper = 'isFavorite' in paper;
   const paperCollections: Collection[] = isLibraryPaper ? (paper as { collections: Collection[] }).collections : [];
   const paperTags: Tag[] = isLibraryPaper ? (paper as { tags: Tag[] }).tags : [];
   const paperId = isLibraryPaper ? (paper as { id: string }).id : null;
@@ -76,7 +84,7 @@ export function PaperDetail() {
     <div className="flex-1 flex flex-col bg-white/40 dark:bg-black/20 overflow-hidden">
       <div className="drag-region h-[38px] flex-shrink-0" />
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-shrink-0 px-6">
         <div className="flex items-start gap-2">
           <h1 className="flex-1 text-mac-heading font-semibold leading-snug">{paper.title}</h1>
           {isLibraryPaper && (
@@ -223,10 +231,45 @@ export function PaperDetail() {
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-mac-separator">
-          <h2 className="text-mac-emphasis font-semibold mb-2">Abstract</h2>
-          <p className="text-mac-body leading-relaxed text-gray-700 dark:text-gray-300 select-text">{paper.abstract}</p>
+        {/* Tab bar */}
+        <div className="mt-4 flex gap-4 border-b border-mac-separator">
+          {hasPdf && (
+            <button
+              onClick={() => setActiveTab('pdf')}
+              className={`no-drag pb-2 text-mac-small font-medium transition-colors ${
+                activeTab === 'pdf'
+                  ? 'border-b-2 border-mac-accent text-mac-accent'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              PDF
+            </button>
+          )}
+          <button
+            onClick={() => setActiveTab('abstract')}
+            className={`no-drag pb-2 text-mac-small font-medium transition-colors ${
+              activeTab === 'abstract'
+                ? 'border-b-2 border-mac-accent text-mac-accent'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            Abstract
+          </button>
         </div>
+      </div>
+
+      <div className="flex-1 min-h-0 flex flex-col">
+        {activeTab === 'pdf' && paperId ? (
+          <PdfViewer paperId={paperId} />
+        ) : (
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="mt-4">
+              <p className="text-mac-body leading-relaxed text-gray-700 dark:text-gray-300 select-text">
+                {paper.abstract}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

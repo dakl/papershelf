@@ -64,6 +64,31 @@ export interface ToolCallStats {
   averageDurationMs: number;
 }
 
+// --- Annotations ---
+
+export interface HighlightAnnotation {
+  paperId: string;
+  pageIndex: number; // 0-based
+  quadPoints: number[]; // [x1,y1, x2,y2, ...] in PDF coordinates, 8 per rect
+  color: string; // hex e.g. '#FFEB3B'
+}
+
+export interface StickyNoteAnnotation {
+  paperId: string;
+  pageIndex: number;
+  x: number; // PDF coordinates
+  y: number;
+  text: string;
+  color: string;
+}
+
+export interface AnnotationEntry {
+  nm: string;
+  subtype: string;
+  rect: number[];
+  contents?: string;
+}
+
 export interface PaperFilter {
   view: 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
   collectionId?: string;
@@ -105,6 +130,7 @@ export interface ElectronAPI {
   savePaper: (paper: ArxivPaper) => Promise<SavePaperResult>;
   getPapers: (filter: PaperFilter) => Promise<LibraryPaper[]>;
   getPaper: (id: string) => Promise<LibraryPaper | null>;
+  getPdf: (paperId: string) => Promise<ArrayBuffer | null>;
   deletePaper: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<boolean>;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<string[]>;
@@ -134,6 +160,16 @@ export interface ElectronAPI {
   getCitationGraph: () => Promise<CitationGraphData>;
   getCitationSubgraph: (seedArxivIds: string[], expandedS2Ids: string[]) => Promise<CitationGraphData>;
   expandCitationNode: (s2Id: string) => Promise<{ success: boolean; error?: string }>;
+
+  // Annotations
+  listAnnotations: (paperId: string, pageIndex: number) => Promise<AnnotationEntry[]>;
+  addHighlight: (annotation: HighlightAnnotation) => Promise<{ success: boolean; error?: string }>;
+  addStickyNote: (annotation: StickyNoteAnnotation) => Promise<{ success: boolean; error?: string }>;
+  removeAnnotation: (
+    paperId: string,
+    pageIndex: number,
+    annotationName: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 
   // MCP Server
   getMcpStatus: () => Promise<McpServerStatus>;

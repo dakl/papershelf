@@ -9,6 +9,7 @@ const api: ElectronAPI = {
   savePaper: (paper) => ipcRenderer.invoke('papers:save', paper),
   getPapers: (filter) => ipcRenderer.invoke('papers:list', filter),
   getPaper: (id) => ipcRenderer.invoke('papers:get', id),
+  getPdf: (paperId) => ipcRenderer.invoke('papers:getPdf', paperId),
   deletePaper: (id) => ipcRenderer.invoke('papers:delete', id),
   toggleFavorite: (id) => ipcRenderer.invoke('papers:toggleFavorite', id),
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),
@@ -40,6 +41,13 @@ const api: ElectronAPI = {
   getCitationSubgraph: (seedArxivIds, expandedS2Ids) =>
     ipcRenderer.invoke('citations:getSubgraph', seedArxivIds, expandedS2Ids),
   expandCitationNode: (s2Id) => ipcRenderer.invoke('citations:expandNode', s2Id),
+
+  // Annotations
+  listAnnotations: (paperId, pageIndex) => ipcRenderer.invoke('annotations:list', paperId, pageIndex),
+  addHighlight: (annotation) => ipcRenderer.invoke('annotations:addHighlight', annotation),
+  addStickyNote: (annotation) => ipcRenderer.invoke('annotations:addStickyNote', annotation),
+  removeAnnotation: (paperId, pageIndex, annotationName) =>
+    ipcRenderer.invoke('annotations:remove', paperId, pageIndex, annotationName),
 
   // MCP Server
   getMcpStatus: () => ipcRenderer.invoke('mcp:getStatus'),
