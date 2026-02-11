@@ -136,6 +136,7 @@ function PdfPage({
   scale,
   annotationMode,
   onPageLoaded,
+  onPageRendered,
   onTextSelected,
   onPageClicked,
   onAnnotationClicked,
@@ -147,6 +148,7 @@ function PdfPage({
   scale: number;
   annotationMode: AnnotationMode;
   onPageLoaded: (pageNumber: number, dimensions: PageDimensions) => void;
+  onPageRendered: () => void;
   onTextSelected: (pageIndex: number, quadPoints: number[], screenX: number, screenY: number) => void;
   onPageClicked: (pageIndex: number, pdfX: number, pdfY: number, screenX: number, screenY: number) => void;
   onAnnotationClicked: (pageIndex: number, annotationNm: string, screenX: number, screenY: number) => void;
@@ -279,6 +281,7 @@ function PdfPage({
             pageRef.current.setAttribute('data-pdf-height', String(page.originalHeight));
           }
         }}
+        onRenderSuccess={onPageRendered}
       />
     </div>
   );
@@ -491,6 +494,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
   } | null>(null);
   const scrollRestoreRef = useRef<{ scrollTop: number; scrollLeft: number } | null>(null);
   const pointerPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const zoomTransitionRef = useRef<{ bridgeCssScale: number } | null>(null);
   const prevPaperIdRef = useRef(paperId);
 
   // Load PDF bytes — pdfVersion triggers re-fetch after annotation mutations
@@ -630,6 +634,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
           pointerOffsetX,
           pointerOffsetY,
         };
+        zoomTransitionRef.current = { bridgeCssScale: finalScale / scale };
       }
 
       setScale(finalScale);
@@ -680,8 +685,15 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
     content.style.minWidth = `${pending.expectedWidth}px`;
     content.style.minHeight = `${pending.expectedHeight}px`;
-    content.style.transform = '';
-    content.style.transformOrigin = '';
+
+    const transition = zoomTransitionRef.current;
+    if (transition) {
+      // Keep CSS transform as visual bridge until pages render at new scale
+      content.style.transform = `scale(${transition.bridgeCssScale})`;
+    } else {
+      content.style.transform = '';
+      content.style.transformOrigin = '';
+    }
 
     const offsetX = pending.pointerOffsetX ?? container.clientWidth / 2;
     const offsetY = pending.pointerOffsetY ?? container.clientHeight / 2;
@@ -696,6 +708,19 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     content.style.minWidth = '';
     content.style.minHeight = '';
   }, [scale]);
+
+  // Clear bridge CSS transform once a page canvas has rendered at new scale
+  const handlePageRendered = useCallback(() => {
+    if (!zoomTransitionRef.current || isPinching.current) return;
+    zoomTransitionRef.current = null;
+    const content = contentRef.current;
+    if (content) {
+      content.style.transform = '';
+      content.style.transformOrigin = '';
+      content.style.minWidth = '';
+      content.style.minHeight = '';
+    }
+  }, []);
 
   // Page dimension tracking
   const handlePageLoaded = useCallback((pageNumber: number, dimensions: PageDimensions) => {
@@ -870,6 +895,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
                 scale={scale}
                 annotationMode={annotationMode}
                 onPageLoaded={handlePageLoaded}
+                onPageRendered={handlePageRendered}
                 onTextSelected={handleTextSelected}
                 onPageClicked={handlePageClicked}
                 onAnnotationClicked={handleAnnotationClicked}
