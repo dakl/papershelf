@@ -1,3 +1,5 @@
+@import "pdfjs-dist/web/pdf_viewer.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,17 +39,17 @@
 }
 
 /* PDF annotation layer: allow text selection in highlight mode */
-.annotate-highlight-mode .react-pdf__Page__annotations {
+.annotate-highlight-mode .annotationLayer {
   pointer-events: none;
 }
 
 /* Allow text selection inside PDF text layer */
-.react-pdf__Page__textContent {
+.textLayer {
   user-select: text;
 }
 
 /* Clean up sticky note annotation popup appearance */
-.react-pdf__Page__annotations .popupWrapper {
+.annotationLayer .popupWrapper {
   max-width: 240px;
   font-size: 12px;
 }

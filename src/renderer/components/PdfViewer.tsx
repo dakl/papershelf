@@ -1,12 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+import type { PDFPageProxy } from 'pdfjs-dist';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { PdfPage } from './pdf/PdfPage';
+import { usePdfDocument } from './pdf/usePdfDocument';
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3.0;
@@ -56,235 +51,6 @@ interface DeleteConfirmState {
   y: number;
   pageIndex: number;
   annotationNm: string;
-}
-
-function screenToPdfCoords(
-  clientX: number,
-  clientY: number,
-  pageElement: HTMLElement,
-  scale: number,
-  pageDimensions: PageDimensions,
-): { pdfX: number; pdfY: number } {
-  const rect = pageElement.getBoundingClientRect();
-  const relativeX = clientX - rect.left;
-  const relativeY = clientY - rect.top;
-  const pdfX = relativeX / scale;
-  const pdfY = pageDimensions.height - relativeY / scale;
-  return { pdfX, pdfY };
-}
-
-function mergeOverlappingRects(rects: DOMRect[]): DOMRect[] {
-  if (rects.length === 0) return [];
-
-  // Sort by top position, then left
-  const sorted = [...rects].sort((a, b) => a.top - b.top || a.left - b.left);
-  const merged: DOMRect[] = [sorted[0]];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const current = sorted[i];
-    const last = merged[merged.length - 1];
-
-    // Rects overlap if they share similar vertical position and overlap horizontally
-    const verticalOverlap = current.top < last.bottom - 1 && current.bottom > last.top + 1;
-    const horizontalOverlap = current.left < last.right + 1;
-
-    if (verticalOverlap && horizontalOverlap) {
-      // Merge by expanding the last rect
-      const newLeft = Math.min(last.left, current.left);
-      const newTop = Math.min(last.top, current.top);
-      const newRight = Math.max(last.right, current.right);
-      const newBottom = Math.max(last.bottom, current.bottom);
-      merged[merged.length - 1] = new DOMRect(newLeft, newTop, newRight - newLeft, newBottom - newTop);
-    } else {
-      merged.push(current);
-    }
-  }
-
-  return merged;
-}
-
-function selectionRectsToQuadPoints(
-  rects: DOMRect[],
-  pageElement: HTMLElement,
-  scale: number,
-  pageDimensions: PageDimensions,
-): number[] {
-  const quadPoints: number[] = [];
-  const pageRect = pageElement.getBoundingClientRect();
-  const dedupedRects = mergeOverlappingRects(rects);
-
-  for (const domRect of dedupedRects) {
-    const relLeft = (domRect.left - pageRect.left) / scale;
-    const relRight = (domRect.right - pageRect.left) / scale;
-    const relTop = (domRect.top - pageRect.top) / scale;
-    const relBottom = (domRect.bottom - pageRect.top) / scale;
-
-    // PDF Y is flipped (origin at bottom-left)
-    const pdfTop = pageDimensions.height - relTop;
-    const pdfBottom = pageDimensions.height - relBottom;
-
-    // QuadPoints order per PDF spec: top-left, top-right, bottom-left, bottom-right
-    quadPoints.push(relLeft, pdfTop, relRight, pdfTop, relLeft, pdfBottom, relRight, pdfBottom);
-  }
-
-  return quadPoints;
-}
-
-function PdfPage({
-  paperId,
-  pageNumber,
-  scale,
-  annotationMode,
-  onPageLoaded,
-  onPageRendered,
-  onTextSelected,
-  onPageClicked,
-  onAnnotationClicked,
-  annotationMap,
-  pdfVersion,
-}: {
-  paperId: string;
-  pageNumber: number;
-  scale: number;
-  annotationMode: AnnotationMode;
-  onPageLoaded: (pageNumber: number, dimensions: PageDimensions) => void;
-  onPageRendered: () => void;
-  onTextSelected: (pageIndex: number, quadPoints: number[], screenX: number, screenY: number) => void;
-  onPageClicked: (pageIndex: number, pdfX: number, pdfY: number, screenX: number, screenY: number) => void;
-  onAnnotationClicked: (pageIndex: number, annotationNm: string, screenX: number, screenY: number) => void;
-  annotationMap: React.MutableRefObject<Map<string, AnnotationInfo>>;
-  pdfVersion: number;
-}) {
-  const pageRef = useRef<HTMLDivElement>(null);
-
-  // Load our annotation metadata (NM values) for this page so we can map
-  // pdfjs rendered annotations to our NM values for deletion
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pdfVersion intentionally triggers reload
-  useEffect(() => {
-    const pageIndex = pageNumber - 1;
-    window.electronAPI.listAnnotations(paperId, pageIndex).then((entries) => {
-      // Build rect-key → NM mapping. pdfjs data-annotation-id is internal,
-      // so we'll match by rect when annotations render.
-      for (const entry of entries) {
-        // Store with rect as key for matching
-        const rectKey = `${pageIndex}:${entry.rect.map((n) => n.toFixed(1)).join(',')}`;
-        annotationMap.current.set(rectKey, { nm: entry.nm, rect: entry.rect, subtype: entry.subtype });
-      }
-    });
-  }, [paperId, pageNumber, annotationMap, pdfVersion]);
-
-  const handlePageLoadSuccess = useCallback(
-    (page: { originalWidth: number; originalHeight: number }) => {
-      onPageLoaded(pageNumber, { width: page.originalWidth, height: page.originalHeight });
-    },
-    [pageNumber, onPageLoaded],
-  );
-
-  const handleMouseUp = useCallback(
-    (_event: React.MouseEvent) => {
-      if (annotationMode !== 'highlight') return;
-
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed || !selection.rangeCount) return;
-
-      const pageEl = pageRef.current;
-      if (!pageEl) return;
-
-      // Check the selection actually intersects this page
-      const range = selection.getRangeAt(0);
-      if (!pageEl.contains(range.commonAncestorContainer)) return;
-
-      const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
-      if (rects.length === 0) return;
-
-      // Get page dimensions from data attribute set during onLoadSuccess
-      const widthAttr = pageEl.getAttribute('data-pdf-width');
-      const heightAttr = pageEl.getAttribute('data-pdf-height');
-      if (!widthAttr || !heightAttr) return;
-
-      const pageDimensions = { width: Number.parseFloat(widthAttr), height: Number.parseFloat(heightAttr) };
-      const quadPoints = selectionRectsToQuadPoints(rects, pageEl, scale, pageDimensions);
-
-      // Position toolbar near the end of the selection
-      const lastRect = rects[rects.length - 1];
-      onTextSelected(pageNumber - 1, quadPoints, lastRect.right, lastRect.bottom);
-    },
-    [annotationMode, scale, pageNumber, onTextSelected],
-  );
-
-  const handleClick = useCallback(
-    (event: React.MouseEvent) => {
-      // Check for annotation click (works in any mode)
-      const target = event.target as HTMLElement;
-      const annotationSection = target.closest('.react-pdf__Page__annotations section') as HTMLElement | null;
-      if (annotationSection) {
-        // Match annotation by its rendered position → our rect-based key
-        const pageEl = pageRef.current;
-        if (pageEl) {
-          const pageIndex = pageNumber - 1;
-          const sectionRect = annotationSection.getBoundingClientRect();
-          const pageRect = pageEl.getBoundingClientRect();
-
-          // Convert screen position to PDF coordinates
-          const widthAttr = pageEl.getAttribute('data-pdf-width');
-          const heightAttr = pageEl.getAttribute('data-pdf-height');
-          if (widthAttr && heightAttr) {
-            const pageHeight = Number.parseFloat(heightAttr);
-            const left = (sectionRect.left - pageRect.left) / scale;
-            const bottom = pageHeight - (sectionRect.bottom - pageRect.top) / scale;
-            const right = (sectionRect.right - pageRect.left) / scale;
-            const top = pageHeight - (sectionRect.top - pageRect.top) / scale;
-            const rectKey = `${pageIndex}:${[left, bottom, right, top].map((n) => n.toFixed(1)).join(',')}`;
-
-            const info = annotationMap.current.get(rectKey);
-            if (info) {
-              onAnnotationClicked(pageIndex, info.nm, event.clientX, event.clientY);
-              return;
-            }
-          }
-        }
-      }
-
-      if (annotationMode !== 'note') return;
-
-      const pageEl = pageRef.current;
-      if (!pageEl) return;
-
-      const widthAttr = pageEl.getAttribute('data-pdf-width');
-      const heightAttr = pageEl.getAttribute('data-pdf-height');
-      if (!widthAttr || !heightAttr) return;
-
-      const pageDimensions = { width: Number.parseFloat(widthAttr), height: Number.parseFloat(heightAttr) };
-      const { pdfX, pdfY } = screenToPdfCoords(event.clientX, event.clientY, pageEl, scale, pageDimensions);
-      onPageClicked(pageNumber - 1, pdfX, pdfY, event.clientX, event.clientY);
-    },
-    [annotationMode, scale, pageNumber, onPageClicked, onAnnotationClicked, annotationMap],
-  );
-
-  return (
-    <div
-      ref={pageRef}
-      className={`relative mx-auto my-4 ${annotationMode === 'highlight' ? 'annotate-highlight-mode' : ''}`}
-      style={{ width: 'fit-content', cursor: annotationMode === 'note' ? 'crosshair' : undefined }}
-      onMouseUp={handleMouseUp}
-      onClick={handleClick}
-    >
-      <Page
-        pageNumber={pageNumber}
-        scale={scale}
-        renderTextLayer={true}
-        renderAnnotationLayer={true}
-        onLoadSuccess={(page) => {
-          handlePageLoadSuccess(page);
-          if (pageRef.current) {
-            pageRef.current.setAttribute('data-pdf-width', String(page.originalWidth));
-            pageRef.current.setAttribute('data-pdf-height', String(page.originalHeight));
-          }
-        }}
-        onRenderSuccess={onPageRendered}
-      />
-    </div>
-  );
 }
 
 function HighlightToolbar({
@@ -466,14 +232,11 @@ function DeleteConfirmPopup({
 }
 
 export function PdfViewer({ paperId }: { paperId: string }) {
-  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
-  const [numPages, setNumPages] = useState<number>(0);
   const [scale, setScale] = useState(1.0);
   const [visualScale, setVisualScale] = useState(1.0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pdfVersion, setPdfVersion] = useState(0);
   const [annotationMode, setAnnotationMode] = useState<AnnotationMode>('read');
+  const [pages, setPages] = useState<PDFPageProxy[]>([]);
 
   const [highlightToolbar, setHighlightToolbar] = useState<HighlightToolbarState | null>(null);
   const [stickyNotePopup, setStickyNotePopup] = useState<StickyNotePopupState | null>(null);
@@ -481,6 +244,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
   const isPinching = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const commitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pageDimensionsRef = useRef<Map<number, PageDimensions>>(new Map());
   const annotationMapRef = useRef<Map<string, AnnotationInfo>>(new Map());
@@ -494,22 +258,40 @@ export function PdfViewer({ paperId }: { paperId: string }) {
   } | null>(null);
   const scrollRestoreRef = useRef<{ scrollTop: number; scrollLeft: number } | null>(null);
   const pointerPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
-  const zoomTransitionRef = useRef<{ bridgeCssScale: number } | null>(null);
-  const prevPaperIdRef = useRef(paperId);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
 
-  // Load PDF bytes — pdfVersion triggers re-fetch after annotation mutations
+  const { pdfDocument, numPages, loading, error } = usePdfDocument(paperId, pdfVersion);
+
+  // Fetch all PDFPageProxy objects when document loads
   useEffect(() => {
-    let cancelled = false;
-    const paperChanged = paperId !== prevPaperIdRef.current;
-    prevPaperIdRef.current = paperId;
+    if (!pdfDocument) {
+      setPages([]);
+      return;
+    }
 
-    if (paperChanged) {
-      // Full reset only when switching papers
-      setLoading(true);
-      setPdfData(null);
-      setNumPages(0);
-    } else if (pdfVersion > 0) {
-      // Annotation reload — save scroll position, keep Document mounted
+    let cancelled = false;
+    const fetchPages = async () => {
+      const pagePromises: Promise<PDFPageProxy>[] = [];
+      for (let i = 1; i <= pdfDocument.numPages; i++) {
+        pagePromises.push(pdfDocument.getPage(i));
+      }
+      const fetchedPages = await Promise.all(pagePromises);
+      if (!cancelled) {
+        setPages(fetchedPages);
+      }
+    };
+    fetchPages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfDocument]);
+
+  // Save scroll position before annotation reload
+  const prevPdfVersionRef = useRef(pdfVersion);
+  useEffect(() => {
+    if (pdfVersion > prevPdfVersionRef.current) {
       const container = containerRef.current;
       if (container) {
         scrollRestoreRef.current = {
@@ -518,26 +300,8 @@ export function PdfViewer({ paperId }: { paperId: string }) {
         };
       }
     }
-    setError(null);
-
-    window.electronAPI.getPdf(paperId).then((buffer) => {
-      if (cancelled) return;
-      if (!buffer) {
-        setError('PDF file not found');
-        setLoading(false);
-        return;
-      }
-      const source = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer as ArrayBuffer);
-      const copy = new Uint8Array(source.length);
-      copy.set(source);
-      setPdfData(copy);
-      setLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [paperId, pdfVersion]);
+    prevPdfVersionRef.current = pdfVersion;
+  }, [pdfVersion]);
 
   const reloadPdf = useCallback(() => {
     setPdfVersion((v) => v + 1);
@@ -552,30 +316,55 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     scrollRestoreRef.current = null;
     container.scrollTop = saved.scrollTop;
     container.scrollLeft = saved.scrollLeft;
-  }, [pdfData, pdfVersion]);
+  }, [pages, pdfVersion]);
 
-  const file = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData]);
+  // Save scroll fractions before committing a scale change.
+  // No snapshot needed — double-buffered canvases handle visual continuity.
+  const prepareScaleCommit = useCallback((nextScale: number) => {
+    const currentScale = scaleRef.current;
+    const container = containerRef.current;
+    if (!container || nextScale === currentScale) return;
 
-  const handleDocumentLoadSuccess = useCallback(({ numPages: pages }: { numPages: number }) => {
-    setNumPages(pages);
+    const ratio = nextScale / currentScale;
+    const containerRect = container.getBoundingClientRect();
+    const pointer = pointerPosRef.current;
+    const offsetX = pointer ? pointer.clientX - containerRect.left : container.clientWidth / 2;
+    const offsetY = pointer ? pointer.clientY - containerRect.top : container.clientHeight / 2;
+    const fractionX =
+      container.scrollWidth > container.clientWidth ? (container.scrollLeft + offsetX) / container.scrollWidth : 0.5;
+    const fractionY =
+      container.scrollHeight > container.clientHeight ? (container.scrollTop + offsetY) / container.scrollHeight : 0.5;
+
+    pendingScrollRef.current = {
+      fractionX,
+      fractionY,
+      expectedWidth: container.scrollWidth * ratio,
+      expectedHeight: container.scrollHeight * ratio,
+      pointerOffsetX: offsetX,
+      pointerOffsetY: offsetY,
+    };
   }, []);
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const zoomIn = useCallback(() => {
     const next = Math.min(MAX_SCALE, Math.round((scale + SCALE_STEP) * 100) / 100);
+    pointerPosRef.current = null;
+    prepareScaleCommit(next);
     setScale(next);
     setVisualScale(next);
-  }, [scale]);
+  }, [scale, prepareScaleCommit]);
   const zoomOut = useCallback(() => {
     const next = Math.max(MIN_SCALE, Math.round((scale - SCALE_STEP) * 100) / 100);
+    pointerPosRef.current = null;
+    prepareScaleCommit(next);
     setScale(next);
     setVisualScale(next);
-  }, [scale]);
+  }, [scale, prepareScaleCommit]);
   const zoomReset = useCallback(() => {
+    pointerPosRef.current = null;
+    prepareScaleCommit(1.0);
     setScale(1.0);
     setVisualScale(1.0);
-  }, []);
+  }, [prepareScaleCommit]);
 
   // Cmd+/Cmd- keyboard shortcuts
   useEffect(() => {
@@ -610,33 +399,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     const commitZoom = () => {
       isPinching.current = false;
       const finalScale = latestVisualScale;
-      const container = containerRef.current;
-
-      if (container && finalScale !== scale) {
-        const ratio = finalScale / scale;
-        const containerRect = container.getBoundingClientRect();
-        const pointer = pointerPosRef.current;
-        const pointerOffsetX = pointer ? pointer.clientX - containerRect.left : container.clientWidth / 2;
-        const pointerOffsetY = pointer ? pointer.clientY - containerRect.top : container.clientHeight / 2;
-        const fractionX =
-          container.scrollWidth > container.clientWidth
-            ? (container.scrollLeft + pointerOffsetX) / container.scrollWidth
-            : 0.5;
-        const fractionY =
-          container.scrollHeight > container.clientHeight
-            ? (container.scrollTop + pointerOffsetY) / container.scrollHeight
-            : 0.5;
-        pendingScrollRef.current = {
-          fractionX,
-          fractionY,
-          expectedWidth: container.scrollWidth * ratio,
-          expectedHeight: container.scrollHeight * ratio,
-          pointerOffsetX,
-          pointerOffsetY,
-        };
-        zoomTransitionRef.current = { bridgeCssScale: finalScale / scale };
-      }
-
+      prepareScaleCommit(finalScale);
       setScale(finalScale);
       setVisualScale(finalScale);
     };
@@ -673,8 +436,9 @@ export function PdfViewer({ paperId }: { paperId: string }) {
       document.removeEventListener('wheel', handleWheel);
       if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
     };
-  }, [scale]);
+  }, [scale, prepareScaleCommit]);
 
+  // Adjust scroll position after scale commit
   // biome-ignore lint/correctness/useExhaustiveDependencies: must fire when scale changes
   useLayoutEffect(() => {
     const pending = pendingScrollRef.current;
@@ -685,15 +449,8 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
     content.style.minWidth = `${pending.expectedWidth}px`;
     content.style.minHeight = `${pending.expectedHeight}px`;
-
-    const transition = zoomTransitionRef.current;
-    if (transition) {
-      // Keep CSS transform as visual bridge until pages render at new scale
-      content.style.transform = `scale(${transition.bridgeCssScale})`;
-    } else {
-      content.style.transform = '';
-      content.style.transformOrigin = '';
-    }
+    content.style.transform = '';
+    content.style.transformOrigin = '';
 
     const offsetX = pending.pointerOffsetX ?? container.clientWidth / 2;
     const offsetY = pending.pointerOffsetY ?? container.clientHeight / 2;
@@ -701,6 +458,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     container.scrollTop = Math.max(0, pending.fractionY * pending.expectedHeight - offsetY);
   }, [scale]);
 
+  // Clear min dimensions after layout settles
   // biome-ignore lint/correctness/useExhaustiveDependencies: paired with useLayoutEffect above
   useEffect(() => {
     const content = contentRef.current;
@@ -708,19 +466,6 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     content.style.minWidth = '';
     content.style.minHeight = '';
   }, [scale]);
-
-  // Clear bridge CSS transform once a page canvas has rendered at new scale
-  const handlePageRendered = useCallback(() => {
-    if (!zoomTransitionRef.current || isPinching.current) return;
-    zoomTransitionRef.current = null;
-    const content = contentRef.current;
-    if (content) {
-      content.style.transform = '';
-      content.style.transformOrigin = '';
-      content.style.minWidth = '';
-      content.style.minHeight = '';
-    }
-  }, []);
 
   // Page dimension tracking
   const handlePageLoaded = useCallback((pageNumber: number, dimensions: PageDimensions) => {
@@ -880,30 +625,22 @@ export function PdfViewer({ paperId }: { paperId: string }) {
 
       <div ref={containerRef} className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900">
         <div ref={contentRef} style={{ willChange: 'transform' }}>
-          <Document
-            file={file}
-            onLoadSuccess={handleDocumentLoadSuccess}
-            onLoadError={(err) => setError(err.message)}
-            loading={null}
-            imageResourcesPath="/pdfjs-images/"
-          >
-            {Array.from({ length: numPages }, (_, index) => (
-              <PdfPage
-                key={`page-${index + 1}`}
-                paperId={paperId}
-                pageNumber={index + 1}
-                scale={scale}
-                annotationMode={annotationMode}
-                onPageLoaded={handlePageLoaded}
-                onPageRendered={handlePageRendered}
-                onTextSelected={handleTextSelected}
-                onPageClicked={handlePageClicked}
-                onAnnotationClicked={handleAnnotationClicked}
-                annotationMap={annotationMapRef}
-                pdfVersion={pdfVersion}
-              />
-            ))}
-          </Document>
+          {pages.map((page, index) => (
+            <PdfPage
+              key={`page-${index + 1}`}
+              page={page}
+              paperId={paperId}
+              pageNumber={index + 1}
+              scale={scale}
+              annotationMode={annotationMode}
+              onPageLoaded={handlePageLoaded}
+              onTextSelected={handleTextSelected}
+              onPageClicked={handlePageClicked}
+              onAnnotationClicked={handleAnnotationClicked}
+              annotationMap={annotationMapRef}
+              pdfVersion={pdfVersion}
+            />
+          ))}
         </div>
       </div>
 
