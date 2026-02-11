@@ -447,24 +447,42 @@ export function PdfViewer({ paperId }: { paperId: string }) {
     if (!pending || !container || !content) return;
     pendingScrollRef.current = null;
 
-    content.style.minWidth = `${pending.expectedWidth}px`;
-    content.style.minHeight = `${pending.expectedHeight}px`;
     content.style.transform = '';
     content.style.transformOrigin = '';
+
+    // Resize page wrappers to expected new-scale dimensions so the content div's
+    // scrollWidth/scrollHeight match what the scroll fraction calculation expects.
+    // Apply a CSS scale bridge on the old canvas so it visually fills the wrapper.
+    const pageWrappers = content.querySelectorAll<HTMLElement>('[data-pdf-width]');
+    for (const wrapper of pageWrappers) {
+      const pdfWidth = wrapper.getAttribute('data-pdf-width');
+      const pdfHeight = wrapper.getAttribute('data-pdf-height');
+      if (pdfWidth && pdfHeight) {
+        const newWidth = Math.floor(Number.parseFloat(pdfWidth) * scale);
+        const newHeight = Math.floor(Number.parseFloat(pdfHeight) * scale);
+        wrapper.style.width = `${newWidth}px`;
+        wrapper.style.height = `${newHeight}px`;
+        wrapper.style.overflow = 'hidden';
+
+        const canvas = wrapper.querySelector('canvas');
+        if (canvas) {
+          const oldCssWidth = Number.parseFloat(canvas.style.width);
+          if (oldCssWidth > 0) {
+            const canvasRatio = newWidth / oldCssWidth;
+            canvas.style.transform = `scale(${canvasRatio})`;
+            canvas.style.transformOrigin = '0 0';
+          }
+        }
+      }
+    }
+
+    content.style.minWidth = `${pending.expectedWidth}px`;
+    content.style.minHeight = `${pending.expectedHeight}px`;
 
     const offsetX = pending.pointerOffsetX ?? container.clientWidth / 2;
     const offsetY = pending.pointerOffsetY ?? container.clientHeight / 2;
     container.scrollLeft = Math.max(0, pending.fractionX * pending.expectedWidth - offsetX);
     container.scrollTop = Math.max(0, pending.fractionY * pending.expectedHeight - offsetY);
-  }, [scale]);
-
-  // Clear min dimensions after layout settles
-  // biome-ignore lint/correctness/useExhaustiveDependencies: paired with useLayoutEffect above
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-    content.style.minWidth = '';
-    content.style.minHeight = '';
   }, [scale]);
 
   // Page dimension tracking

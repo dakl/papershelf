@@ -170,6 +170,18 @@ export function PdfPage({
         canvasRef.current = newCanvas;
         currentScaleRef.current = scale;
 
+        // Clean up bridge styles set by PdfViewer's useLayoutEffect
+        wrapper.style.width = 'fit-content';
+        wrapper.style.height = '';
+        wrapper.style.overflow = '';
+
+        // Clear content div min dimensions (set as scroll anchor during zoom)
+        const contentDiv = wrapper.parentElement;
+        if (contentDiv) {
+          contentDiv.style.minWidth = '';
+          contentDiv.style.minHeight = '';
+        }
+
         // Set data attributes for coordinate conversion
         const unscaledViewport = page.getViewport({ scale: 1.0 });
         wrapper.setAttribute('data-pdf-width', String(unscaledViewport.width));
