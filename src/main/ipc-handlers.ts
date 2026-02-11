@@ -12,6 +12,7 @@ import * as db from './database';
 import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
 import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
+import { fetchAndCachePdf } from './pdf-processor';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
 import { isCitationCacheFresh } from './services/citation-cache';
 import {
@@ -65,6 +66,14 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('papers:getPdf', (_event, paperId: string) => {
     return readPdfForPaper(paperId);
+  });
+
+  ipcMain.handle('papers:fetchPdfByUrl', async (_event, url: string, arxivId: string) => {
+    try {
+      return await fetchAndCachePdf(url, arxivId);
+    } catch {
+      return null;
+    }
   });
 
   // --- Collections ---

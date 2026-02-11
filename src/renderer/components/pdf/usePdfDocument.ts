@@ -5,25 +5,25 @@ import { useEffect, useRef, useState } from 'react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
-export function usePdfDocument(paperId: string, pdfVersion: number) {
+export function usePdfDocument(paperId: string | null, pdfVersion: number, pdfUrl?: string, arxivId?: string) {
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const prevPaperIdRef = useRef(paperId);
+  const sourceKey = paperId ?? pdfUrl ?? '';
+  const prevSourceRef = useRef(sourceKey);
   const documentRef = useRef<PDFDocumentProxy | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pdfVersion intentionally triggers re-fetch after annotation mutations
   useEffect(() => {
     let cancelled = false;
-    const paperChanged = paperId !== prevPaperIdRef.current;
-    prevPaperIdRef.current = paperId;
+    const sourceChanged = sourceKey !== prevSourceRef.current;
+    prevSourceRef.current = sourceKey;
 
-    if (paperChanged) {
+    if (sourceChanged) {
       setLoading(true);
       setPdfDocument(null);
       setNumPages(0);
-      // Destroy old document when switching papers
       if (documentRef.current) {
         documentRef.current.destroy();
         documentRef.current = null;
@@ -31,46 +31,56 @@ export function usePdfDocument(paperId: string, pdfVersion: number) {
     }
     setError(null);
 
-    window.electronAPI.getPdf(paperId).then(async (buffer) => {
-      if (cancelled) return;
-      if (!buffer) {
-        setError('PDF file not found');
-        setLoading(false);
-        return;
-      }
+    const fetchBuffer = paperId
+      ? window.electronAPI.getPdf(paperId)
+      : pdfUrl && arxivId
+        ? window.electronAPI.fetchPdfByUrl(pdfUrl, arxivId)
+        : Promise.resolve(null);
 
-      const source = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer as ArrayBuffer);
-      // pdfjs transfers ownership, so we must copy
-      const copy = new Uint8Array(source.length);
-      copy.set(source);
-
-      try {
-        // Destroy previous document before loading new one (annotation reload case)
-        if (documentRef.current) {
-          documentRef.current.destroy();
-          documentRef.current = null;
-        }
-
-        const doc = await pdfjsLib.getDocument({ data: copy }).promise;
-        if (cancelled) {
-          doc.destroy();
+    fetchBuffer
+      .then(async (buffer) => {
+        if (cancelled) return;
+        if (!buffer) {
+          setError('PDF file not found');
+          setLoading(false);
           return;
         }
-        documentRef.current = doc;
-        setPdfDocument(doc);
-        setNumPages(doc.numPages);
-        setLoading(false);
-      } catch (err) {
+
+        const source = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer as ArrayBuffer);
+        const copy = new Uint8Array(source.length);
+        copy.set(source);
+
+        try {
+          if (documentRef.current) {
+            documentRef.current.destroy();
+            documentRef.current = null;
+          }
+
+          const doc = await pdfjsLib.getDocument({ data: copy }).promise;
+          if (cancelled) {
+            doc.destroy();
+            return;
+          }
+          documentRef.current = doc;
+          setPdfDocument(doc);
+          setNumPages(doc.numPages);
+          setLoading(false);
+        } catch (err) {
+          if (cancelled) return;
+          setError(err instanceof Error ? err.message : 'Failed to load PDF');
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load PDF');
+        setError(err instanceof Error ? err.message : 'Failed to fetch PDF');
         setLoading(false);
-      }
-    });
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [paperId, pdfVersion]);
+  }, [sourceKey, pdfVersion]);
 
   // Cleanup on unmount
   useEffect(() => {

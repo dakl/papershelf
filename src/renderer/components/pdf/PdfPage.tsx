@@ -17,7 +17,7 @@ interface AnnotationInfo {
 
 interface PdfPageProps {
   page: PDFPageProxy;
-  paperId: string;
+  paperId?: string;
   pageNumber: number;
   scale: number;
   annotationMode: AnnotationMode;
@@ -119,6 +119,7 @@ export function PdfPage({
   // Load annotation metadata (NM values) for deletion mapping
   // biome-ignore lint/correctness/useExhaustiveDependencies: pdfVersion intentionally triggers reload
   useEffect(() => {
+    if (!paperId) return;
     const pageIndex = pageNumber - 1;
     window.electronAPI.listAnnotations(paperId, pageIndex).then((entries) => {
       for (const entry of entries) {

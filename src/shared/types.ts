@@ -131,6 +131,7 @@ export interface ElectronAPI {
   getPapers: (filter: PaperFilter) => Promise<LibraryPaper[]>;
   getPaper: (id: string) => Promise<LibraryPaper | null>;
   getPdf: (paperId: string) => Promise<ArrayBuffer | null>;
+  fetchPdfByUrl: (url: string, arxivId: string) => Promise<ArrayBuffer | null>;
   deletePaper: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<boolean>;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<string[]>;

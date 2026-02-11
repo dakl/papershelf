@@ -34,7 +34,9 @@ export function PaperDetail() {
   const paper = isLibraryView ? selectedLibraryPaper : selectedPaper;
 
   const isLibraryPaper = paper ? 'isFavorite' in paper : false;
-  const hasPdf = isLibraryPaper && (paper as LibraryPaper).pdfPath != null;
+  const hasLocalPdf = isLibraryPaper && (paper as LibraryPaper).pdfPath != null;
+  const hasPdfUrl = !isLibraryPaper && paper?.pdfUrl != null;
+  const hasPdf = hasLocalPdf || hasPdfUrl;
   const paperIdentity = paper ? ('arxivId' in paper ? (paper as LibraryPaper).id : paper.id) : null;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset all state on paper change
@@ -259,8 +261,12 @@ export function PaperDetail() {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col">
-        {activeTab === 'pdf' && paperId ? (
-          <PdfViewer paperId={paperId} />
+        {activeTab === 'pdf' && hasPdf ? (
+          <PdfViewer
+            paperId={paperId ?? undefined}
+            pdfUrl={hasPdfUrl ? paper.pdfUrl : undefined}
+            arxivId={hasPdfUrl ? paper.id : undefined}
+          />
         ) : (
           <div className="flex-1 overflow-y-auto px-6 pb-6">
             <div className="mt-4">

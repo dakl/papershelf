@@ -10,6 +10,7 @@ const api: ElectronAPI = {
   getPapers: (filter) => ipcRenderer.invoke('papers:list', filter),
   getPaper: (id) => ipcRenderer.invoke('papers:get', id),
   getPdf: (paperId) => ipcRenderer.invoke('papers:getPdf', paperId),
+  fetchPdfByUrl: (url, arxivId) => ipcRenderer.invoke('papers:fetchPdfByUrl', url, arxivId),
   deletePaper: (id) => ipcRenderer.invoke('papers:delete', id),
   toggleFavorite: (id) => ipcRenderer.invoke('papers:toggleFavorite', id),
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),

@@ -231,7 +231,8 @@ function DeleteConfirmPopup({
   );
 }
 
-export function PdfViewer({ paperId }: { paperId: string }) {
+export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
+  const readOnly = !paperId;
   const [scale, setScale] = useState(1.0);
   const [visualScale, setVisualScale] = useState(1.0);
   const [pdfVersion, setPdfVersion] = useState(0);
@@ -261,7 +262,7 @@ export function PdfViewer({ paperId }: { paperId: string }) {
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
 
-  const { pdfDocument, numPages, loading, error } = usePdfDocument(paperId, pdfVersion);
+  const { pdfDocument, numPages, loading, error } = usePdfDocument(paperId ?? null, pdfVersion, pdfUrl, arxivId);
 
   // Fetch all PDFPageProxy objects when document loads
   useEffect(() => {
@@ -620,25 +621,27 @@ export function PdfViewer({ paperId }: { paperId: string }) {
         </button>
         {numPages > 0 && <span className="text-mac-small text-gray-400 ml-2">{numPages} pages</span>}
 
-        <div className="ml-4 border-l border-mac-separator pl-4">
-          <button
-            onClick={cycleAnnotationMode}
-            className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
-              annotationMode !== 'read' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-            title={
-              annotationMode === 'read'
-                ? 'Enter highlight mode'
-                : annotationMode === 'highlight'
-                  ? 'Switch to sticky note mode'
-                  : 'Exit annotation mode'
-            }
-          >
-            {annotationMode === 'read' && 'Annotate'}
-            {annotationMode === 'highlight' && 'Highlight'}
-            {annotationMode === 'note' && 'Note'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="ml-4 border-l border-mac-separator pl-4">
+            <button
+              onClick={cycleAnnotationMode}
+              className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
+                annotationMode !== 'read' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+              title={
+                annotationMode === 'read'
+                  ? 'Enter highlight mode'
+                  : annotationMode === 'highlight'
+                    ? 'Switch to sticky note mode'
+                    : 'Exit annotation mode'
+              }
+            >
+              {annotationMode === 'read' && 'Annotate'}
+              {annotationMode === 'highlight' && 'Highlight'}
+              {annotationMode === 'note' && 'Note'}
+            </button>
+          </div>
+        )}
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900">
