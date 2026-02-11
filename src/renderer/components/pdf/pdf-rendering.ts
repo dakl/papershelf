@@ -42,6 +42,7 @@ export function renderPageCanvas(page: PDFPageProxy, viewport: PageViewport, can
 export async function createTextLayer(page: PDFPageProxy, viewport: PageViewport, container: HTMLDivElement) {
   container.innerHTML = '';
   container.className = 'textLayer';
+  container.style.setProperty('--scale-factor', String(viewport.scale));
   setLayerDimensions(container, viewport);
 
   const textContent = await page.getTextContent();
@@ -60,6 +61,7 @@ export async function createTextLayer(page: PDFPageProxy, viewport: PageViewport
 export async function createAnnotationLayer(page: PDFPageProxy, viewport: PageViewport, container: HTMLDivElement) {
   container.innerHTML = '';
   container.className = 'annotationLayer';
+  container.style.setProperty('--scale-factor', String(viewport.scale));
   setLayerDimensions(container, viewport);
 
   const annotations = await page.getAnnotations({ intent: 'display' });
