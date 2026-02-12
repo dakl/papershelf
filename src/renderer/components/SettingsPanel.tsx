@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
+import { buildKeyString, FormattedShortcut, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
 
 function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -16,6 +17,107 @@ function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onCha
         }`}
       />
     </button>
+  );
+}
+
+function KeyboardShortcutsSection() {
+  const { shortcuts, setShortcutKeys, resetShortcut, resetAll } = useShortcutStore();
+  const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<string | null>(null);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!recordingId) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.key === 'Escape') {
+        setRecordingId(null);
+        setConflict(null);
+        return;
+      }
+
+      const keyString = buildKeyString(event);
+      if (!keyString) return;
+
+      const result = setShortcutKeys(recordingId, keyString);
+      if (result.success) {
+        setRecordingId(null);
+        setConflict(null);
+      } else {
+        setConflict(result.conflict ?? null);
+      }
+    },
+    [recordingId, setShortcutKeys],
+  );
+
+  useEffect(() => {
+    if (!recordingId) return;
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [recordingId, handleKeyDown]);
+
+  const hasAnyOverride = shortcuts.some((s) => s.keys !== getDefaultKeys(s.id));
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-mac-body font-semibold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+        Keyboard Shortcuts
+      </h2>
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 py-0.5">
+        {shortcuts.map((shortcut) => {
+          const isRecording = recordingId === shortcut.id;
+          const isOverridden = shortcut.keys !== getDefaultKeys(shortcut.id);
+          return (
+            <div
+              key={shortcut.id}
+              className="flex items-center justify-between px-3 py-1 mx-0.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >
+              <span className="text-mac-small">{shortcut.label}</span>
+              <div className="flex items-center gap-1.5">
+                {isRecording && conflict && <span className="text-[11px] text-red-500">Used by {conflict}</span>}
+                <button
+                  onClick={() => {
+                    setConflict(null);
+                    setRecordingId(isRecording ? null : shortcut.id);
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-xs transition-colors ${
+                    isRecording
+                      ? 'bg-mac-accent text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {isRecording ? (
+                    'Press keys...'
+                  ) : (
+                    <kbd>
+                      <FormattedShortcut keys={shortcut.keys} />
+                    </kbd>
+                  )}
+                </button>
+                {isOverridden && !isRecording && (
+                  <button
+                    onClick={() => resetShortcut(shortcut.id)}
+                    className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    title="Reset to default"
+                  >
+                    ↺
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {hasAnyOverride && (
+        <button
+          onClick={resetAll}
+          className="mt-2 text-mac-small text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          Reset all to defaults
+        </button>
+      )}
+    </section>
   );
 }
 
@@ -58,9 +160,11 @@ export function SettingsPanel() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="drag-region h-[38px] flex-shrink-0" />
       <div className="max-w-xl mx-auto px-6 py-4">
         <h1 className="text-lg font-semibold mb-6">Settings</h1>
+
+        {/* Keyboard Shortcuts Section */}
+        <KeyboardShortcutsSection />
 
         {/* MCP Server Section */}
         <section className="mb-8">

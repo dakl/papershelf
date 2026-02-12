@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { SearchMode } from '../hooks/useSearch';
+import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -11,6 +12,9 @@ interface SearchBarProps {
 export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const focusSearchShortcut = useShortcutStore((state) => state.getShortcut('focusSearch'));
+
+  const shortcutHint = focusSearchShortcut ? ` (${formatKeys(focusSearchShortcut.keys)})` : '';
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -19,17 +23,6 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
     },
     [query, onSearch],
   );
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.key === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   return (
     <div className="space-y-2">
@@ -55,10 +48,13 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
         <div className="relative flex-1">
           <input
             ref={inputRef}
+            data-shortcut-focus="search"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={mode === 'arxiv' ? 'Search arXiv papers... (⌘K)' : 'Search your library... (⌘K)'}
+            placeholder={
+              mode === 'arxiv' ? `Search arXiv papers...${shortcutHint}` : `Search your library...${shortcutHint}`
+            }
             className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mac-accent/40"
           />
           {loading && (

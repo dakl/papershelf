@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react';
+import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { FormattedShortcut, useShortcutStore } from '../stores/shortcutStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
 import { TagManager } from './TagManager';
 
-const NAV_ITEMS: { id: SidebarView; label: string; icon: string }[] = [
-  { id: 'search', label: 'Search', icon: '🔍' },
-  { id: 'all-papers', label: 'All Papers', icon: '📄' },
-  { id: 'favorites', label: 'Favorites', icon: '⭐' },
-  { id: 'recent', label: 'Recently Added', icon: '🕐' },
-  { id: 'citations', label: 'Citations', icon: '🔗' },
+const NAV_ITEMS: { id: SidebarView; label: string; icon: string; shortcutId: string }[] = [
+  { id: 'search', label: 'Search', icon: '🔍', shortcutId: 'goSearch' },
+  { id: 'all-papers', label: 'All Papers', icon: '📄', shortcutId: 'goAllPapers' },
+  { id: 'favorites', label: 'Favorites', icon: '⭐', shortcutId: 'goFavorites' },
+  { id: 'recent', label: 'Recently Added', icon: '🕐', shortcutId: 'goRecent' },
+  { id: 'citations', label: 'Citations', icon: '🔗', shortcutId: 'goCitations' },
 ];
 
 export function Sidebar() {
-  const { sidebarView, setSidebarView, navigateToCollection, navigateToTag, selectedCollectionId, selectedTagId } =
-    useUIStore();
+  const {
+    sidebarView,
+    setSidebarView,
+    navigateToCollection,
+    navigateToTag,
+    selectedCollectionId,
+    selectedTagId,
+    sidebarCollapsed,
+  } = useUIStore();
   const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const [showNewCollection, setShowNewCollection] = useState(false);
@@ -28,23 +37,38 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <aside className="w-[220px] flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent">
-      <div className="drag-region h-[38px] flex-shrink-0" />
+  const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH;
 
+  return (
+    <aside
+      className="flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent overflow-hidden"
+      style={{
+        width: sidebarWidth,
+        minWidth: sidebarWidth,
+        transition: `width ${SIDEBAR_TRANSITION_MS}ms ease-out, min-width ${SIDEBAR_TRANSITION_MS}ms ease-out`,
+      }}
+    >
       <nav className="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setSidebarView(item.id)}
-            className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-              sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span className="text-sm">{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const shortcut = useShortcutStore.getState().getShortcut(item.shortcutId);
+          return (
+            <button
+              key={item.id}
+              onClick={() => setSidebarView(item.id)}
+              className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
+                sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <span className="text-sm">{item.icon}</span>
+              <span className="flex-1">{item.label}</span>
+              {shortcut && (
+                <kbd className="text-xs text-gray-400 dark:text-gray-500">
+                  <FormattedShortcut keys={shortcut.keys} />
+                </kbd>
+              )}
+            </button>
+          );
+        })}
 
         {/* Collections */}
         <div className="pt-4 pb-1 px-2 flex items-center justify-between">

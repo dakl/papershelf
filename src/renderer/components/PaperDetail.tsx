@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Collection, LibraryPaper, Tag } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
+import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
 import { PdfViewer } from './PdfViewer';
 
@@ -29,6 +30,8 @@ export function PaperDetail() {
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>('abstract');
+  const toggleFavoriteShortcut = useShortcutStore((state) => state.getShortcut('toggleFavorite'));
+  const favoriteHint = toggleFavoriteShortcut ? ` (${formatKeys(toggleFavoriteShortcut.keys)})` : '';
 
   const isLibraryView = sidebarView !== 'search';
   const paper = isLibraryView ? selectedLibraryPaper : selectedPaper;
@@ -84,16 +87,14 @@ export function PaperDetail() {
 
   return (
     <div className="flex-1 flex flex-col bg-white/40 dark:bg-black/20 overflow-hidden">
-      <div className="drag-region h-[38px] flex-shrink-0" />
-
-      <div className="flex-shrink-0 px-6">
+      <div className="flex-shrink-0 px-6 pt-3">
         <div className="flex items-start gap-2">
           <h1 className="flex-1 text-mac-heading font-semibold leading-snug">{paper.title}</h1>
           {isLibraryPaper && (
             <button
               onClick={handleToggleFavorite}
               className="no-drag flex-shrink-0 text-lg mt-0.5 hover:scale-110 transition-transform"
-              title={(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={`${(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}${favoriteHint}`}
             >
               {(paper as { isFavorite: boolean }).isFavorite ? '⭐' : '☆'}
             </button>
