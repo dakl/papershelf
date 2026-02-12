@@ -17,5 +17,9 @@ mac:
       arch: arm64
     - target: zip
       arch: arm64
-  identity: null
-afterPack: ./scripts/ad-hoc-sign.js
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  notarize:
+    teamId: M2RXQJGK5A
