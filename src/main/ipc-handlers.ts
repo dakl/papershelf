@@ -23,6 +23,7 @@ import {
 } from './services/pdf-annotator';
 import { readPdfForPaper } from './services/pdf-reader';
 import { savePaperFromArxivPaper } from './services/save-paper';
+import { getShortcutOverrides, saveShortcutOverrides } from './settings';
 
 export function registerIpcHandlers(): void {
   // --- ArXiv ---
@@ -282,6 +283,16 @@ export function registerIpcHandlers(): void {
     const seedS2Ids = db.getS2IdsByArxivIds(seedArxivIds);
     const allCenterIds = [...new Set([...seedS2Ids, ...expandedS2Ids])];
     return db.getCitationSubgraph(allCenterIds);
+  });
+
+  // --- Settings ---
+
+  ipcMain.handle('settings:getShortcuts', () => {
+    return getShortcutOverrides();
+  });
+
+  ipcMain.handle('settings:saveShortcuts', (_event, overrides: Record<string, string>) => {
+    saveShortcutOverrides(overrides);
   });
 
   ipcMain.handle('citations:expandNode', async (_event, s2Id: string) => {

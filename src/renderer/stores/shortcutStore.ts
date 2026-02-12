@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-import { createElement } from 'react';
 import { create } from 'zustand';
 
 export interface Shortcut {
@@ -10,11 +8,15 @@ export interface Shortcut {
 
 interface ShortcutState {
   shortcuts: Shortcut[];
+  commandDown: boolean;
+  loaded: boolean;
   getShortcut: (id: string) => Shortcut | undefined;
   setShortcutKeys: (id: string, keys: string) => { success: boolean; conflict?: string };
   resetShortcut: (id: string) => void;
   resetAll: () => void;
+  loadShortcuts: () => Promise<void>;
   formatKeys: (keys: string) => string;
+  setCommandDown: (down: boolean) => void;
 }
 
 const DEFAULT_SHORTCUTS: Shortcut[] = [
@@ -27,21 +29,11 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: 'goCitations', label: 'Go to Citations', keys: 'Meta+5' },
   { id: 'toggleFavorite', label: 'Toggle Favorite', keys: 'Meta+d' },
   { id: 'toggleSettings', label: 'Open Settings', keys: 'Meta+,' },
+  { id: 'savePaper', label: 'Save Paper', keys: 'Meta+s' },
+  { id: 'highlightSelection', label: 'Highlight Selection', keys: 'Meta+e' },
 ];
 
-const STORAGE_KEY = 'shortcuts';
-
-function loadOverrides(): Record<string, string> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function saveOverrides(shortcuts: Shortcut[]) {
+function buildOverridesFromShortcuts(shortcuts: Shortcut[]): Record<string, string> {
   const overrides: Record<string, string> = {};
   for (const shortcut of shortcuts) {
     const defaultShortcut = DEFAULT_SHORTCUTS.find((d) => d.id === shortcut.id);
@@ -49,15 +41,10 @@ function saveOverrides(shortcuts: Shortcut[]) {
       overrides[shortcut.id] = shortcut.keys;
     }
   }
-  if (Object.keys(overrides).length === 0) {
-    localStorage.removeItem(STORAGE_KEY);
-  } else {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
-  }
+  return overrides;
 }
 
-function buildShortcuts(): Shortcut[] {
-  const overrides = loadOverrides();
+function applyOverrides(overrides: Record<string, string>): Shortcut[] {
   return DEFAULT_SHORTCUTS.map((shortcut) => ({
     ...shortcut,
     keys: overrides[shortcut.id] ?? shortcut.keys,
@@ -83,42 +70,6 @@ export function formatKeys(keys: string): string {
   return formatted.join('');
 }
 
-export function FormattedShortcut({ keys }: { keys: string }): ReactNode {
-  const parts = keys.split('+');
-  const children: ReactNode[] = [];
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    let symbol: string;
-    let isModifier = false;
-    switch (part) {
-      case 'Meta':
-        symbol = '⌘';
-        isModifier = true;
-        break;
-      case 'Shift':
-        symbol = '⇧';
-        isModifier = true;
-        break;
-      case 'Alt':
-        symbol = '⌥';
-        isModifier = true;
-        break;
-      case 'Control':
-        symbol = '⌃';
-        isModifier = true;
-        break;
-      default:
-        symbol = part.toUpperCase();
-    }
-    if (isModifier) {
-      children.push(createElement('span', { key: i, style: { fontSize: '1.25em', lineHeight: 0 } }, symbol));
-    } else {
-      children.push(symbol);
-    }
-  }
-  return createElement('span', { style: { display: 'inline-flex', alignItems: 'center' } }, ...children);
-}
-
 export function buildKeyString(event: KeyboardEvent): string | null {
   const key = event.key;
   // Ignore lone modifier presses
@@ -142,9 +93,16 @@ export function getDefaultKeys(id: string): string | undefined {
 }
 
 export const useShortcutStore = create<ShortcutState>((set, get) => ({
-  shortcuts: buildShortcuts(),
+  shortcuts: DEFAULT_SHORTCUTS.map((s) => ({ ...s })),
+  commandDown: false,
+  loaded: false,
 
   getShortcut: (id) => get().shortcuts.find((s) => s.id === id),
+
+  loadShortcuts: async () => {
+    const overrides = await window.electronAPI.getShortcutOverrides();
+    set({ shortcuts: applyOverrides(overrides), loaded: true });
+  },
 
   setShortcutKeys: (id, keys) => {
     const { shortcuts } = get();
@@ -153,7 +111,8 @@ export const useShortcutStore = create<ShortcutState>((set, get) => ({
       return { success: false, conflict: conflict.label };
     }
     const updated = shortcuts.map((s) => (s.id === id ? { ...s, keys } : s));
-    saveOverrides(updated);
+    const overrides = buildOverridesFromShortcuts(updated);
+    window.electronAPI.saveShortcutOverrides(overrides);
     set({ shortcuts: updated });
     return { success: true };
   },
@@ -163,14 +122,16 @@ export const useShortcutStore = create<ShortcutState>((set, get) => ({
     if (!defaultKeys) return;
     const { shortcuts } = get();
     const updated = shortcuts.map((s) => (s.id === id ? { ...s, keys: defaultKeys } : s));
-    saveOverrides(updated);
+    const overrides = buildOverridesFromShortcuts(updated);
+    window.electronAPI.saveShortcutOverrides(overrides);
     set({ shortcuts: updated });
   },
 
   resetAll: () => {
-    localStorage.removeItem(STORAGE_KEY);
+    window.electronAPI.saveShortcutOverrides({});
     set({ shortcuts: DEFAULT_SHORTCUTS.map((s) => ({ ...s })) });
   },
 
   formatKeys,
+  setCommandDown: (down) => set({ commandDown: down }),
 }));

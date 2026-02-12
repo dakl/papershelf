@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
-import { buildKeyString, FormattedShortcut, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
+import { buildKeyString, formatKeys, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
 
 function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -87,13 +87,7 @@ function KeyboardShortcutsSection() {
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {isRecording ? (
-                    'Press keys...'
-                  ) : (
-                    <kbd>
-                      <FormattedShortcut keys={shortcut.keys} />
-                    </kbd>
-                  )}
+                  {isRecording ? 'Press keys...' : formatKeys(shortcut.keys)}
                 </button>
                 {isOverridden && !isRecording && (
                   <button

@@ -6,6 +6,9 @@ import { buildKeyString, useShortcutStore } from './stores/shortcutStore';
 import { useUIStore } from './stores/uiStore';
 import './styles/globals.css';
 
+// Load persisted shortcut overrides from disk
+useShortcutStore.getState().loadShortcuts();
+
 // Prevent Chromium's built-in zoom so Cmd+/-, Cmd+0, and pinch-to-zoom
 // can be handled by the PDF viewer instead
 document.addEventListener('keydown', (event) => {
@@ -55,8 +58,29 @@ document.addEventListener('keydown', (event) => {
       }
       break;
     }
+    case 'savePaper': {
+      const { sidebarView, selectedPaper: searchPaper } = ui;
+      if (sidebarView === 'search' && searchPaper) {
+        usePaperStore.getState().savePaper(searchPaper);
+      }
+      break;
+    }
+    case 'highlightSelection':
+      document.dispatchEvent(new CustomEvent('shortcut:highlightSelection'));
+      break;
   }
 });
+
+// Track Command key held state for inline shortcut hints
+const { setCommandDown } = useShortcutStore.getState();
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Meta') setCommandDown(true);
+});
+document.addEventListener('keyup', (event) => {
+  if (event.key === 'Meta') setCommandDown(false);
+});
+window.addEventListener('blur', () => setCommandDown(false));
+
 document.addEventListener(
   'wheel',
   (event) => {

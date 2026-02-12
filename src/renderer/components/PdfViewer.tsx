@@ -1,6 +1,7 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { PdfPage } from './pdf/PdfPage';
+import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
+import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { usePdfDocument } from './pdf/usePdfDocument';
 
 const MIN_SCALE = 0.5;
@@ -233,6 +234,8 @@ function DeleteConfirmPopup({
 
 export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
   const readOnly = !paperId;
+  const commandDown = useShortcutStore((s) => s.commandDown);
+  const highlightShortcut = useShortcutStore((s) => s.getShortcut('highlightSelection'));
   const [scale, setScale] = useState(1.0);
   const [visualScale, setVisualScale] = useState(1.0);
   const [pdfVersion, setPdfVersion] = useState(0);
@@ -440,7 +443,6 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
   }, [scale, prepareScaleCommit]);
 
   // Adjust scroll position after scale commit
-  // biome-ignore lint/correctness/useExhaustiveDependencies: must fire when scale changes
   useLayoutEffect(() => {
     const pending = pendingScrollRef.current;
     const container = containerRef.current;
@@ -569,6 +571,43 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     }
   }, [deleteConfirm, paperId, reloadPdf]);
 
+  // Listen for keyboard shortcut to highlight current text selection
+  useEffect(() => {
+    if (readOnly) return;
+    const handleHighlightShortcut = async () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      const pageEl =
+        (range.commonAncestorContainer as HTMLElement).closest?.('[data-pdf-width]') ??
+        range.commonAncestorContainer.parentElement?.closest('[data-pdf-width]');
+      if (!pageEl) return;
+
+      const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
+      if (rects.length === 0) return;
+
+      const widthAttr = pageEl.getAttribute('data-pdf-width');
+      const heightAttr = pageEl.getAttribute('data-pdf-height');
+      const pageIndexAttr = pageEl.getAttribute('data-page-index');
+      if (!widthAttr || !heightAttr || pageIndexAttr == null) return;
+
+      const pageDimensions = { width: Number.parseFloat(widthAttr), height: Number.parseFloat(heightAttr) };
+      const quadPoints = selectionRectsToQuadPoints(rects, pageEl as HTMLElement, scaleRef.current, pageDimensions);
+      selection.removeAllRanges();
+
+      const result = await window.electronAPI.addHighlight({
+        paperId: paperId!,
+        pageIndex: Number.parseInt(pageIndexAttr, 10),
+        quadPoints,
+        color: HIGHLIGHT_COLORS[0].hex,
+      });
+      if (result.success) reloadPdf();
+    };
+    document.addEventListener('shortcut:highlightSelection', handleHighlightShortcut);
+    return () => document.removeEventListener('shortcut:highlightSelection', handleHighlightShortcut);
+  }, [readOnly, paperId, reloadPdf]);
+
   const cycleAnnotationMode = useCallback(() => {
     setAnnotationMode((current) => {
       if (current === 'read') return 'highlight';
@@ -622,7 +661,7 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
         {numPages > 0 && <span className="text-mac-small text-gray-400 ml-2">{numPages} pages</span>}
 
         {!readOnly && (
-          <div className="ml-4 border-l border-mac-separator pl-4">
+          <div className="ml-4 border-l border-mac-separator pl-4 flex items-center gap-2">
             <button
               onClick={cycleAnnotationMode}
               className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
@@ -640,6 +679,11 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
               {annotationMode === 'highlight' && 'Highlight'}
               {annotationMode === 'note' && 'Note'}
             </button>
+            {commandDown && highlightShortcut && (
+              <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                {formatKeys(highlightShortcut.keys)} highlight
+              </span>
+            )}
           </div>
         )}
       </div>

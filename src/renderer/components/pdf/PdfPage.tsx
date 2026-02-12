@@ -68,7 +68,7 @@ function mergeOverlappingRects(rects: DOMRect[]): DOMRect[] {
   return merged;
 }
 
-function selectionRectsToQuadPoints(
+export function selectionRectsToQuadPoints(
   rects: DOMRect[],
   pageElement: HTMLElement,
   scale: number,
@@ -187,6 +187,7 @@ export function PdfPage({
         const unscaledViewport = page.getViewport({ scale: 1.0 });
         wrapper.setAttribute('data-pdf-width', String(unscaledViewport.width));
         wrapper.setAttribute('data-pdf-height', String(unscaledViewport.height));
+        wrapper.setAttribute('data-page-index', String(pageNumber - 1));
 
         // Rebuild text layer
         let textDiv = textLayerRef.current;

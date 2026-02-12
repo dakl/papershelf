@@ -172,6 +172,10 @@ export interface ElectronAPI {
     annotationName: string,
   ) => Promise<{ success: boolean; error?: string }>;
 
+  // Settings
+  getShortcutOverrides: () => Promise<Record<string, string>>;
+  saveShortcutOverrides: (overrides: Record<string, string>) => Promise<void>;
+
   // MCP Server
   getMcpStatus: () => Promise<McpServerStatus>;
   startMcpServer: (port: number) => Promise<void>;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { FormattedShortcut, useShortcutStore } from '../stores/shortcutStore';
+import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
 import { TagManager } from './TagManager';
@@ -27,6 +27,8 @@ export function Sidebar() {
   } = useUIStore();
   const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
+  const commandDown = useShortcutStore((s) => s.commandDown);
+  const settingsShortcut = useShortcutStore((s) => s.getShortcut('toggleSettings'));
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
 
@@ -61,10 +63,8 @@ export function Sidebar() {
             >
               <span className="text-sm">{item.icon}</span>
               <span className="flex-1">{item.label}</span>
-              {shortcut && (
-                <kbd className="text-xs text-gray-400 dark:text-gray-500">
-                  <FormattedShortcut keys={shortcut.keys} />
-                </kbd>
+              {commandDown && shortcut && (
+                <span className="text-xs text-gray-400 dark:text-gray-500">{formatKeys(shortcut.keys)}</span>
               )}
             </button>
           );
@@ -154,11 +154,14 @@ export function Sidebar() {
         </button>
         <button
           onClick={() => setSidebarView('settings')}
-          className={`no-drag text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
+          className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
             sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
           }`}
           title="Settings"
         >
+          {commandDown && settingsShortcut && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">{formatKeys(settingsShortcut.keys)}</span>
+          )}
           <svg
             width="16"
             height="16"

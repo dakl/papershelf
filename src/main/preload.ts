@@ -50,6 +50,10 @@ const api: ElectronAPI = {
   removeAnnotation: (paperId, pageIndex, annotationName) =>
     ipcRenderer.invoke('annotations:remove', paperId, pageIndex, annotationName),
 
+  // Settings
+  getShortcutOverrides: () => ipcRenderer.invoke('settings:getShortcuts'),
+  saveShortcutOverrides: (overrides) => ipcRenderer.invoke('settings:saveShortcuts', overrides),
+
   // MCP Server
   getMcpStatus: () => ipcRenderer.invoke('mcp:getStatus'),
   startMcpServer: (port) => ipcRenderer.invoke('mcp:start', port),
