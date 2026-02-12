@@ -27,15 +27,18 @@ function getViewTitle(
   }
 }
 
-export function PaperList() {
+export function PaperList({ width }: { width: number }) {
   const { sidebarView, selectedPaper, setSelectedPaper, selectedCollectionId, selectedTagId } = useUIStore();
   const { collections, tags, selectedLibraryPaper, setSelectedLibraryPaper } = usePaperStore();
   const { results, libraryResults, loading, error, search, mode, setMode } = useSearch();
   const isSearch = sidebarView === 'search';
 
   return (
-    <div className="w-[340px] flex-shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30">
-      <div className="drag-region flex-shrink-0 pt-[38px] px-3 pb-2">
+    <div
+      className="flex-shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30"
+      style={{ width }}
+    >
+      <div className="flex-shrink-0 px-3 pt-2 pb-2">
         {isSearch && (
           <div className="no-drag">
             <SearchBar onSearch={search} loading={loading} mode={mode} onModeChange={setMode} />

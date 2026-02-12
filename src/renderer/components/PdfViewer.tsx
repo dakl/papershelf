@@ -1,8 +1,8 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { usePdfDocument } from './pdf/usePdfDocument';
+import { ShortcutHint } from './ShortcutHint';
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3.0;
@@ -234,8 +234,6 @@ function DeleteConfirmPopup({
 
 export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
   const readOnly = !paperId;
-  const commandDown = useShortcutStore((s) => s.commandDown);
-  const highlightShortcut = useShortcutStore((s) => s.getShortcut('highlightSelection'));
   const [scale, setScale] = useState(1.0);
   const [visualScale, setVisualScale] = useState(1.0);
   const [pdfVersion, setPdfVersion] = useState(0);
@@ -662,28 +660,25 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
 
         {!readOnly && (
           <div className="ml-4 border-l border-mac-separator pl-4 flex items-center gap-2">
-            <button
-              onClick={cycleAnnotationMode}
-              className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
-                annotationMode !== 'read' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-              title={
-                annotationMode === 'read'
-                  ? 'Enter highlight mode'
-                  : annotationMode === 'highlight'
-                    ? 'Switch to sticky note mode'
-                    : 'Exit annotation mode'
-              }
-            >
-              {annotationMode === 'read' && 'Annotate'}
-              {annotationMode === 'highlight' && 'Highlight'}
-              {annotationMode === 'note' && 'Note'}
-            </button>
-            {commandDown && highlightShortcut && (
-              <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                {formatKeys(highlightShortcut.keys)} highlight
-              </span>
-            )}
+            <ShortcutHint shortcutId="highlightSelection" label="highlight">
+              <button
+                onClick={cycleAnnotationMode}
+                className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
+                  annotationMode !== 'read' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title={
+                  annotationMode === 'read'
+                    ? 'Enter highlight mode'
+                    : annotationMode === 'highlight'
+                      ? 'Switch to sticky note mode'
+                      : 'Exit annotation mode'
+                }
+              >
+                {annotationMode === 'read' && 'Annotate'}
+                {annotationMode === 'highlight' && 'Highlight'}
+                {annotationMode === 'note' && 'Note'}
+              </button>
+            </ShortcutHint>
           </div>
         )}
       </div>

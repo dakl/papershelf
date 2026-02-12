@@ -1,12 +1,15 @@
 import { CitationGraphView } from './components/CitationGraphView';
 import { PaperDetail } from './components/PaperDetail';
 import { PaperList } from './components/PaperList';
+import { ResizeHandle } from './components/ResizeHandle';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Sidebar } from './components/Sidebar';
+import { Toolbar } from './components/Toolbar';
 import { useUIStore } from './stores/uiStore';
 
 export function App() {
   const sidebarView = useUIStore((state) => state.sidebarView);
+  const paperListWidth = useUIStore((state) => state.paperListWidth);
 
   const renderContent = () => {
     switch (sidebarView) {
@@ -17,7 +20,8 @@ export function App() {
       default:
         return (
           <div className="flex flex-1 min-w-0">
-            <PaperList />
+            <PaperList width={paperListWidth} />
+            <ResizeHandle />
             <PaperDetail />
           </div>
         );
@@ -25,9 +29,12 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-white/80 dark:bg-black/80">
-      <Sidebar />
-      {renderContent()}
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white/80 dark:bg-black/80">
+      <Toolbar />
+      <div className="flex flex-1 min-h-0">
+        <Sidebar />
+        {renderContent()}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
+import { ShortcutHint } from './ShortcutHint';
 import { TagManager } from './TagManager';
 
 const NAV_ITEMS: { id: SidebarView; label: string; icon: string; shortcutId: string }[] = [
@@ -28,7 +29,6 @@ export function Sidebar() {
   const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
-  const settingsShortcut = useShortcutStore((s) => s.getShortcut('toggleSettings'));
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
 
@@ -152,30 +152,29 @@ export function Sidebar() {
           <span className={`w-2 h-2 rounded-full ${mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'}`} />
           <span>MCP</span>
         </button>
-        <button
-          onClick={() => setSidebarView('settings')}
-          className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
-            sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
-          }`}
-          title="Settings"
-        >
-          {commandDown && settingsShortcut && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">{formatKeys(settingsShortcut.keys)}</span>
-          )}
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <ShortcutHint shortcutId="toggleSettings" position="above">
+          <button
+            onClick={() => setSidebarView('settings')}
+            className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
+              sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
+            }`}
+            title="Settings"
           >
-            <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
-            <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
-          </svg>
-        </button>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
+              <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
+            </svg>
+          </button>
+        </ShortcutHint>
       </div>
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
