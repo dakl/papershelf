@@ -6,6 +6,7 @@ interface ShortcutHintProps {
   children: ReactNode;
   position?: 'below' | 'above' | 'right';
   label?: string;
+  className?: string;
 }
 
 const ARROW = (
@@ -20,7 +21,7 @@ const ARROW_RIGHT = (
   <span className="block w-0 h-0 border-t-[4px] border-b-[4px] border-t-transparent border-b-transparent border-r-[4px] border-r-gray-800/90 dark:border-r-gray-200/90" />
 );
 
-export function ShortcutHint({ shortcutId, children, position = 'below', label }: ShortcutHintProps) {
+export function ShortcutHint({ shortcutId, children, position = 'below', label, className }: ShortcutHintProps) {
   const commandDown = useShortcutStore((s) => s.commandDown);
   const shortcut = useShortcutStore((s) => s.getShortcut(shortcutId));
 
@@ -73,7 +74,7 @@ export function ShortcutHint({ shortcutId, children, position = 'below', label }
   }[position];
 
   return (
-    <span className="relative inline-flex">
+    <span className={`relative inline-flex ${className ?? ''}`}>
       {children}
       {commandDown && (
         <span

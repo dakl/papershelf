@@ -64,7 +64,12 @@ export function Sidebar() {
               <span className="text-sm">{item.icon}</span>
               <span className="flex-1">{item.label}</span>
               {commandDown && shortcut && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">{formatKeys(shortcut.keys)}</span>
+                <span
+                  className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm"
+                  style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
+                >
+                  {formatKeys(shortcut.keys)}
+                </span>
               )}
             </button>
           );

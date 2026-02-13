@@ -13,8 +13,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const focusSearchShortcut = useShortcutStore((state) => state.getShortcut('focusSearch'));
-
-  const shortcutHint = focusSearchShortcut ? ` (${formatKeys(focusSearchShortcut.keys)})` : '';
+  const commandDown = useShortcutStore((s) => s.commandDown);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -52,15 +51,21 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              mode === 'arxiv' ? `Search arXiv papers...${shortcutHint}` : `Search your library...${shortcutHint}`
-            }
+            placeholder={mode === 'arxiv' ? 'Search arXiv papers...' : 'Search your library...'}
             className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mac-accent/40"
           />
           {loading && (
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
               <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-mac-accent rounded-full animate-spin" />
             </div>
+          )}
+          {!loading && commandDown && focusSearchShortcut && (
+            <span
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm"
+              style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
+            >
+              {formatKeys(focusSearchShortcut.keys)}
+            </span>
           )}
         </div>
         <button

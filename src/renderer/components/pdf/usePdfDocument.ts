@@ -51,10 +51,7 @@ export function usePdfDocument(paperId: string | null, pdfVersion: number, pdfUr
         copy.set(source);
 
         try {
-          if (documentRef.current) {
-            documentRef.current.destroy();
-            documentRef.current = null;
-          }
+          const prevDoc = documentRef.current;
 
           const doc = await pdfjsLib.getDocument({ data: copy }).promise;
           if (cancelled) {
@@ -65,6 +62,12 @@ export function usePdfDocument(paperId: string | null, pdfVersion: number, pdfUr
           setPdfDocument(doc);
           setNumPages(doc.numPages);
           setLoading(false);
+
+          // Destroy old document after new one is ready so in-flight
+          // getPage() calls against the previous doc don't fail.
+          if (prevDoc) {
+            prevDoc.destroy();
+          }
         } catch (err) {
           if (cancelled) return;
           setError(err instanceof Error ? err.message : 'Failed to load PDF');
