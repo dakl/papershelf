@@ -28,6 +28,9 @@ export async function fetchPaper(arxivId: string): Promise<ArxivPaper | null> {
 
   const response = await rateLimitedFetch(url);
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('arXiv is rate-limiting requests from your IP. Please wait a few minutes and try again.');
+    }
     throw new Error(`ArXiv API error: ${response.status}`);
   }
 
