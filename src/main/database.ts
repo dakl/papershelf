@@ -1,6 +1,6 @@
 // Re-export from split db modules for backward compatibility
 
-export type { S2PaperInput } from './db/index';
+export type { LibraryStats, S2PaperInput } from './db/index';
 export {
   addPaperToCollection,
   addTagToPaper,
@@ -17,6 +17,7 @@ export {
   getCollectionByName,
   getCollections,
   getCollectionsForPaper,
+  getLibraryStats,
   getPaperByArxivId,
   getPaperById,
   getPapers,

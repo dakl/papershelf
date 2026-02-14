@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { AboutDialog } from './components/AboutDialog';
 import { PaperDetail } from './components/PaperDetail';
 import { PaperList } from './components/PaperList';
 import { ResizeHandle } from './components/ResizeHandle';
@@ -9,6 +11,11 @@ import { useUIStore } from './stores/uiStore';
 export function App() {
   const sidebarView = useUIStore((state) => state.sidebarView);
   const paperListWidth = useUIStore((state) => state.paperListWidth);
+  const [showAbout, setShowAbout] = useState(false);
+
+  useEffect(() => {
+    return window.electronAPI.onShowAbout(() => setShowAbout(true));
+  }, []);
 
   const renderContent = () => {
     switch (sidebarView) {
@@ -32,6 +39,7 @@ export function App() {
         <Sidebar />
         {renderContent()}
       </div>
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     </div>
   );
 }

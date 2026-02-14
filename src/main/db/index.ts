@@ -18,9 +18,11 @@ export {
   updateCollection,
 } from './collections';
 export { closeDatabase, initDatabase } from './connection';
+export type { LibraryStats } from './papers';
 export {
   checkPapersInLibrary,
   deletePaper,
+  getLibraryStats,
   getPaperByArxivId,
   getPaperById,
   getPapers,
