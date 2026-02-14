@@ -6,6 +6,7 @@ import { getDataDir } from '../paths';
 interface ToolConfig {
   disabledTools: string[];
   toolModes: Record<string, ToolNotificationMode>;
+  mcpServerEnabled?: boolean;
 }
 
 function getConfigPath(): string {
@@ -50,4 +51,13 @@ export function setToolMode(toolName: string, mode: ToolNotificationMode): void 
     config.toolModes[toolName] = mode;
   }
   writeConfig(config);
+}
+
+export function isMcpServerEnabled(): boolean {
+  return readConfig().mcpServerEnabled ?? false;
+}
+
+export function setMcpServerEnabled(enabled: boolean): void {
+  const config = readConfig();
+  writeConfig({ ...config, mcpServerEnabled: enabled });
 }

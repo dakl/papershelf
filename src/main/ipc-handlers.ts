@@ -11,7 +11,13 @@ import { searchArxiv } from './arxiv-client';
 import { CITATION_CACHE_TTL_DAYS } from './constants';
 import * as db from './database';
 import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
-import { getDisabledTools, getToolModes, setDisabledTools, setToolMode } from './mcp/tool-config';
+import {
+  getDisabledTools,
+  getToolModes,
+  setDisabledTools,
+  setMcpServerEnabled,
+  setToolMode,
+} from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchAndCachePdf } from './pdf-processor';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
@@ -205,10 +211,12 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('mcp:start', async (_event, port: number) => {
     await startMcpHttpServer(port);
+    setMcpServerEnabled(true);
   });
 
   ipcMain.handle('mcp:stop', async () => {
     await stopMcpHttpServer();
+    setMcpServerEnabled(false);
   });
 
   ipcMain.handle('mcp:getTools', () => {
