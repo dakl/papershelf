@@ -53,7 +53,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('papers:save', async (_event, paper: ArxivPaper): Promise<SavePaperResult> => {
     try {
       const result = await savePaperFromArxivPaper(paper);
-      return { success: true, paper: result.paper };
+      return { success: true, paper: result.paper, pdfDownloaded: result.pdfDownloaded };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to save paper' };
     }
@@ -68,7 +68,12 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('papers:delete', (_event, id: string) => {
-    db.deletePaper(id);
+    try {
+      db.deletePaper(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete paper' };
+    }
   });
 
   ipcMain.handle('papers:toggleFavorite', (_event, id: string) => {
@@ -109,7 +114,12 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('collections:delete', (_event, id: string) => {
-    db.deleteCollection(id);
+    try {
+      db.deleteCollection(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete collection' };
+    }
   });
 
   ipcMain.handle('collections:addPaper', (_event, paperId: string, collectionId: string) => {
@@ -138,7 +148,12 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('tags:delete', (_event, id: string) => {
-    db.deleteTag(id);
+    try {
+      db.deleteTag(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete tag' };
+    }
   });
 
   ipcMain.handle('tags:addToPaper', (_event, paperId: string, tagId: string) => {
@@ -326,7 +341,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(
     'viewerState:save',
     (_event, paperId: string, scale: number, scrollTop: number, scrollLeft: number) => {
-      db.saveViewerState(paperId, scale, scrollTop, scrollLeft);
+      try {
+        db.saveViewerState(paperId, scale, scrollTop, scrollLeft);
+      } catch (err) {
+        console.warn('Failed to save viewer state:', err);
+      }
     },
   );
 

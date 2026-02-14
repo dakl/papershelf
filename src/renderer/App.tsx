@@ -5,6 +5,7 @@ import { PaperList } from './components/PaperList';
 import { ResizeHandle } from './components/ResizeHandle';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Sidebar } from './components/Sidebar';
+import { ToastContainer } from './components/Toast';
 import { Toolbar } from './components/Toolbar';
 import { useUIStore } from './stores/uiStore';
 
@@ -40,6 +41,7 @@ export function App() {
         {renderContent()}
       </div>
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      <ToastContainer />
     </div>
   );
 }
