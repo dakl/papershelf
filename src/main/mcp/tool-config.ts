@@ -1,9 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import type { ToolNotificationMode } from '../../shared/types';
 import { getDataDir } from '../paths';
 
 interface ToolConfig {
   disabledTools: string[];
+  toolModes: Record<string, ToolNotificationMode>;
 }
 
 function getConfigPath(): string {
@@ -13,9 +15,13 @@ function getConfigPath(): string {
 function readConfig(): ToolConfig {
   try {
     const raw = fs.readFileSync(getConfigPath(), 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return {
+      disabledTools: parsed.disabledTools ?? [],
+      toolModes: parsed.toolModes ?? {},
+    };
   } catch {
-    return { disabledTools: [] };
+    return { disabledTools: [], toolModes: {} };
   }
 }
 
@@ -28,5 +34,20 @@ export function getDisabledTools(): string[] {
 }
 
 export function setDisabledTools(disabledTools: string[]): void {
-  writeConfig({ disabledTools });
+  const config = readConfig();
+  writeConfig({ ...config, disabledTools });
+}
+
+export function getToolModes(): Record<string, ToolNotificationMode> {
+  return readConfig().toolModes;
+}
+
+export function setToolMode(toolName: string, mode: ToolNotificationMode): void {
+  const config = readConfig();
+  if (mode === 'notify') {
+    delete config.toolModes[toolName];
+  } else {
+    config.toolModes[toolName] = mode;
+  }
+  writeConfig(config);
 }

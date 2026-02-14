@@ -5,12 +5,13 @@ import type {
   PaperFilter,
   SavePaperResult,
   StickyNoteAnnotation,
+  ToolNotificationMode,
 } from '../shared/types';
 import { searchArxiv } from './arxiv-client';
 import { CITATION_CACHE_TTL_DAYS } from './constants';
 import * as db from './database';
 import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
-import { getDisabledTools, setDisabledTools } from './mcp/tool-config';
+import { getDisabledTools, getToolModes, setDisabledTools, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchAndCachePdf } from './pdf-processor';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
@@ -201,10 +202,12 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('mcp:getTools', () => {
     const disabled = new Set(getDisabledTools());
+    const modes = getToolModes();
     return TOOL_METADATA.map((tool) => ({
       name: tool.name,
       description: tool.description,
       enabled: !disabled.has(tool.name),
+      mode: modes[tool.name] ?? 'notify',
     }));
   });
 
@@ -222,6 +225,16 @@ export function registerIpcHandlers(): void {
     setDisabledTools([...disabled]);
 
     // Restart server so new sessions pick up the change
+    const status = getMcpHttpServerStatus();
+    if (status.running) {
+      await stopMcpHttpServer();
+      await startMcpHttpServer(status.port);
+    }
+  });
+
+  ipcMain.handle('mcp:setToolMode', async (_event, toolName: string, mode: ToolNotificationMode) => {
+    setToolMode(toolName, mode);
+
     const status = getMcpHttpServerStatus();
     if (status.running) {
       await stopMcpHttpServer();

@@ -5,7 +5,7 @@ export function logToolCall(
   toolName: string,
   inputArgs: string,
   durationMs: number,
-  status: 'success' | 'error',
+  status: 'success' | 'error' | 'denied',
   errorMessage?: string,
 ): void {
   const db = getDb();

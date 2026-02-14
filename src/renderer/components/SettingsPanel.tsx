@@ -1,6 +1,43 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ToolNotificationMode } from '../../shared/types';
 import { useSettingsStore } from '../stores/settingsStore';
 import { buildKeyString, formatKeys, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
+
+const MODE_OPTIONS: { value: ToolNotificationMode; label: string }[] = [
+  { value: 'silent', label: 'Silent' },
+  { value: 'notify', label: 'Notify' },
+  { value: 'confirm', label: 'Confirm' },
+];
+
+function ModeSelector({
+  mode,
+  onChange,
+  disabled,
+}: {
+  mode: ToolNotificationMode;
+  onChange: (mode: ToolNotificationMode) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={`inline-flex rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+    >
+      {MODE_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-2 py-0.5 text-[11px] transition-colors ${
+            mode === opt.value
+              ? 'bg-mac-accent text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -126,6 +163,7 @@ export function SettingsPanel() {
     stopMcpServer,
     loadMcpTools,
     setToolEnabled,
+    setToolMode,
     loadToolStats,
   } = useSettingsStore();
   const [portInput, setPortInput] = useState('3847');
@@ -219,7 +257,14 @@ export function SettingsPanel() {
                   <div className="text-mac-body font-medium font-mono text-sm">{tool.name}</div>
                   <div className="text-mac-small text-gray-500 dark:text-gray-400 truncate">{tool.description}</div>
                 </div>
-                <ToggleSwitch enabled={tool.enabled} onChange={() => setToolEnabled(tool.name, !tool.enabled)} />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <ModeSelector
+                    mode={tool.mode}
+                    onChange={(mode) => setToolMode(tool.name, mode)}
+                    disabled={!tool.enabled}
+                  />
+                  <ToggleSwitch enabled={tool.enabled} onChange={() => setToolEnabled(tool.name, !tool.enabled)} />
+                </div>
               </div>
             ))}
           </div>

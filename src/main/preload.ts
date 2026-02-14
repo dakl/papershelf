@@ -65,6 +65,7 @@ const api: ElectronAPI = {
   stopMcpServer: () => ipcRenderer.invoke('mcp:stop'),
   getMcpTools: () => ipcRenderer.invoke('mcp:getTools'),
   setMcpToolEnabled: (toolName, enabled) => ipcRenderer.invoke('mcp:setToolEnabled', toolName, enabled),
+  setMcpToolMode: (toolName, mode) => ipcRenderer.invoke('mcp:setToolMode', toolName, mode),
   getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
 };
 

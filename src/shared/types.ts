@@ -50,10 +50,13 @@ export interface McpServerStatus {
   port: number;
 }
 
+export type ToolNotificationMode = 'notify' | 'confirm' | 'silent';
+
 export interface McpToolInfo {
   name: string;
   description: string;
   enabled: boolean;
+  mode: ToolNotificationMode;
 }
 
 export interface ToolCallStats {
@@ -193,6 +196,7 @@ export interface ElectronAPI {
   stopMcpServer: () => Promise<void>;
   getMcpTools: () => Promise<McpToolInfo[]>;
   setMcpToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
+  setMcpToolMode: (toolName: string, mode: ToolNotificationMode) => Promise<void>;
   getToolStats: () => Promise<ToolCallStats[]>;
 }
 
