@@ -36,7 +36,7 @@ export function CollectionManager({ onClose, editId, editName, editColor }: Coll
             onChange={(e) => setName(e.target.value)}
             placeholder="Collection name"
             autoFocus
-            className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mac-accent/40 mb-3"
+            className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-mac-accent/40 mb-3"
           />
           <div className="flex gap-2 mb-4">
             {COLOR_PALETTE.map((c) => (

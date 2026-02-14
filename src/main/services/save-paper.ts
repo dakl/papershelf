@@ -23,8 +23,8 @@ export async function savePaperFromArxivPaper(paper: ArxivPaper): Promise<SavePa
       const result = await downloadAndExtractPdf(paper.pdfUrl, paper.id);
       pdfPath = result.pdfPath;
       fullText = result.fullText;
-    } catch {
-      // Save paper even if PDF download fails
+    } catch (err) {
+      console.warn(`PDF download failed for paper ${paper.id}:`, err);
     }
   }
 

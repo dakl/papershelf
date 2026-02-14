@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { app, ipcMain } from 'electron';
 import type {
   ArxivPaper,
   HighlightAnnotation,
@@ -11,7 +11,13 @@ import { searchArxiv } from './arxiv-client';
 import { CITATION_CACHE_TTL_DAYS } from './constants';
 import * as db from './database';
 import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
-import { getDisabledTools, getToolModes, setDisabledTools, setToolMode } from './mcp/tool-config';
+import {
+  getDisabledTools,
+  getToolModes,
+  setDisabledTools,
+  setMcpServerEnabled,
+  setToolMode,
+} from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchAndCachePdf } from './pdf-processor';
 import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
@@ -27,6 +33,17 @@ import { savePaperFromArxivPaper } from './services/save-paper';
 import { getShortcutOverrides, saveShortcutOverrides } from './settings';
 
 export function registerIpcHandlers(): void {
+  // --- App ---
+  ipcMain.handle('app:getInfo', () => {
+    const stats = db.getLibraryStats();
+    return {
+      name: app.getName(),
+      version: app.getVersion(),
+      electronVersion: process.versions.electron,
+      stats,
+    };
+  });
+
   // --- ArXiv ---
   ipcMain.handle('arxiv:search', async (_event, query: string) => {
     return searchArxiv(query);
@@ -36,7 +53,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('papers:save', async (_event, paper: ArxivPaper): Promise<SavePaperResult> => {
     try {
       const result = await savePaperFromArxivPaper(paper);
-      return { success: true, paper: result.paper };
+      return { success: true, paper: result.paper, pdfDownloaded: result.pdfDownloaded };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to save paper' };
     }
@@ -51,7 +68,12 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('papers:delete', (_event, id: string) => {
-    db.deletePaper(id);
+    try {
+      db.deletePaper(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete paper' };
+    }
   });
 
   ipcMain.handle('papers:toggleFavorite', (_event, id: string) => {
@@ -84,23 +106,46 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('collections:create', (_event, name: string, color: string) => {
-    return db.createCollection(name, color);
+    try {
+      return db.createCollection(name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to create collection');
+    }
   });
 
   ipcMain.handle('collections:update', (_event, id: string, name: string, color: string) => {
-    return db.updateCollection(id, name, color);
+    try {
+      return db.updateCollection(id, name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update collection');
+    }
   });
 
   ipcMain.handle('collections:delete', (_event, id: string) => {
-    db.deleteCollection(id);
+    try {
+      db.deleteCollection(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete collection' };
+    }
   });
 
   ipcMain.handle('collections:addPaper', (_event, paperId: string, collectionId: string) => {
-    db.addPaperToCollection(paperId, collectionId);
+    try {
+      db.addPaperToCollection(paperId, collectionId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add paper to collection' };
+    }
   });
 
   ipcMain.handle('collections:removePaper', (_event, paperId: string, collectionId: string) => {
-    db.removePaperFromCollection(paperId, collectionId);
+    try {
+      db.removePaperFromCollection(paperId, collectionId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove paper from collection' };
+    }
   });
 
   ipcMain.handle('collections:forPaper', (_event, paperId: string) => {
@@ -113,23 +158,46 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('tags:create', (_event, name: string, color: string) => {
-    return db.createTag(name, color);
+    try {
+      return db.createTag(name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to create tag');
+    }
   });
 
   ipcMain.handle('tags:update', (_event, id: string, name: string, color: string) => {
-    return db.updateTag(id, name, color);
+    try {
+      return db.updateTag(id, name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update tag');
+    }
   });
 
   ipcMain.handle('tags:delete', (_event, id: string) => {
-    db.deleteTag(id);
+    try {
+      db.deleteTag(id);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete tag' };
+    }
   });
 
   ipcMain.handle('tags:addToPaper', (_event, paperId: string, tagId: string) => {
-    db.addTagToPaper(paperId, tagId);
+    try {
+      db.addTagToPaper(paperId, tagId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add tag to paper' };
+    }
   });
 
   ipcMain.handle('tags:removeFromPaper', (_event, paperId: string, tagId: string) => {
-    db.removeTagFromPaper(paperId, tagId);
+    try {
+      db.removeTagFromPaper(paperId, tagId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove tag from paper' };
+    }
   });
 
   ipcMain.handle('tags:forPaper', (_event, paperId: string) => {
@@ -194,10 +262,12 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('mcp:start', async (_event, port: number) => {
     await startMcpHttpServer(port);
+    setMcpServerEnabled(true);
   });
 
   ipcMain.handle('mcp:stop', async () => {
     await stopMcpHttpServer();
+    setMcpServerEnabled(false);
   });
 
   ipcMain.handle('mcp:getTools', () => {
@@ -307,7 +377,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(
     'viewerState:save',
     (_event, paperId: string, scale: number, scrollTop: number, scrollLeft: number) => {
-      db.saveViewerState(paperId, scale, scrollTop, scrollLeft);
+      try {
+        db.saveViewerState(paperId, scale, scrollTop, scrollLeft);
+      } catch (err) {
+        console.warn('Failed to save viewer state:', err);
+      }
     },
   );
 
