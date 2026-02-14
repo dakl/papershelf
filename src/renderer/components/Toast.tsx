@@ -28,10 +28,7 @@ export function ToastContainer() {
         >
           <span className="text-sm">{ICON[t.type]}</span>
           <span>{t.message}</span>
-          <button
-            onClick={() => removeToast(t.id)}
-            className="ml-2 opacity-70 hover:opacity-100 text-sm leading-none"
-          >
+          <button onClick={() => removeToast(t.id)} className="ml-2 opacity-70 hover:opacity-100 text-sm leading-none">
             &times;
           </button>
         </div>
