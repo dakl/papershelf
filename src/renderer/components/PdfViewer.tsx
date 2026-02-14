@@ -1,5 +1,6 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ConfirmPopup } from './ConfirmPopup';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { usePdfDocument } from './pdf/usePdfDocument';
 import { ShortcutHint } from './ShortcutHint';
@@ -185,53 +186,6 @@ function StickyNotePopup({
   );
 }
 
-function DeleteConfirmPopup({
-  x,
-  y,
-  onConfirm,
-  onCancel,
-}: {
-  x: number;
-  y: number;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        onCancel();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onCancel]);
-
-  return (
-    <div
-      ref={ref}
-      className="fixed z-50 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3"
-      style={{ left: x, top: y }}
-    >
-      <p className="text-mac-small mb-2">Delete this annotation?</p>
-      <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="px-2 py-0.5 text-mac-small rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-2 py-0.5 text-mac-small rounded-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
   const readOnly = !paperId;
@@ -826,9 +780,10 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
       )}
 
       {deleteConfirm && (
-        <DeleteConfirmPopup
+        <ConfirmPopup
           x={deleteConfirm.x}
           y={deleteConfirm.y}
+          message="Delete this annotation?"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteConfirm(null)}
         />
