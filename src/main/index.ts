@@ -9,10 +9,64 @@ if (isMcpMode) {
     });
 } else {
   // Dynamic import so Electron is not required in --mcp-mode
-  import('electron').then(({ app, BrowserWindow }) => {
+  import('electron').then(({ app, BrowserWindow, Menu }) => {
     const path = require('path') as typeof import('path');
 
     let mainWindow: InstanceType<typeof BrowserWindow> | null = null;
+
+    function showAboutInRenderer(): void {
+      mainWindow?.webContents.send('app:showAbout');
+    }
+
+    function buildAppMenu(): void {
+      const template: Electron.MenuItemConstructorOptions[] = [
+        {
+          label: app.getName(),
+          submenu: [
+            { label: `About ${app.getName()}`, click: showAboutInRenderer },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' },
+          ],
+        },
+        {
+          label: 'Edit',
+          submenu: [
+            { role: 'undo' },
+            { role: 'redo' },
+            { type: 'separator' },
+            { role: 'cut' },
+            { role: 'copy' },
+            { role: 'paste' },
+            { role: 'selectAll' },
+          ],
+        },
+        {
+          label: 'View',
+          submenu: [
+            { role: 'reload' },
+            { role: 'forceReload' },
+            { role: 'toggleDevTools' },
+            { type: 'separator' },
+            { role: 'resetZoom' },
+            { role: 'zoomIn' },
+            { role: 'zoomOut' },
+            { type: 'separator' },
+            { role: 'togglefullscreen' },
+          ],
+        },
+        {
+          label: 'Window',
+          submenu: [{ role: 'minimize' }, { role: 'zoom' }, { role: 'close' }],
+        },
+      ];
+      Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+    }
 
     function createWindow(): void {
       mainWindow = new BrowserWindow({
@@ -47,6 +101,7 @@ if (isMcpMode) {
       initDatabase();
       const { registerIpcHandlers } = await import('./ipc-handlers.js');
       registerIpcHandlers();
+      buildAppMenu();
       createWindow();
       const { startMcpHttpServer } = await import('./mcp/http-server.js');
       startMcpHttpServer().catch((err: unknown) => {

@@ -132,7 +132,23 @@ export interface CitationGraphData {
   edges: CitationEdge[];
 }
 
+export interface AppInfo {
+  name: string;
+  version: string;
+  electronVersion: string;
+  stats: {
+    paperCount: number;
+    favoriteCount: number;
+    collectionCount: number;
+    tagCount: number;
+  };
+}
+
 export interface ElectronAPI {
+  // App info
+  getAppInfo: () => Promise<AppInfo>;
+  onShowAbout: (callback: () => void) => () => void;
+
   // ArXiv search
   searchArxiv: (query: string) => Promise<ArxivPaper[]>;
 

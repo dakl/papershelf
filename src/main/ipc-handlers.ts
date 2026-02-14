@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { app, ipcMain } from 'electron';
 import type {
   ArxivPaper,
   HighlightAnnotation,
@@ -27,6 +27,17 @@ import { savePaperFromArxivPaper } from './services/save-paper';
 import { getShortcutOverrides, saveShortcutOverrides } from './settings';
 
 export function registerIpcHandlers(): void {
+  // --- App ---
+  ipcMain.handle('app:getInfo', () => {
+    const stats = db.getLibraryStats();
+    return {
+      name: app.getName(),
+      version: app.getVersion(),
+      electronVersion: process.versions.electron,
+      stats,
+    };
+  });
+
   // --- ArXiv ---
   ipcMain.handle('arxiv:search', async (_event, query: string) => {
     return searchArxiv(query);
