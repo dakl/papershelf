@@ -9,8 +9,8 @@ import { ShortcutHint } from './ShortcutHint';
 import { TagManager } from './TagManager';
 
 const NAV_ITEMS: { id: SidebarView; label: string; icon: string; shortcutId: string }[] = [
+  { id: 'all-papers', label: 'My Library', icon: '📄', shortcutId: 'goAllPapers' },
   { id: 'search', label: 'Search', icon: '🔍', shortcutId: 'goSearch' },
-  { id: 'all-papers', label: 'All Papers', icon: '📄', shortcutId: 'goAllPapers' },
   { id: 'favorites', label: 'Favorites', icon: '⭐', shortcutId: 'goFavorites' },
   { id: 'recent', label: 'Recently Added', icon: '🕐', shortcutId: 'goRecent' },
   { id: 'citations', label: 'Citations', icon: '🔗', shortcutId: 'goCitations' },
