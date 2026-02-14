@@ -68,7 +68,7 @@ export function Sidebar() {
                 sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <item.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
               {commandDown && shortcut && (
                 <span
