@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { dialog, Notification } from 'electron';
 import type { ToolNotificationMode } from '../../../shared/types';
 import { logToolCall } from '../../db/tool-stats';
+import { setToolMode } from '../tool-config';
 import { registerOrganizationTools } from './organization-tools';
 import { registerPaperTools } from './paper-tools';
 import { registerSearchTools } from './search-tools';
@@ -72,15 +73,19 @@ function createInstrumentedServer(server: McpServer, toolModes: Record<string, T
             if (mode === 'confirm') {
               const response = dialog.showMessageBoxSync({
                 type: 'question',
-                buttons: ['Allow', 'Deny'],
+                buttons: ['Allow', 'Always Allow', 'Deny'],
                 defaultId: 0,
-                cancelId: 1,
+                cancelId: 2,
                 title: 'MCP Tool Call',
                 message: `Allow "${humanToolName(toolName)}"?`,
                 detail: humanizeArgs(handlerArgs[0]) || 'No arguments',
               });
 
-              if (response !== 0) {
+              if (response === 1) {
+                // "Always Allow" — switch to notify mode and persist
+                setToolMode(toolName, 'notify');
+                toolModes[toolName] = 'notify';
+              } else if (response === 2) {
                 logToolCall(toolName, argsString, 0, 'denied');
                 return {
                   content: [{ type: 'text' as const, text: 'Tool call denied by user' }],
