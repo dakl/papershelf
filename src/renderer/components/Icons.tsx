@@ -41,6 +41,14 @@ export function StarIcon(props: IconProps) {
   );
 }
 
+export function StarOutlineIcon(props: IconProps) {
+  return (
+    <svg {...defaults} fill="none" {...props}>
+      <path d="M8 1.5l1.76 3.57 3.94.57-2.85 2.78.67 3.93L8 10.67l-3.52 1.68.67-3.93L2.3 5.64l3.94-.57L8 1.5z" />
+    </svg>
+  );
+}
+
 export function ClockIcon(props: IconProps) {
   return (
     <svg {...defaults} {...props}>

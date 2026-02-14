@@ -3,6 +3,7 @@ import type { Collection, LibraryPaper, Tag } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
+import { StarIcon, StarOutlineIcon } from './Icons';
 import { PdfViewer } from './PdfViewer';
 
 function formatDate(dateStr: string): string {
@@ -94,17 +95,21 @@ export function PaperDetail() {
       {/* Compact header */}
       <div className="shrink-0 px-4 py-2 border-b border-mac-separator">
         <div className="flex items-center gap-2 min-w-0">
-          <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
-
           {isLibraryPaper && (
             <button
               onClick={handleToggleFavorite}
               className="no-drag shrink-0 text-sm hover:scale-110 transition-transform"
               title={`${(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}${favoriteHint}`}
             >
-              {(paper as { isFavorite: boolean }).isFavorite ? '⭐' : '☆'}
+              {(paper as { isFavorite: boolean }).isFavorite ? (
+                <StarIcon className="text-yellow-500" />
+              ) : (
+                <StarOutlineIcon className="text-gray-400" />
+              )}
             </button>
           )}
+
+          <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
 
           <InfoPopoverButton
             open={showInfoPopover}
