@@ -103,10 +103,13 @@ if (isMcpMode) {
       registerIpcHandlers();
       buildAppMenu();
       createWindow();
-      const { startMcpHttpServer } = await import('./mcp/http-server.js');
-      startMcpHttpServer().catch((err: unknown) => {
-        console.warn('MCP HTTP server failed to start:', err instanceof Error ? err.message : err);
-      });
+      const { isMcpServerEnabled } = await import('./mcp/tool-config.js');
+      if (isMcpServerEnabled()) {
+        const { startMcpHttpServer } = await import('./mcp/http-server.js');
+        startMcpHttpServer().catch((err: unknown) => {
+          console.warn('MCP HTTP server failed to start:', err instanceof Error ? err.message : err);
+        });
+      }
 
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
