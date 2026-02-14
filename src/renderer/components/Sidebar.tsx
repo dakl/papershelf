@@ -16,8 +16,8 @@ const NAV_ITEMS: {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   shortcutId: string;
 }[] = [
+  { id: 'all-papers', label: 'My Library', icon: DocTextIcon, shortcutId: 'goAllPapers' },
   { id: 'search', label: 'Search', icon: SearchIcon, shortcutId: 'goSearch' },
-  { id: 'all-papers', label: 'All Papers', icon: DocTextIcon, shortcutId: 'goAllPapers' },
   { id: 'favorites', label: 'Favorites', icon: StarIcon, shortcutId: 'goFavorites' },
   { id: 'recent', label: 'Recently Added', icon: ClockIcon, shortcutId: 'goRecent' },
   { id: 'citations', label: 'Citations', icon: LinkIcon, shortcutId: 'goCitations' },
