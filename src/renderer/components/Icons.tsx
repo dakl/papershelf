@@ -58,3 +58,21 @@ export function LinkIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5L11 2.5z" />
+    </svg>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M3 4.5h10" />
+      <path d="M5.5 4.5V3a1 1 0 011-1h3a1 1 0 011 1v1.5" />
+      <path d="M4.5 4.5l.5 8.5a1 1 0 001 1h4a1 1 0 001-1l.5-8.5" />
+    </svg>
+  );
+}

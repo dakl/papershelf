@@ -8,6 +8,7 @@ import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
 import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
 import { ShortcutHint } from './ShortcutHint';
+import { SidebarItem } from './SidebarItem';
 import { TagManager } from './TagManager';
 
 const NAV_ITEMS: {
@@ -32,11 +33,14 @@ export function Sidebar() {
     selectedTagId,
     sidebarCollapsed,
   } = useUIStore();
-  const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
+  const { collections, tags, loadCollections, loadTags, updateCollection, updateTag, deleteCollection, deleteTag } =
+    usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
+  const [editCollection, setEditCollection] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [editTag, setEditTag] = useState<{ id: string; name: string; color: string } | null>(null);
 
   useEffect(() => {
     loadCollections();
@@ -44,6 +48,20 @@ export function Sidebar() {
     loadMcpStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDeleteCollection = (id: string) => {
+    if (sidebarView === 'collection' && selectedCollectionId === id) {
+      setSidebarView('all-papers');
+    }
+    deleteCollection(id);
+  };
+
+  const handleDeleteTag = (id: string) => {
+    if (sidebarView === 'tag' && selectedTagId === id) {
+      setSidebarView('all-papers');
+    }
+    deleteTag(id);
+  };
 
   const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH;
 
@@ -94,25 +112,19 @@ export function Sidebar() {
         </div>
         {collections.length === 0 && <p className="px-2 text-mac-small text-gray-400">No collections yet</p>}
         {collections.map((col) => (
-          <button
+          <SidebarItem
             key={col.id}
+            id={col.id}
+            name={col.name}
+            color={col.color}
+            paperCount={col.paperCount}
+            isSelected={sidebarView === 'collection' && selectedCollectionId === col.id}
             onClick={() => navigateToCollection(col.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (confirm(`Delete collection "${col.name}"?`)) {
-                deleteCollection(col.id);
-              }
-            }}
-            className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-              sidebarView === 'collection' && selectedCollectionId === col.id
-                ? 'bg-mac-selection font-medium'
-                : 'hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
-            <span className="flex-1 truncate">{col.name}</span>
-            <span className="text-mac-small text-gray-400">{col.paperCount}</span>
-          </button>
+            onRename={(id, newName) => updateCollection(id, newName, col.color)}
+            onEdit={(id) => setEditCollection({ id, name: col.name, color: col.color })}
+            onDelete={handleDeleteCollection}
+            itemType="collection"
+          />
         ))}
 
         {/* Tags */}
@@ -128,25 +140,19 @@ export function Sidebar() {
         </div>
         {tags.length === 0 && <p className="px-2 text-mac-small text-gray-400">No tags yet</p>}
         {tags.map((tag) => (
-          <button
+          <SidebarItem
             key={tag.id}
+            id={tag.id}
+            name={tag.name}
+            color={tag.color}
+            paperCount={tag.paperCount}
+            isSelected={sidebarView === 'tag' && selectedTagId === tag.id}
             onClick={() => navigateToTag(tag.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (confirm(`Delete tag "${tag.name}"?`)) {
-                deleteTag(tag.id);
-              }
-            }}
-            className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-              sidebarView === 'tag' && selectedTagId === tag.id
-                ? 'bg-mac-selection font-medium'
-                : 'hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-            <span className="flex-1 truncate">{tag.name}</span>
-            <span className="text-mac-small text-gray-400">{tag.paperCount}</span>
-          </button>
+            onRename={(id, newName) => updateTag(id, newName, tag.color)}
+            onEdit={(id) => setEditTag({ id, name: tag.name, color: tag.color })}
+            onDelete={handleDeleteTag}
+            itemType="tag"
+          />
         ))}
       </nav>
 
@@ -190,6 +196,22 @@ export function Sidebar() {
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
       {showNewTag && <TagManager onClose={() => setShowNewTag(false)} />}
+      {editCollection && (
+        <CollectionManager
+          onClose={() => setEditCollection(null)}
+          editId={editCollection.id}
+          editName={editCollection.name}
+          editColor={editCollection.color}
+        />
+      )}
+      {editTag && (
+        <TagManager
+          onClose={() => setEditTag(null)}
+          editId={editTag.id}
+          editName={editTag.name}
+          editColor={editTag.color}
+        />
+      )}
     </aside>
   );
 }
