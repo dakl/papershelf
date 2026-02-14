@@ -40,3 +40,4 @@ export {
   updateTag,
 } from './tags';
 export { getToolStats, logToolCall } from './tool-stats';
+export { getViewerState, saveViewerState } from './viewer-state';

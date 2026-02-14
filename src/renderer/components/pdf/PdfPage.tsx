@@ -308,11 +308,17 @@ export function PdfPage({
     [annotationMode, scale, pageNumber, onPageClicked, onAnnotationClicked, annotationMap],
   );
 
+  const viewport = page.getViewport({ scale });
+
   return (
     <div
       ref={wrapperRef}
       className={`relative mx-auto my-4 ${annotationMode === 'highlight' ? 'annotate-highlight-mode' : ''}`}
-      style={{ width: 'fit-content', cursor: annotationMode === 'note' ? 'crosshair' : undefined }}
+      style={{
+        width: Math.floor(viewport.width),
+        height: Math.floor(viewport.height),
+        cursor: annotationMode === 'note' ? 'crosshair' : undefined,
+      }}
       onMouseUp={handleMouseUp}
       onClick={handleClick}
     />

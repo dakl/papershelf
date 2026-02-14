@@ -285,6 +285,19 @@ export function registerIpcHandlers(): void {
     return db.getCitationSubgraph(allCenterIds);
   });
 
+  // --- Viewer State ---
+
+  ipcMain.handle('viewerState:get', (_event, paperId: string) => {
+    return db.getViewerState(paperId);
+  });
+
+  ipcMain.handle(
+    'viewerState:save',
+    (_event, paperId: string, scale: number, scrollTop: number, scrollLeft: number) => {
+      db.saveViewerState(paperId, scale, scrollTop, scrollLeft);
+    },
+  );
+
   // --- Settings ---
 
   ipcMain.handle('settings:getShortcuts', () => {

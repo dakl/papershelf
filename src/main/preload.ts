@@ -50,6 +50,11 @@ const api: ElectronAPI = {
   removeAnnotation: (paperId, pageIndex, annotationName) =>
     ipcRenderer.invoke('annotations:remove', paperId, pageIndex, annotationName),
 
+  // Viewer state
+  getViewerState: (paperId) => ipcRenderer.invoke('viewerState:get', paperId),
+  saveViewerState: (paperId, scale, scrollTop, scrollLeft) =>
+    ipcRenderer.invoke('viewerState:save', paperId, scale, scrollTop, scrollLeft),
+
   // Settings
   getShortcutOverrides: () => ipcRenderer.invoke('settings:getShortcuts'),
   saveShortcutOverrides: (overrides) => ipcRenderer.invoke('settings:saveShortcuts', overrides),

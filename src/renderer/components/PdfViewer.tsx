@@ -8,6 +8,7 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 3.0;
 const SCALE_STEP = 0.25;
 const PINCH_COMMIT_DELAY_MS = 150;
+const VIEWER_STATE_SAVE_DELAY_MS = 500;
 
 type AnnotationMode = 'read' | 'highlight' | 'note';
 
@@ -263,6 +264,11 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
 
+  const [pendingScroll, setPendingScroll] = useState<{ scrollTop: number; scrollLeft: number } | null>(null);
+  const initialStateLoadedRef = useRef(false);
+  const viewerStateSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<{ scale: number; scrollTop: number; scrollLeft: number } | null>(null);
+
   const { pdfDocument, numPages, loading, error } = usePdfDocument(paperId ?? null, pdfVersion, pdfUrl, arxivId);
 
   // Fetch all PDFPageProxy objects when document loads
@@ -274,13 +280,17 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
 
     let cancelled = false;
     const fetchPages = async () => {
-      const pagePromises: Promise<PDFPageProxy>[] = [];
-      for (let i = 1; i <= pdfDocument.numPages; i++) {
-        pagePromises.push(pdfDocument.getPage(i));
-      }
-      const fetchedPages = await Promise.all(pagePromises);
-      if (!cancelled) {
-        setPages(fetchedPages);
+      try {
+        const pagePromises: Promise<PDFPageProxy>[] = [];
+        for (let i = 1; i <= pdfDocument.numPages; i++) {
+          pagePromises.push(pdfDocument.getPage(i));
+        }
+        const fetchedPages = await Promise.all(pagePromises);
+        if (!cancelled) {
+          setPages(fetchedPages);
+        }
+      } catch {
+        // Document was destroyed during paper switch — ignore
       }
     };
     fetchPages();
@@ -289,6 +299,83 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
       cancelled = true;
     };
   }, [pdfDocument]);
+
+  // --- Viewer state persistence (library papers only) ---
+
+  const flushViewerState = useCallback(() => {
+    if (!paperId) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const currentScale = scaleRef.current;
+    const { scrollTop, scrollLeft } = container;
+    const last = lastSavedRef.current;
+    if (last && last.scale === currentScale && last.scrollTop === scrollTop && last.scrollLeft === scrollLeft) return;
+    lastSavedRef.current = { scale: currentScale, scrollTop, scrollLeft };
+    window.electronAPI.saveViewerState(paperId, currentScale, scrollTop, scrollLeft);
+  }, [paperId]);
+
+  const debouncedSaveViewerState = useCallback(() => {
+    if (viewerStateSaveTimerRef.current) clearTimeout(viewerStateSaveTimerRef.current);
+    viewerStateSaveTimerRef.current = setTimeout(flushViewerState, VIEWER_STATE_SAVE_DELAY_MS);
+  }, [flushViewerState]);
+
+  // Load saved state when paperId changes
+  useEffect(() => {
+    initialStateLoadedRef.current = false;
+    setPendingScroll(null);
+    lastSavedRef.current = null;
+    if (!paperId) return;
+    window.electronAPI.getViewerState(paperId).then((state) => {
+      if (!state) {
+        initialStateLoadedRef.current = true;
+        return;
+      }
+      setScale(state.scale);
+      setVisualScale(state.scale);
+      setPendingScroll({ scrollTop: state.scrollTop, scrollLeft: state.scrollLeft });
+      initialStateLoadedRef.current = true;
+    });
+  }, [paperId]);
+
+  // Restore scroll position once pages are rendered and pendingScroll is set
+  useEffect(() => {
+    if (!pendingScroll || pages.length === 0) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const { scrollTop, scrollLeft } = pendingScroll;
+    setPendingScroll(null);
+    requestAnimationFrame(() => {
+      container.scrollTop = scrollTop;
+      container.scrollLeft = scrollLeft;
+    });
+  }, [pendingScroll, pages]);
+
+  // Save on scroll (passive listener, debounced)
+  useEffect(() => {
+    if (!paperId) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      if (initialStateLoadedRef.current) debouncedSaveViewerState();
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [paperId, debouncedSaveViewerState]);
+
+  // Save on zoom change (skip initial load)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scale triggers save on zoom
+  useEffect(() => {
+    if (!paperId || !initialStateLoadedRef.current) return;
+    debouncedSaveViewerState();
+  }, [scale, paperId, debouncedSaveViewerState]);
+
+  // Flush on unmount / paperId change
+  useEffect(() => {
+    return () => {
+      if (viewerStateSaveTimerRef.current) clearTimeout(viewerStateSaveTimerRef.current);
+      flushViewerState();
+    };
+  }, [flushViewerState]);
 
   // Save scroll position before annotation reload
   const prevPdfVersionRef = useRef(pdfVersion);

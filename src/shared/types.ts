@@ -89,6 +89,13 @@ export interface AnnotationEntry {
   contents?: string;
 }
 
+export interface ViewerState {
+  paperId: string;
+  scale: number;
+  scrollTop: number;
+  scrollLeft: number;
+}
+
 export interface PaperFilter {
   view: 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
   collectionId?: string;
@@ -171,6 +178,10 @@ export interface ElectronAPI {
     pageIndex: number,
     annotationName: string,
   ) => Promise<{ success: boolean; error?: string }>;
+
+  // Viewer state
+  getViewerState: (paperId: string) => Promise<ViewerState | null>;
+  saveViewerState: (paperId: string, scale: number, scrollTop: number, scrollLeft: number) => Promise<void>;
 
   // Settings
   getShortcutOverrides: () => Promise<Record<string, string>>;

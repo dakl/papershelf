@@ -119,6 +119,14 @@ function createSchema(): void {
       error_message TEXT,
       called_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS paper_viewer_state (
+      paper_id TEXT PRIMARY KEY REFERENCES papers(id) ON DELETE CASCADE,
+      scale REAL NOT NULL DEFAULT 1.0,
+      scroll_top REAL NOT NULL DEFAULT 0,
+      scroll_left REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
