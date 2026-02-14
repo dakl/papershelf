@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { ConfirmPopup } from './ConfirmPopup';
 import type { ContextMenuItem } from './ContextMenu';
 import { ContextMenu } from './ContextMenu';
-import { ConfirmPopup } from './ConfirmPopup';
 import { PencilIcon, TrashIcon } from './Icons';
 
 interface SidebarItemProps {
@@ -15,6 +15,7 @@ interface SidebarItemProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   itemType: 'collection' | 'tag';
+  onDrop?: (dataValue: string) => void;
 }
 
 export function SidebarItem({
@@ -28,11 +29,13 @@ export function SidebarItem({
   onEdit,
   onDelete,
   itemType,
+  onDrop,
 }: SidebarItemProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ x: number; y: number } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(name);
+  const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,10 +74,40 @@ export function SidebarItem({
     setConfirmDelete({ x: rect.left, y: rect.bottom + 4 });
   };
 
+  const isCollection = itemType === 'collection';
+  const isTag = itemType === 'tag';
+  const acceptedDragType = isCollection ? 'application/x-paper-id' : null;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!isTag) return;
+    e.dataTransfer.setData('application/x-tag-id', id);
+    e.dataTransfer.effectAllowed = 'link';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!acceptedDragType || !onDrop || !e.dataTransfer.types.includes(acceptedDragType)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'link';
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    setDragOver(false);
+    if (!acceptedDragType || !onDrop) return;
+    const value = e.dataTransfer.getData(acceptedDragType);
+    if (value) onDrop(value);
+  };
+
   const contextMenuItems: ContextMenuItem[] = [
     { label: 'Rename', onClick: startRename },
     { label: 'Change Color\u2026', onClick: () => onEdit(id) },
-    { label: 'Delete', onClick: () => setConfirmDelete({ x: contextMenu?.x ?? 0, y: contextMenu?.y ?? 0 }), variant: 'danger' },
+    {
+      label: 'Delete',
+      onClick: () => setConfirmDelete({ x: contextMenu?.x ?? 0, y: contextMenu?.y ?? 0 }),
+      variant: 'danger',
+    },
   ];
 
   return (
@@ -82,9 +115,14 @@ export function SidebarItem({
       <div
         className={`group no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors cursor-default ${
           isSelected ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
-        }`}
+        } ${dragOver ? 'ring-2 ring-mac-accent ring-inset' : ''}`}
         onClick={isRenaming ? undefined : onClick}
         onContextMenu={handleContextMenu}
+        draggable={isTag && !isRenaming}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
 
@@ -140,7 +178,12 @@ export function SidebarItem({
       </div>
 
       {contextMenu && (
-        <ContextMenu x={contextMenu.x} y={contextMenu.y} items={contextMenuItems} onClose={() => setContextMenu(null)} />
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
       )}
 
       {confirmDelete && (

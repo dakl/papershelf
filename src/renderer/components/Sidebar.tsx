@@ -4,6 +4,7 @@ import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
+import { toast } from '../stores/toastStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
 import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
@@ -33,8 +34,17 @@ export function Sidebar() {
     selectedTagId,
     sidebarCollapsed,
   } = useUIStore();
-  const { collections, tags, loadCollections, loadTags, updateCollection, updateTag, deleteCollection, deleteTag } =
-    usePaperStore();
+  const {
+    collections,
+    tags,
+    loadCollections,
+    loadTags,
+    updateCollection,
+    updateTag,
+    deleteCollection,
+    deleteTag,
+    addPaperToCollection,
+  } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
   const [showNewCollection, setShowNewCollection] = useState(false);
@@ -124,6 +134,10 @@ export function Sidebar() {
             onEdit={(id) => setEditCollection({ id, name: col.name, color: col.color })}
             onDelete={handleDeleteCollection}
             itemType="collection"
+            onDrop={async (paperId) => {
+              await addPaperToCollection(paperId, col.id);
+              toast(`Added to "${col.name}"`, 'success');
+            }}
           />
         ))}
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StarIcon } from './Icons';
 
 function formatDate(dateStr: string): string {
@@ -23,6 +24,8 @@ interface PaperListItemProps {
   inLibrary?: boolean;
   onClick: () => void;
   rightSlot?: React.ReactNode;
+  paperId?: string;
+  onTagDrop?: (tagId: string) => void;
 }
 
 export function PaperListItem({
@@ -35,13 +38,43 @@ export function PaperListItem({
   inLibrary,
   onClick,
   rightSlot,
+  paperId,
+  onTagDrop,
 }: PaperListItemProps) {
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!paperId) return;
+    e.dataTransfer.setData('application/x-paper-id', paperId);
+    e.dataTransfer.effectAllowed = 'link';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!onTagDrop || !e.dataTransfer.types.includes('application/x-tag-id')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'link';
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    setDragOver(false);
+    const tagId = e.dataTransfer.getData('application/x-tag-id');
+    if (tagId && onTagDrop) onTagDrop(tagId);
+  };
+
   return (
     <button
       onClick={onClick}
+      draggable={!!paperId}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       className={`w-full text-left px-3 py-2.5 border-b border-mac-separator transition-colors ${
         isSelected ? 'bg-mac-selection' : 'hover:bg-black/3 dark:hover:bg-white/3'
-      }`}
+      } ${dragOver ? 'ring-2 ring-mac-accent ring-inset' : ''}`}
     >
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
