@@ -1,28 +1,32 @@
 # PaperShelf
 
-A native-feeling Mac desktop app for searching arXiv, organizing research papers, annotating PDFs, and chatting with your paper library using RAG.
-
-Built with Electron + React + TypeScript + Tailwind CSS + SQLite.
+A native-feeling Mac desktop app for managing research papers. Search arXiv, save and annotate PDFs, organize with collections and tags, explore citation graphs, and let AI assistants access your library via MCP.
 
 ## Install
 
-Download the latest `.dmg` from [Releases](https://github.com/dakl/papershelf/releases) and drag PaperShelf to `/Applications`.
+Download the latest `.dmg` from [Releases](https://github.com/dakl/papershelf/releases), open it, and drag PaperShelf to Applications.
 
-On first launch, right-click the app and select **Open** to bypass the "unidentified developer" dialog.
+> Requires macOS (Apple Silicon). The app is signed and notarized.
 
 ## Features
 
-- **arXiv search** — search and save papers directly from arXiv
-- **Paper library** — organize with collections, tags, and favorites
-- **Full-text search** — FTS5-powered search across titles, abstracts, and extracted PDF text
-- **PDF management** — automatic download and text extraction on save
-- **MCP server** — expose search and library as tools for Claude and other MCP clients
+- **arXiv search** -- find papers and save them to your library with one click
+- **PDF viewer** -- read, highlight, and add sticky notes directly on papers
+- **Collections & tags** -- organize papers with colored collections and tags
+- **Citation graph** -- visualize how papers cite each other using Semantic Scholar data
+- **Full-text search** -- FTS5-powered search across titles, abstracts, and full paper text
+- **MCP server** -- expose your library to AI assistants (Claude, etc.) over the Model Context Protocol
+- **Keyboard-driven** -- customizable shortcuts for fast navigation
 
-## MCP Server
+## MCP integration
 
-PaperShelf includes an MCP server that lets Claude search your paper library, fetch arXiv papers, and more.
+PaperShelf includes a built-in MCP server that lets AI assistants search your library, read papers, and manage collections.
 
-### Claude Desktop
+### Streamable HTTP
+
+Start the server from Settings and connect your MCP client to `http://localhost:<port>/mcp`.
+
+### Claude Desktop (stdio)
 
 Add this to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -37,48 +41,49 @@ Add this to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop to pick up the change.
-
-### Available Tools
+### Available tools
 
 | Tool | Description |
 |------|-------------|
 | `search_arxiv` | Search arXiv for papers |
 | `search_library` | Full-text search your saved papers |
 | `get_paper` | Get details for a specific paper |
-| `list_papers` | List papers in your library |
+| `list_papers` | List papers with optional collection/tag filters |
 | `save_paper` | Save an arXiv paper to your library |
 | `fetch_paper_html` | Fetch the HTML content of a paper |
-| `get_bibtex` | Get BibTeX citation for a paper |
-| `list_collections` | List your paper collections |
-| `list_tags` | List tags |
+| `get_bibtex` | Generate a BibTeX citation for a paper |
+| `list_collections` | List all collections |
+| `list_tags` | List all tags |
 | `list_categories` | List arXiv categories |
+| `create_collection` | Create a new collection |
+| `create_tag` | Create a new tag |
+| `add_paper_to_collection` | Add a paper to a collection |
+| `remove_paper_from_collection` | Remove a paper from a collection |
+| `add_tag_to_paper` | Add a tag to a paper |
+| `remove_tag_from_paper` | Remove a tag from a paper |
+| `toggle_favorite` | Toggle favorite status on a paper |
 
 ## Development
 
 ```bash
-npm install          # Also runs @electron/rebuild for better-sqlite3
-npm run dev          # Start Electron + Vite + TypeScript watch
-npm run build        # Build main + renderer
-npm run test         # Run tests (vitest)
+npm install          # also runs @electron/rebuild for better-sqlite3
+
+# dev mode with isolated data directory
+PAPERSHELF_DATA_DIR=/tmp/papershelf-dev npm run dev
+
+npm run test         # run tests (vitest)
+npm run lint         # biome check
+npm run build        # build main + renderer
 ```
 
-## Architecture
+## Tech stack
 
-```
-src/
-├── main/            # Electron main process (CommonJS)
-│   ├── index.ts     # App entry, window creation
-│   ├── arxiv-client.ts
-│   ├── database.ts  # SQLite + FTS5
-│   ├── pdf-processor.ts
-│   ├── ipc-handlers.ts
-│   ├── mcp/         # MCP server (stdio + HTTP)
-│   └── preload.ts
-├── renderer/        # React frontend (ESM, Vite)
-│   ├── components/
-│   ├── stores/      # Zustand state
-│   └── hooks/
-└── shared/
-    └── types.ts
-```
+Electron + React + TypeScript + SQLite + Tailwind CSS
+
+## License
+
+[MIT](LICENSE)
+
+## Support
+
+If you find PaperShelf useful, consider [sponsoring the project](https://github.com/sponsors/dakl).
