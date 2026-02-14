@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ArxivPaper, Collection, LibraryPaper, PaperFilter, SavePaperResult, Tag } from '../../shared/types';
+import { toast } from './toastStore';
 
 interface PaperState {
   papers: LibraryPaper[];
@@ -62,11 +63,16 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   deletePaper: async (id) => {
-    await window.electronAPI.deletePaper(id);
-    set((state) => ({
-      papers: state.papers.filter((p) => p.id !== id),
-      selectedLibraryPaper: state.selectedLibraryPaper?.id === id ? null : state.selectedLibraryPaper,
-    }));
+    try {
+      await window.electronAPI.deletePaper(id);
+      set((state) => ({
+        papers: state.papers.filter((p) => p.id !== id),
+        selectedLibraryPaper: state.selectedLibraryPaper?.id === id ? null : state.selectedLibraryPaper,
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete paper', 'error');
+      throw err;
+    }
   },
 
   toggleFavorite: async (id) => {
@@ -101,28 +107,46 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   createCollection: async (name, color) => {
-    const collection = await window.electronAPI.createCollection(name, color);
-    set((state) => ({ collections: [...state.collections, collection] }));
-    return collection;
+    try {
+      const collection = await window.electronAPI.createCollection(name, color);
+      set((state) => ({ collections: [...state.collections, collection] }));
+      return collection;
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create collection', 'error');
+      throw err;
+    }
   },
 
   updateCollection: async (id, name, color) => {
-    const updated = await window.electronAPI.updateCollection(id, name, color);
-    set((state) => ({
-      collections: state.collections.map((c) => (c.id === id ? updated : c)),
-    }));
+    try {
+      const updated = await window.electronAPI.updateCollection(id, name, color);
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === id ? updated : c)),
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update collection', 'error');
+      throw err;
+    }
   },
 
   deleteCollection: async (id) => {
-    await window.electronAPI.deleteCollection(id);
-    set((state) => ({
-      collections: state.collections.filter((c) => c.id !== id),
-    }));
+    try {
+      await window.electronAPI.deleteCollection(id);
+      set((state) => ({
+        collections: state.collections.filter((c) => c.id !== id),
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete collection', 'error');
+      throw err;
+    }
   },
 
   addPaperToCollection: async (paperId, collectionId) => {
-    await window.electronAPI.addPaperToCollection(paperId, collectionId);
-    // Refresh the selected paper's collections
+    const result = await window.electronAPI.addPaperToCollection(paperId, collectionId);
+    if (result && !result.success) {
+      toast(result.error ?? 'Failed to add paper to collection', 'error');
+      return;
+    }
     const { selectedLibraryPaper } = get();
     if (selectedLibraryPaper?.id === paperId) {
       const paper = await window.electronAPI.getPaper(paperId);
@@ -132,7 +156,11 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   removePaperFromCollection: async (paperId, collectionId) => {
-    await window.electronAPI.removePaperFromCollection(paperId, collectionId);
+    const result = await window.electronAPI.removePaperFromCollection(paperId, collectionId);
+    if (result && !result.success) {
+      toast(result.error ?? 'Failed to remove paper from collection', 'error');
+      return;
+    }
     const { selectedLibraryPaper } = get();
     if (selectedLibraryPaper?.id === paperId) {
       const paper = await window.electronAPI.getPaper(paperId);
@@ -149,27 +177,46 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   createTag: async (name, color) => {
-    const tag = await window.electronAPI.createTag(name, color);
-    set((state) => ({ tags: [...state.tags, tag] }));
-    return tag;
+    try {
+      const tag = await window.electronAPI.createTag(name, color);
+      set((state) => ({ tags: [...state.tags, tag] }));
+      return tag;
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to create tag', 'error');
+      throw err;
+    }
   },
 
   updateTag: async (id, name, color) => {
-    const updated = await window.electronAPI.updateTag(id, name, color);
-    set((state) => ({
-      tags: state.tags.map((t) => (t.id === id ? updated : t)),
-    }));
+    try {
+      const updated = await window.electronAPI.updateTag(id, name, color);
+      set((state) => ({
+        tags: state.tags.map((t) => (t.id === id ? updated : t)),
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update tag', 'error');
+      throw err;
+    }
   },
 
   deleteTag: async (id) => {
-    await window.electronAPI.deleteTag(id);
-    set((state) => ({
-      tags: state.tags.filter((t) => t.id !== id),
-    }));
+    try {
+      await window.electronAPI.deleteTag(id);
+      set((state) => ({
+        tags: state.tags.filter((t) => t.id !== id),
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to delete tag', 'error');
+      throw err;
+    }
   },
 
   addTagToPaper: async (paperId, tagId) => {
-    await window.electronAPI.addTagToPaper(paperId, tagId);
+    const result = await window.electronAPI.addTagToPaper(paperId, tagId);
+    if (result && !result.success) {
+      toast(result.error ?? 'Failed to add tag to paper', 'error');
+      return;
+    }
     const { selectedLibraryPaper } = get();
     if (selectedLibraryPaper?.id === paperId) {
       const paper = await window.electronAPI.getPaper(paperId);
@@ -179,7 +226,11 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   removeTagFromPaper: async (paperId, tagId) => {
-    await window.electronAPI.removeTagFromPaper(paperId, tagId);
+    const result = await window.electronAPI.removeTagFromPaper(paperId, tagId);
+    if (result && !result.success) {
+      toast(result.error ?? 'Failed to remove tag from paper', 'error');
+      return;
+    }
     const { selectedLibraryPaper } = get();
     if (selectedLibraryPaper?.id === paperId) {
       const paper = await window.electronAPI.getPaper(paperId);

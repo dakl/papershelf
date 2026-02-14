@@ -1,19 +1,27 @@
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
+import { toast } from '../stores/toastStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
+import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
 import { ShortcutHint } from './ShortcutHint';
+import { SidebarItem } from './SidebarItem';
 import { TagManager } from './TagManager';
 
-const NAV_ITEMS: { id: SidebarView; label: string; icon: string; shortcutId: string }[] = [
-  { id: 'search', label: 'Search', icon: '🔍', shortcutId: 'goSearch' },
-  { id: 'all-papers', label: 'All Papers', icon: '📄', shortcutId: 'goAllPapers' },
-  { id: 'favorites', label: 'Favorites', icon: '⭐', shortcutId: 'goFavorites' },
-  { id: 'recent', label: 'Recently Added', icon: '🕐', shortcutId: 'goRecent' },
-  { id: 'citations', label: 'Citations', icon: '🔗', shortcutId: 'goCitations' },
+const NAV_ITEMS: {
+  id: SidebarView;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  shortcutId: string;
+}[] = [
+  { id: 'all-papers', label: 'My Library', icon: DocTextIcon, shortcutId: 'goAllPapers' },
+  { id: 'search', label: 'Search', icon: SearchIcon, shortcutId: 'goSearch' },
+  { id: 'favorites', label: 'Favorites', icon: StarIcon, shortcutId: 'goFavorites' },
+  { id: 'recent', label: 'Recently Added', icon: ClockIcon, shortcutId: 'goRecent' },
 ];
 
 export function Sidebar() {
@@ -26,11 +34,23 @@ export function Sidebar() {
     selectedTagId,
     sidebarCollapsed,
   } = useUIStore();
-  const { collections, tags, loadCollections, loadTags, deleteCollection, deleteTag } = usePaperStore();
+  const {
+    collections,
+    tags,
+    loadCollections,
+    loadTags,
+    updateCollection,
+    updateTag,
+    deleteCollection,
+    deleteTag,
+    addPaperToCollection,
+  } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
+  const [editCollection, setEditCollection] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [editTag, setEditTag] = useState<{ id: string; name: string; color: string } | null>(null);
 
   useEffect(() => {
     loadCollections();
@@ -39,11 +59,25 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleDeleteCollection = (id: string) => {
+    if (sidebarView === 'collection' && selectedCollectionId === id) {
+      setSidebarView('all-papers');
+    }
+    deleteCollection(id);
+  };
+
+  const handleDeleteTag = (id: string) => {
+    if (sidebarView === 'tag' && selectedTagId === id) {
+      setSidebarView('all-papers');
+    }
+    deleteTag(id);
+  };
+
   const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH;
 
   return (
     <aside
-      className="flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent overflow-hidden"
+      className="shrink-0 border-r sidebar-separator flex flex-col bg-transparent overflow-hidden"
       style={{
         width: sidebarWidth,
         minWidth: sidebarWidth,
@@ -61,11 +95,11 @@ export function Sidebar() {
                 sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
             >
-              <span className="text-sm">{item.icon}</span>
+              <item.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
               {commandDown && shortcut && (
                 <span
-                  className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm"
+                  className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs"
                   style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
                 >
                   {formatKeys(shortcut.keys)}
@@ -88,25 +122,23 @@ export function Sidebar() {
         </div>
         {collections.length === 0 && <p className="px-2 text-mac-small text-gray-400">No collections yet</p>}
         {collections.map((col) => (
-          <button
+          <SidebarItem
             key={col.id}
+            id={col.id}
+            name={col.name}
+            color={col.color}
+            paperCount={col.paperCount}
+            isSelected={sidebarView === 'collection' && selectedCollectionId === col.id}
             onClick={() => navigateToCollection(col.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (confirm(`Delete collection "${col.name}"?`)) {
-                deleteCollection(col.id);
-              }
+            onRename={(id, newName) => updateCollection(id, newName, col.color)}
+            onEdit={(id) => setEditCollection({ id, name: col.name, color: col.color })}
+            onDelete={handleDeleteCollection}
+            itemType="collection"
+            onDrop={async (paperId) => {
+              await addPaperToCollection(paperId, col.id);
+              toast(`Added to "${col.name}"`, 'success');
             }}
-            className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-              sidebarView === 'collection' && selectedCollectionId === col.id
-                ? 'bg-mac-selection font-medium'
-                : 'hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
-            <span className="flex-1 truncate">{col.name}</span>
-            <span className="text-mac-small text-gray-400">{col.paperCount}</span>
-          </button>
+          />
         ))}
 
         {/* Tags */}
@@ -122,30 +154,24 @@ export function Sidebar() {
         </div>
         {tags.length === 0 && <p className="px-2 text-mac-small text-gray-400">No tags yet</p>}
         {tags.map((tag) => (
-          <button
+          <SidebarItem
             key={tag.id}
+            id={tag.id}
+            name={tag.name}
+            color={tag.color}
+            paperCount={tag.paperCount}
+            isSelected={sidebarView === 'tag' && selectedTagId === tag.id}
             onClick={() => navigateToTag(tag.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (confirm(`Delete tag "${tag.name}"?`)) {
-                deleteTag(tag.id);
-              }
-            }}
-            className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-              sidebarView === 'tag' && selectedTagId === tag.id
-                ? 'bg-mac-selection font-medium'
-                : 'hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-            <span className="flex-1 truncate">{tag.name}</span>
-            <span className="text-mac-small text-gray-400">{tag.paperCount}</span>
-          </button>
+            onRename={(id, newName) => updateTag(id, newName, tag.color)}
+            onEdit={(id) => setEditTag({ id, name: tag.name, color: tag.color })}
+            onDelete={handleDeleteTag}
+            itemType="tag"
+          />
         ))}
       </nav>
 
       {/* Footer bar */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
+      <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
         <button
           onClick={() => toggleMcpServer(mcpStatus.port)}
           disabled={mcpLoading}
@@ -184,6 +210,22 @@ export function Sidebar() {
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
       {showNewTag && <TagManager onClose={() => setShowNewTag(false)} />}
+      {editCollection && (
+        <CollectionManager
+          onClose={() => setEditCollection(null)}
+          editId={editCollection.id}
+          editName={editCollection.name}
+          editColor={editCollection.color}
+        />
+      )}
+      {editTag && (
+        <TagManager
+          onClose={() => setEditTag(null)}
+          editId={editTag.id}
+          editName={editTag.name}
+          editColor={editTag.color}
+        />
+      )}
     </aside>
   );
 }

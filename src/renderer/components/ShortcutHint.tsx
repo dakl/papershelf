@@ -10,15 +10,15 @@ interface ShortcutHintProps {
 }
 
 const ARROW = (
-  <span className="block w-0 h-0 border-l-[4px] border-r-[4px] border-l-transparent border-r-transparent border-b-[4px] border-b-gray-800/90 dark:border-b-gray-200/90" />
+  <span className="block w-0 h-0 border-l-4 border-r-4 border-l-transparent border-r-transparent border-b-4 border-b-gray-800/90 dark:border-b-gray-200/90" />
 );
 
 const ARROW_DOWN = (
-  <span className="block w-0 h-0 border-l-[4px] border-r-[4px] border-l-transparent border-r-transparent border-t-[4px] border-t-gray-800/90 dark:border-t-gray-200/90" />
+  <span className="block w-0 h-0 border-l-4 border-r-4 border-l-transparent border-r-transparent border-t-4 border-t-gray-800/90 dark:border-t-gray-200/90" />
 );
 
 const ARROW_RIGHT = (
-  <span className="block w-0 h-0 border-t-[4px] border-b-[4px] border-t-transparent border-b-transparent border-r-[4px] border-r-gray-800/90 dark:border-r-gray-200/90" />
+  <span className="block w-0 h-0 border-t-4 border-b-4 border-t-transparent border-b-transparent border-r-4 border-r-gray-800/90 dark:border-r-gray-200/90" />
 );
 
 export function ShortcutHint({ shortcutId, children, position = 'below', label, className }: ShortcutHintProps) {
@@ -28,7 +28,7 @@ export function ShortcutHint({ shortcutId, children, position = 'below', label, 
   if (!shortcut) return <>{children}</>;
 
   const pill = (
-    <span className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm">
+    <span className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
       {formatKeys(shortcut.keys)}
       {label && <span className="opacity-70">{label}</span>}
     </span>

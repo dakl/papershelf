@@ -1,5 +1,6 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ConfirmPopup } from './ConfirmPopup';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { usePdfDocument } from './pdf/usePdfDocument';
 import { ShortcutHint } from './ShortcutHint';
@@ -143,7 +144,7 @@ function StickyNotePopup({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Enter note text..."
-        className="w-full h-20 text-mac-small resize-none rounded border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full h-20 text-mac-small resize-none rounded-sm border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-1 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && e.metaKey) handleSubmit();
           if (e.key === 'Escape') onCancel();
@@ -168,14 +169,14 @@ function StickyNotePopup({
         <div className="flex gap-1">
           <button
             onClick={onCancel}
-            className="px-2 py-0.5 text-mac-small rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="px-2 py-0.5 text-mac-small rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!text.trim()}
-            className="px-2 py-0.5 text-mac-small rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 transition-colors"
+            className="px-2 py-0.5 text-mac-small rounded-sm bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 transition-colors"
           >
             Add
           </button>
@@ -185,53 +186,6 @@ function StickyNotePopup({
   );
 }
 
-function DeleteConfirmPopup({
-  x,
-  y,
-  onConfirm,
-  onCancel,
-}: {
-  x: number;
-  y: number;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        onCancel();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onCancel]);
-
-  return (
-    <div
-      ref={ref}
-      className="fixed z-50 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3"
-      style={{ left: x, top: y }}
-    >
-      <p className="text-mac-small mb-2">Delete this annotation?</p>
-      <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="px-2 py-0.5 text-mac-small rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-2 py-0.5 text-mac-small rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
   const readOnly = !paperId;
@@ -494,30 +448,43 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     };
 
     const handleWheel = (event: WheelEvent) => {
-      if (!event.ctrlKey) return;
       const container = containerRef.current;
-      if (!container?.contains(event.target as Node)) return;
-      event.preventDefault();
+      if (!container) return;
 
-      pointerPosRef.current = { clientX: event.clientX, clientY: event.clientY };
+      // Pinch-to-zoom: ctrlKey is set by trackpad pinch gestures
+      if (event.ctrlKey) {
+        if (!container.contains(event.target as Node)) return;
+        event.preventDefault();
 
-      const delta = -event.deltaY;
-      const nextVisualScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, latestVisualScale + delta * 0.01));
-      latestVisualScale = nextVisualScale;
-      isPinching.current = true;
-      setVisualScale(nextVisualScale);
+        pointerPosRef.current = { clientX: event.clientX, clientY: event.clientY };
 
-      if (contentRef.current) {
-        const cssScale = nextVisualScale / scale;
-        contentRef.current.style.transform = `scale(${cssScale})`;
-        const containerRect = container.getBoundingClientRect();
-        const originX = container.scrollLeft + (event.clientX - containerRect.left);
-        const originY = container.scrollTop + (event.clientY - containerRect.top);
-        contentRef.current.style.transformOrigin = `${originX}px ${originY}px`;
+        const delta = -event.deltaY;
+        const nextVisualScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, latestVisualScale + delta * 0.01));
+        latestVisualScale = nextVisualScale;
+        isPinching.current = true;
+        setVisualScale(nextVisualScale);
+
+        if (contentRef.current) {
+          const cssScale = nextVisualScale / scale;
+          contentRef.current.style.transform = `scale(${cssScale})`;
+          const containerRect = container.getBoundingClientRect();
+          const originX = container.scrollLeft + (event.clientX - containerRect.left);
+          const originY = container.scrollTop + (event.clientY - containerRect.top);
+          contentRef.current.style.transformOrigin = `${originX}px ${originY}px`;
+        }
+
+        if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        commitTimeoutRef.current = setTimeout(commitZoom, PINCH_COMMIT_DELAY_MS);
+        return;
       }
 
-      if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
-      commitTimeoutRef.current = setTimeout(commitZoom, PINCH_COMMIT_DELAY_MS);
+      // Diagonal scroll fix: bypass Chromium's trackpad axis-locking
+      if (!container.contains(event.target as Node)) return;
+      if (event.deltaX !== 0 && event.deltaY !== 0) {
+        event.preventDefault();
+        container.scrollLeft += event.deltaX;
+        container.scrollTop += event.deltaY;
+      }
     };
 
     document.addEventListener('wheel', handleWheel, { passive: false });
@@ -722,24 +689,24 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-shrink-0 flex items-center justify-center gap-3 px-4 py-2 border-b border-mac-separator bg-white/60 dark:bg-black/20">
+      <div className="shrink-0 flex items-center justify-center gap-3 px-4 py-2 border-b border-mac-separator bg-white/60 dark:bg-black/20">
         <button
           onClick={zoomOut}
           disabled={scale <= MIN_SCALE}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
         >
           -
         </button>
         <button
           onClick={zoomReset}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[4rem] text-center"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-16 text-center"
         >
           {Math.round(visualScale * 100)}%
         </button>
         <button
           onClick={zoomIn}
           disabled={scale >= MAX_SCALE}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
         >
           +
         </button>
@@ -813,9 +780,10 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
       )}
 
       {deleteConfirm && (
-        <DeleteConfirmPopup
+        <ConfirmPopup
           x={deleteConfirm.x}
           y={deleteConfirm.y}
+          message="Delete this annotation?"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteConfirm(null)}
         />

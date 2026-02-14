@@ -2,6 +2,15 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { ElectronAPI } from '../shared/types';
 
 const api: ElectronAPI = {
+  // App info
+  getAppInfo: () => ipcRenderer.invoke('app:getInfo'),
+  onShowAbout: (callback: () => void) => {
+    ipcRenderer.on('app:showAbout', callback);
+    return () => {
+      ipcRenderer.removeListener('app:showAbout', callback);
+    };
+  },
+
   // ArXiv search
   searchArxiv: (query) => ipcRenderer.invoke('arxiv:search', query),
 

@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import type { PaperFilter } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
+import { toast } from '../stores/toastStore';
 import { useUIStore } from '../stores/uiStore';
 import { PaperListItem } from './PaperListItem';
 
 export function LibraryList() {
   const { sidebarView, selectedCollectionId, selectedTagId } = useUIStore();
-  const { papers, selectedLibraryPaper, setSelectedLibraryPaper, loadPapers, loading } = usePaperStore();
+  const { papers, selectedLibraryPaper, setSelectedLibraryPaper, loadPapers, loading, addTagToPaper, tags } =
+    usePaperStore();
 
   useEffect(() => {
     const filter: PaperFilter = { view: sidebarView as PaperFilter['view'] };
@@ -48,6 +50,12 @@ export function LibraryList() {
           isSelected={selectedLibraryPaper?.id === paper.id}
           isFavorite={paper.isFavorite}
           onClick={() => setSelectedLibraryPaper(paper)}
+          paperId={paper.id}
+          onTagDrop={async (tagId) => {
+            await addTagToPaper(paper.id, tagId);
+            const tagName = tags.find((t) => t.id === tagId)?.name;
+            toast(tagName ? `Tagged with "${tagName}"` : 'Tag added', 'success');
+          }}
         />
       ))}
     </div>

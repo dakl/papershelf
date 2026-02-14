@@ -1,4 +1,6 @@
 import type { LibraryPaper } from '../../shared/types';
+import { usePaperStore } from '../stores/paperStore';
+import { toast } from '../stores/toastStore';
 import { PaperListItem } from './PaperListItem';
 
 interface LibrarySearchResultsProps {
@@ -8,6 +10,8 @@ interface LibrarySearchResultsProps {
 }
 
 export function LibrarySearchResults({ results, selectedPaperId, onSelectPaper }: LibrarySearchResultsProps) {
+  const { addTagToPaper, tags } = usePaperStore();
+
   if (results.length === 0) return null;
 
   return (
@@ -22,6 +26,12 @@ export function LibrarySearchResults({ results, selectedPaperId, onSelectPaper }
           isSelected={selectedPaperId === paper.id}
           isFavorite={paper.isFavorite}
           onClick={() => onSelectPaper(paper)}
+          paperId={paper.id}
+          onTagDrop={async (tagId) => {
+            await addTagToPaper(paper.id, tagId);
+            const tagName = tags.find((t) => t.id === tagId)?.name;
+            toast(tagName ? `Tagged with "${tagName}"` : 'Tag added', 'success');
+          }}
         />
       ))}
     </div>
