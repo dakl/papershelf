@@ -49,7 +49,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="flex-shrink-0 border-r sidebar-separator flex flex-col bg-transparent overflow-hidden"
+      className="shrink-0 border-r sidebar-separator flex flex-col bg-transparent overflow-hidden"
       style={{
         width: sidebarWidth,
         minWidth: sidebarWidth,
@@ -67,11 +67,11 @@ export function Sidebar() {
                 sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <item.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
               {commandDown && shortcut && (
                 <span
-                  className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm"
+                  className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs"
                   style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
                 >
                   {formatKeys(shortcut.keys)}
@@ -109,7 +109,7 @@ export function Sidebar() {
                 : 'hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
             <span className="flex-1 truncate">{col.name}</span>
             <span className="text-mac-small text-gray-400">{col.paperCount}</span>
           </button>
@@ -143,7 +143,7 @@ export function Sidebar() {
                 : 'hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
             <span className="flex-1 truncate">{tag.name}</span>
             <span className="text-mac-small text-gray-400">{tag.paperCount}</span>
           </button>
@@ -151,7 +151,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer bar */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
+      <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
         <button
           onClick={() => toggleMcpServer(mcpStatus.port)}
           disabled={mcpLoading}

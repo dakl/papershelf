@@ -6,7 +6,7 @@ export function Toolbar() {
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
 
   return (
-    <div className="drag-region h-[38px] flex-shrink-0 relative px-2 border-b border-transparent">
+    <div className="drag-region h-[38px] shrink-0 relative px-2 border-b border-transparent">
       {/* Position button to vertically align with traffic lights (y:16 + 6px center = 22px) */}
       <div className="absolute" style={{ top: 10, left: 76 }}>
         <ShortcutHint shortcutId="toggleSidebar">

@@ -44,7 +44,7 @@ export function ResizeHandle() {
     <div
       onMouseDown={onMouseDown}
       onDoubleClick={onDoubleClick}
-      className="w-[4px] flex-shrink-0 cursor-col-resize hover:bg-blue-500/30 transition-colors duration-150"
+      className="w-[4px] shrink-0 cursor-col-resize hover:bg-blue-500/30 transition-colors duration-150"
     />
   );
 }

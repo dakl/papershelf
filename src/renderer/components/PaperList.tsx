@@ -35,10 +35,10 @@ export function PaperList({ width }: { width: number }) {
 
   return (
     <div
-      className="flex-shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30"
+      className="shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30"
       style={{ width }}
     >
-      <div className="flex-shrink-0 px-3 pt-2 pb-2">
+      <div className="shrink-0 px-3 pt-2 pb-2">
         {isSearch && (
           <div className="no-drag">
             <SearchBar onSearch={search} loading={loading} mode={mode} onModeChange={setMode} />

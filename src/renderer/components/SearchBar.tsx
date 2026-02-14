@@ -29,7 +29,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
         <button
           onClick={() => onModeChange('arxiv')}
           className={`flex-1 px-2 py-1 rounded text-mac-small font-medium transition-colors ${
-            mode === 'arxiv' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            mode === 'arxiv' ? 'bg-white dark:bg-gray-700 shadow-xs' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           arXiv
@@ -37,7 +37,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
         <button
           onClick={() => onModeChange('library')}
           className={`flex-1 px-2 py-1 rounded text-mac-small font-medium transition-colors ${
-            mode === 'library' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            mode === 'library' ? 'bg-white dark:bg-gray-700 shadow-xs' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Library
@@ -52,7 +52,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={mode === 'arxiv' ? 'Search arXiv papers...' : 'Search your library...'}
-            className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-mac-accent/40"
+            className="w-full px-3 py-1.5 rounded-md bg-black/5 dark:bg-white/10 border border-mac-separator text-mac-body placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-mac-accent/40"
           />
           {loading && (
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -61,7 +61,7 @@ export function SearchBar({ onSearch, loading, mode, onModeChange }: SearchBarPr
           )}
           {!loading && commandDown && focusSearchShortcut && (
             <span
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-sm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs"
               style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
             >
               {formatKeys(focusSearchShortcut.keys)}
