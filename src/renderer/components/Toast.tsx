@@ -2,7 +2,7 @@ import { type ToastType, useToastStore } from '../stores/toastStore';
 
 const ICON: Record<ToastType, string> = {
   success: '\u2713',
-  error: '\u2717',
+  error: '\u26A0',
   info: '\u2139',
 };
 
