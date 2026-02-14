@@ -3,6 +3,7 @@ import { dialog, Notification } from 'electron';
 import type { ToolNotificationMode } from '../../../shared/types';
 import { logToolCall } from '../../db/tool-stats';
 import { setToolMode } from '../tool-config';
+import { registerAnnotationTools } from './annotation-tools';
 import { registerOrganizationTools } from './organization-tools';
 import { registerPaperTools } from './paper-tools';
 import { registerSearchTools } from './search-tools';
@@ -27,6 +28,9 @@ export const TOOL_METADATA: { name: string; description: string }[] = [
   { name: 'add_tag_to_paper', description: 'Add a tag to a paper' },
   { name: 'remove_tag_from_paper', description: 'Remove a tag from a paper' },
   { name: 'toggle_favorite', description: 'Toggle favorite status on a paper' },
+  { name: 'list_annotations', description: 'List annotations (highlights, sticky notes) for a paper' },
+  { name: 'add_sticky_note', description: 'Add a sticky note annotation to a paper PDF' },
+  { name: 'remove_annotation', description: 'Remove an annotation from a paper PDF' },
 ];
 
 function humanToolName(name: string): string {
@@ -138,4 +142,5 @@ export function registerTools(
   registerSearchTools(instrumented, isEnabled);
   registerPaperTools(instrumented, isEnabled);
   registerOrganizationTools(instrumented, isEnabled);
+  registerAnnotationTools(instrumented, isEnabled);
 }
