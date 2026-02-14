@@ -6,7 +6,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
-import { ClockIcon, DocTextIcon, LinkIcon, SearchIcon, StarIcon } from './Icons';
+import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
 import { ShortcutHint } from './ShortcutHint';
 import { TagManager } from './TagManager';
 
@@ -20,7 +20,6 @@ const NAV_ITEMS: {
   { id: 'search', label: 'Search', icon: SearchIcon, shortcutId: 'goSearch' },
   { id: 'favorites', label: 'Favorites', icon: StarIcon, shortcutId: 'goFavorites' },
   { id: 'recent', label: 'Recently Added', icon: ClockIcon, shortcutId: 'goRecent' },
-  { id: 'citations', label: 'Citations', icon: LinkIcon, shortcutId: 'goCitations' },
 ];
 
 export function Sidebar() {
