@@ -22,6 +22,12 @@ function getViewTitle(
       const tag = tags.find((t) => t.id === tagId);
       return tag?.name ?? 'Tag';
     }
+    case 'all-papers':
+      return 'My Library';
+    case 'favorites':
+      return 'Favorites';
+    case 'recent':
+      return 'Recently Added';
     default:
       return view.replace(/-/g, ' ');
   }

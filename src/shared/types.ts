@@ -108,6 +108,7 @@ export interface PaperFilter {
 export interface SavePaperResult {
   success: boolean;
   paper?: LibraryPaper;
+  pdfDownloaded?: boolean;
   error?: string;
 }
 
