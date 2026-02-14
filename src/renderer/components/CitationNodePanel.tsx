@@ -36,7 +36,7 @@ export function CitationNodePanel({ node }: CitationNodePanelProps) {
   };
 
   return (
-    <div className="w-[320px] flex-shrink-0 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-white/60 dark:bg-white/5">
+    <div className="w-[320px] shrink-0 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-white/60 dark:bg-white/5">
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         <div>
           <h2 className="text-mac-body font-semibold leading-snug">{node.title}</h2>

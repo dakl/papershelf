@@ -25,7 +25,7 @@ function ToolModeControl({
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`px-3 py-0.5 text-[11px] text-center transition-colors ${
+          className={`px-3 py-0.5 text-mac-small text-center transition-colors ${
             state === opt.value
               ? opt.value === 'off'
                 ? 'bg-gray-400 dark:bg-gray-500 text-white'
@@ -45,7 +45,7 @@ function ToggleSwitch({ enabled, onChange, disabled }: { enabled: boolean; onCha
     <button
       onClick={onChange}
       disabled={disabled}
-      className={`relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${
+      className={`relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-hidden shrink-0 ${
         enabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
@@ -109,11 +109,11 @@ function KeyboardShortcutsSection() {
           return (
             <div
               key={shortcut.id}
-              className="flex items-center justify-between px-3 py-1 mx-0.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center justify-between px-3 py-1 mx-0.5 rounded-sm hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             >
               <span className="text-mac-small">{shortcut.label}</span>
               <div className="flex items-center gap-1.5">
-                {isRecording && conflict && <span className="text-[11px] text-red-500">Used by {conflict}</span>}
+                {isRecording && conflict && <span className="text-mac-small text-red-500">Used by {conflict}</span>}
                 <button
                   onClick={() => {
                     setConflict(null);
@@ -130,7 +130,7 @@ function KeyboardShortcutsSection() {
                 {isOverridden && !isRecording && (
                   <button
                     onClick={() => resetShortcut(shortcut.id)}
-                    className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="text-mac-small text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     title="Reset to default"
                   >
                     ↺
@@ -246,7 +246,7 @@ export function SettingsPanel() {
                 value={portInput}
                 onChange={(e) => setPortInput(e.target.value)}
                 disabled={mcpStatus.running}
-                className={`w-24 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-mac-body focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+                className={`w-24 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-mac-body focus:outline-hidden focus:ring-1 focus:ring-blue-400 ${
                   mcpStatus.running ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               />
@@ -273,7 +273,7 @@ export function SettingsPanel() {
               Tools
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-gray-400 dark:text-gray-500">Set all:</span>
+              <span className="text-mac-small text-gray-400 dark:text-gray-500">Set all:</span>
               <ToolModeControl
                 state={(() => {
                   const enabled = mcpTools.filter((t) => t.enabled);

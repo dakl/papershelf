@@ -143,7 +143,7 @@ function StickyNotePopup({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Enter note text..."
-        className="w-full h-20 text-mac-small resize-none rounded border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full h-20 text-mac-small resize-none rounded-sm border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-1 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && e.metaKey) handleSubmit();
           if (e.key === 'Escape') onCancel();
@@ -168,14 +168,14 @@ function StickyNotePopup({
         <div className="flex gap-1">
           <button
             onClick={onCancel}
-            className="px-2 py-0.5 text-mac-small rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="px-2 py-0.5 text-mac-small rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!text.trim()}
-            className="px-2 py-0.5 text-mac-small rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 transition-colors"
+            className="px-2 py-0.5 text-mac-small rounded-sm bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 transition-colors"
           >
             Add
           </button>
@@ -218,13 +218,13 @@ function DeleteConfirmPopup({
       <div className="flex gap-2 justify-end">
         <button
           onClick={onCancel}
-          className="px-2 py-0.5 text-mac-small rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="px-2 py-0.5 text-mac-small rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           Cancel
         </button>
         <button
           onClick={onConfirm}
-          className="px-2 py-0.5 text-mac-small rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+          className="px-2 py-0.5 text-mac-small rounded-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
         >
           Delete
         </button>
@@ -735,24 +735,24 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-shrink-0 flex items-center justify-center gap-3 px-4 py-2 border-b border-mac-separator bg-white/60 dark:bg-black/20">
+      <div className="shrink-0 flex items-center justify-center gap-3 px-4 py-2 border-b border-mac-separator bg-white/60 dark:bg-black/20">
         <button
           onClick={zoomOut}
           disabled={scale <= MIN_SCALE}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
         >
           -
         </button>
         <button
           onClick={zoomReset}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[4rem] text-center"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-16 text-center"
         >
           {Math.round(visualScale * 100)}%
         </button>
         <button
           onClick={zoomIn}
           disabled={scale >= MAX_SCALE}
-          className="no-drag px-2 py-0.5 rounded text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
         >
           +
         </button>

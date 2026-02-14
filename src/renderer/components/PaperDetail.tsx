@@ -92,14 +92,14 @@ export function PaperDetail() {
   return (
     <div className="flex-1 flex flex-col bg-white/40 dark:bg-black/20 overflow-hidden">
       {/* Compact header */}
-      <div className="flex-shrink-0 px-4 py-2 border-b border-mac-separator">
+      <div className="shrink-0 px-4 py-2 border-b border-mac-separator">
         <div className="flex items-center gap-2 min-w-0">
           <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
 
           {isLibraryPaper && (
             <button
               onClick={handleToggleFavorite}
-              className="no-drag flex-shrink-0 text-sm hover:scale-110 transition-transform"
+              className="no-drag shrink-0 text-sm hover:scale-110 transition-transform"
               title={`${(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}${favoriteHint}`}
             >
               {(paper as { isFavorite: boolean }).isFavorite ? '⭐' : '☆'}
@@ -209,7 +209,7 @@ function InfoPopoverButton({
       <button
         ref={buttonRef}
         onClick={onToggle}
-        className="no-drag flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+        className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
         title="Paper info"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
@@ -245,7 +245,7 @@ function InfoPopoverButton({
             {paper.categories.map((cat) => (
               <span
                 key={cat}
-                className="px-2 py-0.5 rounded-full text-[11px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                className="px-2 py-0.5 rounded-full text-mac-small bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
               >
                 {cat}
               </span>
@@ -257,7 +257,7 @@ function InfoPopoverButton({
               {paperCollections.map((col) => (
                 <span
                   key={col.id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-mac-small bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
                 >
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: col.color }} />
                   {col.name}
@@ -266,7 +266,7 @@ function InfoPopoverButton({
               {paperTags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-mac-small border"
                   style={{ borderColor: tag.color, color: tag.color }}
                 >
                   {tag.name}
@@ -279,7 +279,7 @@ function InfoPopoverButton({
                     setShowCollectionPicker(!showCollectionPicker);
                     setShowTagPicker(false);
                   }}
-                  className="no-drag px-1.5 py-0.5 rounded text-[11px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="no-drag px-1.5 py-0.5 rounded-sm text-mac-small text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   + Collection
                 </button>
@@ -309,7 +309,7 @@ function InfoPopoverButton({
                     setShowTagPicker(!showTagPicker);
                     setShowCollectionPicker(false);
                   }}
-                  className="no-drag px-1.5 py-0.5 rounded text-[11px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="no-drag px-1.5 py-0.5 rounded-sm text-mac-small text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   + Tag
                 </button>

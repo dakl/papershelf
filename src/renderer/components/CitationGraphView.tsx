@@ -97,7 +97,7 @@ export function CitationGraphView() {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex-wrap">
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0 flex-wrap">
         {hasSession && (
           <>
             {/* Seed chips */}
@@ -106,7 +106,7 @@ export function CitationGraphView() {
               {seedPaperNames.map(({ arxivId, title }) => (
                 <span
                   key={arxivId}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-mac-small bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
                 >
                   {title.length > 30 ? title.slice(0, 30) + '...' : title}
                   <button
@@ -270,7 +270,7 @@ function SeedPickerDropdown({
           value={seedSearch}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search library papers..."
-          className="w-full px-2.5 py-1.5 rounded-md text-mac-small bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full px-2.5 py-1.5 rounded-md text-mac-small bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-hidden focus:ring-1 focus:ring-blue-400"
           autoFocus
         />
       </div>
@@ -287,7 +287,7 @@ function SeedPickerDropdown({
                 className="w-full text-left px-3 py-2 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-start gap-2"
               >
                 <span
-                  className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center text-[10px] ${
+                  className={`mt-0.5 w-4 h-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
                     isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 >
