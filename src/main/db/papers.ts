@@ -129,6 +129,24 @@ export function updatePaperPdf(id: string, pdfPath: string, fullText: string | n
   getDb().prepare('UPDATE papers SET pdf_path = ?, full_text = ? WHERE id = ?').run(pdfPath, fullText, id);
 }
 
+export interface LibraryStats {
+  paperCount: number;
+  favoriteCount: number;
+  collectionCount: number;
+  tagCount: number;
+}
+
+export function getLibraryStats(): LibraryStats {
+  const db = getDb();
+  const paperCount = (db.prepare('SELECT COUNT(*) as count FROM papers').get() as { count: number }).count;
+  const favoriteCount = (
+    db.prepare('SELECT COUNT(*) as count FROM papers WHERE is_favorite = 1').get() as { count: number }
+  ).count;
+  const collectionCount = (db.prepare('SELECT COUNT(*) as count FROM collections').get() as { count: number }).count;
+  const tagCount = (db.prepare('SELECT COUNT(*) as count FROM tags').get() as { count: number }).count;
+  return { paperCount, favoriteCount, collectionCount, tagCount };
+}
+
 export function searchLibrary(query: string): LibraryPaper[] {
   const db = getDb();
   const rows = db

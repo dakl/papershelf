@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ToolNotificationMode } from '../../shared/types';
 import { useSettingsStore } from '../stores/settingsStore';
 import { buildKeyString, formatKeys, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
+import { AboutDialog } from './AboutDialog';
 
 type ToolState = 'off' | ToolNotificationMode;
 
@@ -12,13 +13,7 @@ const TOOL_STATE_OPTIONS: { value: ToolState; label: string }[] = [
   { value: 'confirm', label: 'Confirm' },
 ];
 
-function ToolModeControl({
-  state,
-  onChange,
-}: {
-  state: ToolState;
-  onChange: (state: ToolState) => void;
-}) {
+function ToolModeControl({ state, onChange }: { state: ToolState; onChange: (state: ToolState) => void }) {
   return (
     <div className="inline-grid grid-cols-4 rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
       {TOOL_STATE_OPTIONS.map((opt) => (
@@ -154,6 +149,7 @@ function KeyboardShortcutsSection() {
 }
 
 export function SettingsPanel() {
+  const [showAbout, setShowAbout] = useState(false);
   const {
     mcpStatus,
     mcpLoading,
@@ -347,7 +343,19 @@ export function SettingsPanel() {
             )}
           </div>
         </section>
+
+        {/* About */}
+        <section className="mb-8 text-center">
+          <button
+            onClick={() => setShowAbout(true)}
+            className="text-mac-small text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
+          >
+            About PaperShelf
+          </button>
+        </section>
       </div>
+
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     </div>
   );
 }
