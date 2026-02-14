@@ -3,32 +3,33 @@ import type { ToolNotificationMode } from '../../shared/types';
 import { useSettingsStore } from '../stores/settingsStore';
 import { buildKeyString, formatKeys, getDefaultKeys, useShortcutStore } from '../stores/shortcutStore';
 
-const MODE_OPTIONS: { value: ToolNotificationMode; label: string }[] = [
+type ToolState = 'off' | ToolNotificationMode;
+
+const TOOL_STATE_OPTIONS: { value: ToolState; label: string }[] = [
+  { value: 'off', label: 'Off' },
   { value: 'silent', label: 'Silent' },
   { value: 'notify', label: 'Notify' },
   { value: 'confirm', label: 'Confirm' },
 ];
 
-function ModeSelector({
-  mode,
+function ToolModeControl({
+  state,
   onChange,
-  disabled,
 }: {
-  mode: ToolNotificationMode;
-  onChange: (mode: ToolNotificationMode) => void;
-  disabled?: boolean;
+  state: ToolState;
+  onChange: (state: ToolState) => void;
 }) {
   return (
-    <div
-      className={`inline-flex rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
-    >
-      {MODE_OPTIONS.map((opt) => (
+    <div className="inline-grid grid-cols-4 rounded-md border border-gray-200 dark:border-gray-600 overflow-hidden">
+      {TOOL_STATE_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`px-2 py-0.5 text-[11px] transition-colors ${
-            mode === opt.value
-              ? 'bg-mac-accent text-white'
+          className={`px-3 py-0.5 text-[11px] text-center transition-colors ${
+            state === opt.value
+              ? opt.value === 'off'
+                ? 'bg-gray-400 dark:bg-gray-500 text-white'
+                : 'bg-mac-accent text-white'
               : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
@@ -164,9 +165,29 @@ export function SettingsPanel() {
     loadMcpTools,
     setToolEnabled,
     setToolMode,
+    setAllToolModes,
     loadToolStats,
   } = useSettingsStore();
   const [portInput, setPortInput] = useState('3847');
+
+  const handleToolStateChange = async (toolName: string, state: ToolState) => {
+    if (state === 'off') {
+      await setToolEnabled(toolName, false);
+    } else {
+      const tool = mcpTools.find((t) => t.name === toolName);
+      if (tool && !tool.enabled) await setToolEnabled(toolName, true);
+      await setToolMode(toolName, state);
+    }
+  };
+
+  const handleSetAllState = async (state: ToolState) => {
+    if (state === 'off') {
+      await Promise.all(mcpTools.filter((t) => t.enabled).map((t) => setToolEnabled(t.name, false)));
+    } else {
+      await Promise.all(mcpTools.filter((t) => !t.enabled).map((t) => setToolEnabled(t.name, true)));
+      await setAllToolModes(state);
+    }
+  };
 
   useEffect(() => {
     loadMcpStatus();
@@ -192,7 +213,7 @@ export function SettingsPanel() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-xl mx-auto px-6 py-4">
+      <div className="max-w-2xl mx-auto px-6 py-4">
         <h1 className="text-lg font-semibold mb-6">Settings</h1>
 
         {/* Keyboard Shortcuts Section */}
@@ -247,24 +268,37 @@ export function SettingsPanel() {
 
         {/* Tools Section */}
         <section className="mb-8">
-          <h2 className="text-mac-body font-semibold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
-            Tools
-          </h2>
+          <div className="flex items-center justify-between mb-3 pr-4">
+            <h2 className="text-mac-body font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+              Tools
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-400 dark:text-gray-500">Set all:</span>
+              <ToolModeControl
+                state={(() => {
+                  const enabled = mcpTools.filter((t) => t.enabled);
+                  if (enabled.length === 0) return 'off';
+                  if (enabled.length === mcpTools.length && enabled.every((t) => t.mode === enabled[0].mode))
+                    return enabled[0].mode;
+                  return 'notify';
+                })()}
+                onChange={handleSetAllState}
+              />
+            </div>
+          </div>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 divide-y divide-gray-200 dark:divide-gray-700">
             {mcpTools.map((tool) => (
               <div key={tool.name} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 mr-3">
-                  <div className="text-mac-body font-medium font-mono text-sm">{tool.name}</div>
+                  <div className={`text-mac-body font-medium font-mono text-sm ${!tool.enabled ? 'opacity-50' : ''}`}>
+                    {tool.name}
+                  </div>
                   <div className="text-mac-small text-gray-500 dark:text-gray-400 truncate">{tool.description}</div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <ModeSelector
-                    mode={tool.mode}
-                    onChange={(mode) => setToolMode(tool.name, mode)}
-                    disabled={!tool.enabled}
-                  />
-                  <ToggleSwitch enabled={tool.enabled} onChange={() => setToolEnabled(tool.name, !tool.enabled)} />
-                </div>
+                <ToolModeControl
+                  state={tool.enabled ? tool.mode : 'off'}
+                  onChange={(state) => handleToolStateChange(tool.name, state)}
+                />
               </div>
             ))}
           </div>

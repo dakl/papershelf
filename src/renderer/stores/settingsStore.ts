@@ -13,6 +13,7 @@ interface SettingsState {
   loadMcpTools: () => Promise<void>;
   setToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
   setToolMode: (toolName: string, mode: ToolNotificationMode) => Promise<void>;
+  setAllToolModes: (mode: ToolNotificationMode) => Promise<void>;
   loadToolStats: () => Promise<void>;
 }
 
@@ -75,6 +76,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       mcpTools: state.mcpTools.map((t) => (t.name === toolName ? { ...t, mode } : t)),
     }));
     await window.electronAPI.setMcpToolMode(toolName, mode);
+    await get().loadMcpStatus();
+  },
+
+  setAllToolModes: async (mode: ToolNotificationMode) => {
+    set((state) => ({
+      mcpTools: state.mcpTools.map((t) => (t.enabled ? { ...t, mode } : t)),
+    }));
+    const enabledTools = get().mcpTools.filter((t) => t.enabled);
+    await Promise.all(enabledTools.map((t) => window.electronAPI.setMcpToolMode(t.name, mode)));
     await get().loadMcpStatus();
   },
 

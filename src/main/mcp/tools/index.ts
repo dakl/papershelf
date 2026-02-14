@@ -71,14 +71,19 @@ function createInstrumentedServer(server: McpServer, toolModes: Record<string, T
             const notificationBody = formatNotificationBody(toolName, handlerArgs[0]);
 
             if (mode === 'confirm') {
+              const argsDetail = humanizeArgs(handlerArgs[0]);
+              const detail = argsDetail
+                ? `An MCP client wants to call this tool with:\n${argsDetail}`
+                : 'An MCP client wants to call this tool.';
+
               const response = dialog.showMessageBoxSync({
                 type: 'question',
-                buttons: ['Allow', 'Always Allow', 'Deny'],
+                buttons: ['Allow Once', 'Always Allow', 'Deny'],
                 defaultId: 0,
                 cancelId: 2,
                 title: 'MCP Tool Call',
                 message: `Allow "${humanToolName(toolName)}"?`,
-                detail: humanizeArgs(handlerArgs[0]) || 'No arguments',
+                detail,
               });
 
               if (response === 1) {
