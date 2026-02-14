@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ArxivPaper } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
+import { toast } from '../stores/toastStore';
 
 interface SaveToLibraryButtonProps {
   paper: ArxivPaper;
@@ -26,6 +27,8 @@ export function SaveToLibraryButton({ paper, alreadySaved }: SaveToLibraryButton
     setSaving(false);
     if (result.success) {
       setSaved(true);
+    } else {
+      toast(result.error ?? 'Failed to save paper', 'error');
     }
   };
 

@@ -106,11 +106,19 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('collections:create', (_event, name: string, color: string) => {
-    return db.createCollection(name, color);
+    try {
+      return db.createCollection(name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to create collection');
+    }
   });
 
   ipcMain.handle('collections:update', (_event, id: string, name: string, color: string) => {
-    return db.updateCollection(id, name, color);
+    try {
+      return db.updateCollection(id, name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update collection');
+    }
   });
 
   ipcMain.handle('collections:delete', (_event, id: string) => {
@@ -123,11 +131,21 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('collections:addPaper', (_event, paperId: string, collectionId: string) => {
-    db.addPaperToCollection(paperId, collectionId);
+    try {
+      db.addPaperToCollection(paperId, collectionId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add paper to collection' };
+    }
   });
 
   ipcMain.handle('collections:removePaper', (_event, paperId: string, collectionId: string) => {
-    db.removePaperFromCollection(paperId, collectionId);
+    try {
+      db.removePaperFromCollection(paperId, collectionId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove paper from collection' };
+    }
   });
 
   ipcMain.handle('collections:forPaper', (_event, paperId: string) => {
@@ -140,11 +158,19 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('tags:create', (_event, name: string, color: string) => {
-    return db.createTag(name, color);
+    try {
+      return db.createTag(name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to create tag');
+    }
   });
 
   ipcMain.handle('tags:update', (_event, id: string, name: string, color: string) => {
-    return db.updateTag(id, name, color);
+    try {
+      return db.updateTag(id, name, color);
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update tag');
+    }
   });
 
   ipcMain.handle('tags:delete', (_event, id: string) => {
@@ -157,11 +183,21 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('tags:addToPaper', (_event, paperId: string, tagId: string) => {
-    db.addTagToPaper(paperId, tagId);
+    try {
+      db.addTagToPaper(paperId, tagId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to add tag to paper' };
+    }
   });
 
   ipcMain.handle('tags:removeFromPaper', (_event, paperId: string, tagId: string) => {
-    db.removeTagFromPaper(paperId, tagId);
+    try {
+      db.removeTagFromPaper(paperId, tagId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove tag from paper' };
+    }
   });
 
   ipcMain.handle('tags:forPaper', (_event, paperId: string) => {

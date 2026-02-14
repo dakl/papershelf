@@ -169,8 +169,8 @@ export interface ElectronAPI {
   createCollection: (name: string, color: string) => Promise<Collection>;
   updateCollection: (id: string, name: string, color: string) => Promise<Collection>;
   deleteCollection: (id: string) => Promise<void>;
-  addPaperToCollection: (paperId: string, collectionId: string) => Promise<void>;
-  removePaperFromCollection: (paperId: string, collectionId: string) => Promise<void>;
+  addPaperToCollection: (paperId: string, collectionId: string) => Promise<{ success: boolean; error?: string }>;
+  removePaperFromCollection: (paperId: string, collectionId: string) => Promise<{ success: boolean; error?: string }>;
   getPaperCollections: (paperId: string) => Promise<Collection[]>;
 
   // Tags
@@ -178,8 +178,8 @@ export interface ElectronAPI {
   createTag: (name: string, color: string) => Promise<Tag>;
   updateTag: (id: string, name: string, color: string) => Promise<Tag>;
   deleteTag: (id: string) => Promise<void>;
-  addTagToPaper: (paperId: string, tagId: string) => Promise<void>;
-  removeTagFromPaper: (paperId: string, tagId: string) => Promise<void>;
+  addTagToPaper: (paperId: string, tagId: string) => Promise<{ success: boolean; error?: string }>;
+  removeTagFromPaper: (paperId: string, tagId: string) => Promise<{ success: boolean; error?: string }>;
   getPaperTags: (paperId: string) => Promise<Tag[]>;
 
   // Citations
