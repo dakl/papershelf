@@ -51,7 +51,7 @@ function loadPaperListWidth(): number {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  sidebarView: 'search',
+  sidebarView: 'all-papers',
   selectedPaper: null,
   selectedCollectionId: null,
   selectedTagId: null,

@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
@@ -5,15 +6,21 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
+import { ClockIcon, DocTextIcon, LinkIcon, SearchIcon, StarIcon } from './Icons';
 import { ShortcutHint } from './ShortcutHint';
 import { TagManager } from './TagManager';
 
-const NAV_ITEMS: { id: SidebarView; label: string; icon: string; shortcutId: string }[] = [
-  { id: 'search', label: 'Search', icon: '🔍', shortcutId: 'goSearch' },
-  { id: 'all-papers', label: 'All Papers', icon: '📄', shortcutId: 'goAllPapers' },
-  { id: 'favorites', label: 'Favorites', icon: '⭐', shortcutId: 'goFavorites' },
-  { id: 'recent', label: 'Recently Added', icon: '🕐', shortcutId: 'goRecent' },
-  { id: 'citations', label: 'Citations', icon: '🔗', shortcutId: 'goCitations' },
+const NAV_ITEMS: {
+  id: SidebarView;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  shortcutId: string;
+}[] = [
+  { id: 'all-papers', label: 'My Library', icon: DocTextIcon, shortcutId: 'goAllPapers' },
+  { id: 'search', label: 'Search', icon: SearchIcon, shortcutId: 'goSearch' },
+  { id: 'favorites', label: 'Favorites', icon: StarIcon, shortcutId: 'goFavorites' },
+  { id: 'recent', label: 'Recently Added', icon: ClockIcon, shortcutId: 'goRecent' },
+  { id: 'citations', label: 'Citations', icon: LinkIcon, shortcutId: 'goCitations' },
 ];
 
 export function Sidebar() {
@@ -61,7 +68,7 @@ export function Sidebar() {
                 sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
             >
-              <span className="text-sm">{item.icon}</span>
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               <span className="flex-1">{item.label}</span>
               {commandDown && shortcut && (
                 <span

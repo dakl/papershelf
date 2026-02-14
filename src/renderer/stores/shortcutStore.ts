@@ -22,8 +22,8 @@ interface ShortcutState {
 const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: 'toggleSidebar', label: 'Toggle Sidebar', keys: 'Meta+b' },
   { id: 'focusSearch', label: 'Focus Search', keys: 'Meta+k' },
-  { id: 'goSearch', label: 'Go to Search', keys: 'Meta+1' },
-  { id: 'goAllPapers', label: 'Go to All Papers', keys: 'Meta+2' },
+  { id: 'goAllPapers', label: 'Go to My Library', keys: 'Meta+1' },
+  { id: 'goSearch', label: 'Go to Search', keys: 'Meta+2' },
   { id: 'goFavorites', label: 'Go to Favorites', keys: 'Meta+3' },
   { id: 'goRecent', label: 'Go to Recently Added', keys: 'Meta+4' },
   { id: 'goCitations', label: 'Go to Citations', keys: 'Meta+5' },
