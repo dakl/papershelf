@@ -1,6 +1,6 @@
 {
   "name": "papershelf",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "productName": "PaperShelf",
   "description": "A native-feeling Mac desktop app for searching arXiv, organizing research papers, annotating PDFs, and chatting with your paper library using RAG.",
   "author": "Daniel Klevebring",
