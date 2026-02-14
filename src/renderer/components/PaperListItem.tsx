@@ -1,3 +1,5 @@
+import { StarIcon } from './Icons';
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -44,7 +46,9 @@ export function PaperListItem({
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="text-mac-body font-medium leading-snug line-clamp-2">
-            {isFavorite && <span className="mr-1">⭐</span>}
+            {isFavorite && (
+              <StarIcon className="inline-block mr-1 text-yellow-500 align-text-top" width={14} height={14} />
+            )}
             {title}
           </h3>
           <p className="text-mac-small text-gray-500 mt-0.5">{truncateAuthors(authors)}</p>
