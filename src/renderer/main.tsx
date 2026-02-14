@@ -45,9 +45,6 @@ document.addEventListener('keydown', (event) => {
     case 'goRecent':
       ui.setSidebarView('recent');
       break;
-    case 'goCitations':
-      ui.setSidebarView('citations');
-      break;
     case 'toggleSettings':
       ui.setSidebarView(ui.sidebarView === 'settings' ? 'search' : 'settings');
       break;
