@@ -494,30 +494,43 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     };
 
     const handleWheel = (event: WheelEvent) => {
-      if (!event.ctrlKey) return;
       const container = containerRef.current;
-      if (!container?.contains(event.target as Node)) return;
-      event.preventDefault();
+      if (!container) return;
 
-      pointerPosRef.current = { clientX: event.clientX, clientY: event.clientY };
+      // Pinch-to-zoom: ctrlKey is set by trackpad pinch gestures
+      if (event.ctrlKey) {
+        if (!container.contains(event.target as Node)) return;
+        event.preventDefault();
 
-      const delta = -event.deltaY;
-      const nextVisualScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, latestVisualScale + delta * 0.01));
-      latestVisualScale = nextVisualScale;
-      isPinching.current = true;
-      setVisualScale(nextVisualScale);
+        pointerPosRef.current = { clientX: event.clientX, clientY: event.clientY };
 
-      if (contentRef.current) {
-        const cssScale = nextVisualScale / scale;
-        contentRef.current.style.transform = `scale(${cssScale})`;
-        const containerRect = container.getBoundingClientRect();
-        const originX = container.scrollLeft + (event.clientX - containerRect.left);
-        const originY = container.scrollTop + (event.clientY - containerRect.top);
-        contentRef.current.style.transformOrigin = `${originX}px ${originY}px`;
+        const delta = -event.deltaY;
+        const nextVisualScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, latestVisualScale + delta * 0.01));
+        latestVisualScale = nextVisualScale;
+        isPinching.current = true;
+        setVisualScale(nextVisualScale);
+
+        if (contentRef.current) {
+          const cssScale = nextVisualScale / scale;
+          contentRef.current.style.transform = `scale(${cssScale})`;
+          const containerRect = container.getBoundingClientRect();
+          const originX = container.scrollLeft + (event.clientX - containerRect.left);
+          const originY = container.scrollTop + (event.clientY - containerRect.top);
+          contentRef.current.style.transformOrigin = `${originX}px ${originY}px`;
+        }
+
+        if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        commitTimeoutRef.current = setTimeout(commitZoom, PINCH_COMMIT_DELAY_MS);
+        return;
       }
 
-      if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
-      commitTimeoutRef.current = setTimeout(commitZoom, PINCH_COMMIT_DELAY_MS);
+      // Diagonal scroll fix: bypass Chromium's trackpad axis-locking
+      if (!container.contains(event.target as Node)) return;
+      if (event.deltaX !== 0 && event.deltaY !== 0) {
+        event.preventDefault();
+        container.scrollLeft += event.deltaX;
+        container.scrollTop += event.deltaY;
+      }
     };
 
     document.addEventListener('wheel', handleWheel, { passive: false });
