@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { AboutDialog } from './components/AboutDialog';
-import { CitationGraphView } from './components/CitationGraphView';
 import { PaperDetail } from './components/PaperDetail';
 import { PaperList } from './components/PaperList';
 import { ResizeHandle } from './components/ResizeHandle';
@@ -22,8 +21,6 @@ export function App() {
     switch (sidebarView) {
       case 'settings':
         return <SettingsPanel />;
-      case 'citations':
-        return <CitationGraphView />;
       default:
         return (
           <div className="flex flex-1 min-w-0">
