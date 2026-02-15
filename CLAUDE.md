@@ -13,14 +13,14 @@
 - **Renderer** (`src/renderer/`): ESM bundled by Vite
 - **Shared types**: `src/shared/types.ts` — imported by both main and renderer
 - **IPC flow**: renderer → `preload.ts` contextBridge → `ipc-handlers.ts` → domain modules
-- **Database**: Split into `src/main/db/` modules (connection, papers, collections, tags, citations) with `database.ts` re-exporting everything for backward compatibility
+- **Database**: Split into `src/main/db/` modules (connection, papers, collections, tags) with `database.ts` re-exporting everything for backward compatibility
 - **MCP tools**: Split into `src/main/mcp/tools/` modules (search-tools, paper-tools, organization-tools, resolvers) with `mcp/tools.ts` re-exporting
-- **Services**: Shared business logic in `src/main/services/` (save-paper, citation-cache)
+- **Services**: Shared business logic in `src/main/services/` (save-paper, pdf-reader, pdf-annotator)
 - **Constants**: `src/main/constants.ts` (backend), `src/renderer/constants.ts` (frontend)
 
 ### IPC Channels
 
-Pattern: `<domain>:<action>` — e.g., `papers:save`, `collections:list`, `tags:addToPaper`, `citations:fetch`, `mcp:getStatus`
+Pattern: `<domain>:<action>` — e.g., `papers:save`, `collections:list`, `tags:addToPaper`, `mcp:getStatus`
 
 ### Error Handling
 
@@ -90,8 +90,6 @@ The full path for surfacing new backend data in the renderer:
 ### Key Constants
 
 - `DEFAULT_COLOR`: `#007AFF` (macOS system blue)
-- `CITATION_CACHE_TTL_DAYS`: `30`
-- `SEMANTIC_SCHOLAR_RATE_LIMIT_MS`: `350` (~3 req/sec)
 - `COLOR_PALETTE`: 8 macOS system colors (renderer only)
 
 ### Commands

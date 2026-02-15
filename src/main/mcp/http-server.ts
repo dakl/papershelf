@@ -119,3 +119,11 @@ export async function stopMcpHttpServer(): Promise<void> {
 export function getMcpHttpServerStatus(): { running: boolean; port: number } {
   return { running: httpServer !== null, port: currentPort };
 }
+
+export async function restartMcpHttpServerIfRunning(): Promise<void> {
+  const status = getMcpHttpServerStatus();
+  if (status.running) {
+    await stopMcpHttpServer();
+    await startMcpHttpServer(status.port);
+  }
+}

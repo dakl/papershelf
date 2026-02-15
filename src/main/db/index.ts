@@ -1,12 +1,3 @@
-export type { S2PaperInput } from './citations';
-export {
-  getCitationFetchTime,
-  getCitationGraph,
-  getCitationSubgraph,
-  getS2IdsByArxivIds,
-  isCitationNodeExpanded,
-  saveCitationBatch,
-} from './citations';
 export {
   addPaperToCollection,
   createCollection,

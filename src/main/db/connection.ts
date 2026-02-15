@@ -90,26 +90,6 @@ function createSchema(): void {
       VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
     END;
 
-    CREATE TABLE IF NOT EXISTS semantic_scholar_papers (
-      s2_id TEXT PRIMARY KEY,
-      arxiv_id TEXT,
-      title TEXT NOT NULL,
-      authors TEXT NOT NULL,
-      year INTEGER,
-      fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS citation_edges (
-      citing_s2_id TEXT NOT NULL,
-      cited_s2_id TEXT NOT NULL,
-      PRIMARY KEY (citing_s2_id, cited_s2_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS citation_fetch_log (
-      arxiv_id TEXT PRIMARY KEY,
-      fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
     CREATE TABLE IF NOT EXISTS tool_call_log (
       id TEXT PRIMARY KEY,
       tool_name TEXT NOT NULL,

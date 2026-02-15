@@ -1,6 +1,6 @@
 // Re-export from split db modules for backward compatibility
 
-export type { LibraryStats, S2PaperInput } from './db/index';
+export type { LibraryStats } from './db/index';
 export {
   addPaperToCollection,
   addTagToPaper,
@@ -11,9 +11,6 @@ export {
   deleteCollection,
   deletePaper,
   deleteTag,
-  getCitationFetchTime,
-  getCitationGraph,
-  getCitationSubgraph,
   getCollectionByName,
   getCollections,
   getCollectionsForPaper,
@@ -22,7 +19,6 @@ export {
   getPaperByArxivId,
   getPaperById,
   getPapers,
-  getS2IdsByArxivIds,
   getTagByName,
   getTags,
   getTagsForPaper,
@@ -31,11 +27,9 @@ export {
   getViewerState,
   initDatabase,
   insertPaper,
-  isCitationNodeExpanded,
   logToolCall,
   removePaperFromCollection,
   removeTagFromPaper,
-  saveCitationBatch,
   saveViewerState,
   searchLibrary,
   toggleFavorite,

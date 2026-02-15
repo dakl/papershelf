@@ -8,20 +8,18 @@ import type {
   ToolNotificationMode,
 } from '../shared/types';
 import { searchArxiv } from './arxiv-client';
-import { CITATION_CACHE_TTL_DAYS } from './constants';
+
 import * as db from './database';
-import { getMcpHttpServerStatus, startMcpHttpServer, stopMcpHttpServer } from './mcp/http-server';
 import {
-  getDisabledTools,
-  getToolModes,
-  setDisabledTools,
-  setMcpServerEnabled,
-  setToolMode,
-} from './mcp/tool-config';
+  getMcpHttpServerStatus,
+  restartMcpHttpServerIfRunning,
+  startMcpHttpServer,
+  stopMcpHttpServer,
+} from './mcp/http-server';
+import { getDisabledTools, getToolModes, setDisabledTools, setMcpServerEnabled, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchAndCachePdf } from './pdf-processor';
-import { fetchCitationData, fetchCitationDataByS2Id } from './semantic-scholar/client';
-import { isCitationCacheFresh } from './services/citation-cache';
+
 import {
   addHighlightAnnotation,
   addStickyNoteAnnotation,
@@ -293,79 +291,12 @@ export function registerIpcHandlers(): void {
       disabled.add(toolName);
     }
     setDisabledTools([...disabled]);
-
-    // Restart server so new sessions pick up the change
-    const status = getMcpHttpServerStatus();
-    if (status.running) {
-      await stopMcpHttpServer();
-      await startMcpHttpServer(status.port);
-    }
+    await restartMcpHttpServerIfRunning();
   });
 
   ipcMain.handle('mcp:setToolMode', async (_event, toolName: string, mode: ToolNotificationMode) => {
     setToolMode(toolName, mode);
-
-    const status = getMcpHttpServerStatus();
-    if (status.running) {
-      await stopMcpHttpServer();
-      await startMcpHttpServer(status.port);
-    }
-  });
-
-  // --- Citations ---
-
-  ipcMain.handle('citations:fetch', async (_event, arxivId: string) => {
-    try {
-      if (isCitationCacheFresh(arxivId, CITATION_CACHE_TTL_DAYS)) {
-        return { success: true };
-      }
-
-      const data = await fetchCitationData(arxivId);
-      if (!data) {
-        return { success: false, error: 'Paper not found on Semantic Scholar' };
-      }
-
-      db.saveCitationBatch(data.paper, data.references, data.citations, arxivId);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to fetch citations' };
-    }
-  });
-
-  ipcMain.handle('citations:fetchBatch', async (_event, arxivIds: string[]) => {
-    let fetched = 0;
-    let failed = 0;
-
-    for (const arxivId of arxivIds) {
-      try {
-        if (isCitationCacheFresh(arxivId, CITATION_CACHE_TTL_DAYS)) {
-          fetched++;
-          continue;
-        }
-
-        const data = await fetchCitationData(arxivId);
-        if (data) {
-          db.saveCitationBatch(data.paper, data.references, data.citations, arxivId);
-          fetched++;
-        } else {
-          failed++;
-        }
-      } catch {
-        failed++;
-      }
-    }
-
-    return { fetched, failed };
-  });
-
-  ipcMain.handle('citations:getGraph', () => {
-    return db.getCitationGraph();
-  });
-
-  ipcMain.handle('citations:getSubgraph', async (_event, seedArxivIds: string[], expandedS2Ids: string[]) => {
-    const seedS2Ids = db.getS2IdsByArxivIds(seedArxivIds);
-    const allCenterIds = [...new Set([...seedS2Ids, ...expandedS2Ids])];
-    return db.getCitationSubgraph(allCenterIds);
+    await restartMcpHttpServerIfRunning();
   });
 
   // --- Viewer State ---
@@ -393,19 +324,5 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('settings:saveShortcuts', (_event, overrides: Record<string, string>) => {
     saveShortcutOverrides(overrides);
-  });
-
-  ipcMain.handle('citations:expandNode', async (_event, s2Id: string) => {
-    try {
-      const data = await fetchCitationDataByS2Id(s2Id);
-      if (!data) {
-        return { success: false, error: 'Paper not found on Semantic Scholar' };
-      }
-
-      db.saveCitationBatch(data.paper, data.references, data.citations);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to expand node' };
-    }
   });
 }
