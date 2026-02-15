@@ -67,8 +67,8 @@ afterEach(() => {
   closeDatabase();
   try {
     fs.unlinkSync(dbPath);
-    fs.unlinkSync(dbPath + '-wal');
-    fs.unlinkSync(dbPath + '-shm');
+    fs.unlinkSync(`${dbPath}-wal`);
+    fs.unlinkSync(`${dbPath}-shm`);
   } catch {
     // cleanup best-effort
   }

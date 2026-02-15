@@ -190,7 +190,7 @@ export function SettingsPanel() {
     loadMcpTools();
     loadToolStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadMcpStatus, loadMcpTools, loadToolStats]);
 
   useEffect(() => {
     setPortInput(String(mcpStatus.port));

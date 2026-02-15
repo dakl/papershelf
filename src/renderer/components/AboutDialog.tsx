@@ -42,7 +42,12 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
       >
         {/* Decorative header gradient */}
         <div className="h-28 bg-gradient-to-br from-pink-300 via-purple-200 to-indigo-300 flex items-center justify-center">
-          <img src="./icon.png" alt="PaperShelf" className="w-20 h-20 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.25)]" draggable={false} />
+          <img
+            src="./icon.png"
+            alt="PaperShelf"
+            className="w-20 h-20 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            draggable={false}
+          />
         </div>
 
         {/* Content */}

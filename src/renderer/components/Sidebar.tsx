@@ -57,7 +57,7 @@ export function Sidebar() {
     loadTags();
     loadMcpStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadCollections, loadMcpStatus, loadTags]);
 
   const handleDeleteCollection = (id: string) => {
     if (sidebarView === 'collection' && selectedCollectionId === id) {
