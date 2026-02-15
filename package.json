@@ -23,7 +23,8 @@
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "screenshots": "npm run rebuild:electron && npm run build && npx tsx scripts/take-screenshots.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

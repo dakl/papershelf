@@ -78,6 +78,11 @@ document.addEventListener('keyup', (event) => {
 });
 window.addEventListener('blur', () => setCommandDown(false));
 
+// Expose store for e2e screenshot automation
+if ((window as any).electronAPI) {
+  (window as any).__shortcutStore = useShortcutStore;
+}
+
 document.addEventListener(
   'wheel',
   (event) => {

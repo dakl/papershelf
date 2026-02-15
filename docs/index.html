@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperShelf — Search arXiv, organize papers, and annotate PDFs</title>
+  <meta name="description" content="Search arXiv, organize papers, and annotate PDFs — all from your desktop.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/icon.png" type="image/png">
+</head>
+<body>
+
+  <!-- ── Hero ──────────────────────────────────────────── -->
+  <section class="hero">
+    <img src="assets/icon.png" alt="PaperShelf icon" class="hero-icon">
+    <h1>PaperShelf</h1>
+    <p class="tagline">Search arXiv, organize papers, and annotate PDFs &mdash; all from your desktop.</p>
+    <div class="hero-buttons">
+      <a href="https://github.com/dakl/papershelf/releases/latest" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for macOS
+      </a>
+      <a href="https://github.com/dakl/papershelf" class="btn btn-secondary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Main Screenshot ───────────────────────────────── -->
+  <div class="main-screenshot">
+    <div class="window-frame">
+      <div class="window-toolbar">
+        <span class="traffic-light red"></span>
+        <span class="traffic-light yellow"></span>
+        <span class="traffic-light green"></span>
+      </div>
+      <picture>
+        <img src="assets/screenshots/library.png" alt="PaperShelf library view showing organized research papers"
+             onerror="this.parentElement.outerHTML='<div class=\'screenshot-placeholder\'>Run <code>npm run screenshots</code> to generate screenshots</div>'">
+      </picture>
+    </div>
+  </div>
+
+  <!-- ── Features Grid ─────────────────────────────────── -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Everything you need for research</h2>
+      <p class="section-subtitle">A native macOS app built for speed and simplicity.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>arXiv Search</h3>
+          <p>Search arXiv directly from the app. Preview abstracts, save papers to your library with one click.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">✏️</div>
+          <h3>PDF Annotations</h3>
+          <p>Highlight text and add notes to papers. Annotations are stored locally and stay with the paper.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗂️</div>
+          <h3>Collections &amp; Tags</h3>
+          <p>Organize papers into color-coded collections and add tags for flexible categorization.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📖</div>
+          <h3>Full-Text Search</h3>
+          <p>Search across all your saved papers by title, author, abstract, or full PDF text content.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>MCP / AI Integration</h3>
+          <p>Expose your library to AI assistants via Model Context Protocol. Chat with your papers using RAG.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⌨️</div>
+          <h3>Keyboard-First</h3>
+          <p>Navigate your entire library with keyboard shortcuts. Hold ⌘ to see shortcuts live in the app — everything is a keystroke away.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Screenshot Showcase ───────────────────────────── -->
+  <section class="section section-alt">
+    <div class="container">
+
+      <!-- Search -->
+      <div class="showcase-item">
+        <div class="showcase-text">
+          <h3>Search arXiv instantly</h3>
+          <p>Find papers by keyword, author, or arXiv ID. Preview abstracts and save to your library without leaving the app. Results appear in real time as you type.</p>
+        </div>
+        <div class="showcase-image">
+          <div class="window-frame">
+            <div class="window-toolbar">
+              <span class="traffic-light red"></span>
+              <span class="traffic-light yellow"></span>
+              <span class="traffic-light green"></span>
+            </div>
+            <picture>
+              <img src="assets/screenshots/search.png" alt="arXiv search with results"
+                   onerror="this.parentElement.outerHTML='<div class=\'screenshot-placeholder\'>search.png</div>'">
+            </picture>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collections -->
+      <div class="showcase-item reverse">
+        <div class="showcase-text">
+          <h3>Organize with collections</h3>
+          <p>Group related papers into collections with custom colors. Build reading lists, project bibliographies, or topic clusters. A paper can belong to multiple collections.</p>
+        </div>
+        <div class="showcase-image">
+          <div class="window-frame">
+            <div class="window-toolbar">
+              <span class="traffic-light red"></span>
+              <span class="traffic-light yellow"></span>
+              <span class="traffic-light green"></span>
+            </div>
+            <picture>
+              <img src="assets/screenshots/collections.png" alt="Collection view in sidebar"
+                   onerror="this.parentElement.outerHTML='<div class=\'screenshot-placeholder\'>collections.png</div>'">
+            </picture>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keyboard Shortcuts -->
+      <div class="showcase-item">
+        <div class="showcase-text">
+          <h3>Keyboard-first navigation</h3>
+          <p>Hold ⌘ to reveal every shortcut live in the sidebar. Navigate views, toggle favorites, and manage your library without reaching for the mouse.</p>
+        </div>
+        <div class="showcase-image">
+          <div class="window-frame">
+            <div class="window-toolbar">
+              <span class="traffic-light red"></span>
+              <span class="traffic-light yellow"></span>
+              <span class="traffic-light green"></span>
+            </div>
+            <picture>
+              <img src="assets/screenshots/shortcuts.png" alt="Keyboard shortcut hints shown by holding Command key"
+                   onerror="this.parentElement.outerHTML='<div class=\'screenshot-placeholder\'>shortcuts.png</div>'">
+            </picture>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dark Mode -->
+      <div class="showcase-item reverse">
+        <div class="showcase-text">
+          <h3>Beautiful in dark mode</h3>
+          <p>PaperShelf follows your system appearance. Every view, dialog, and the PDF reader adapt seamlessly to light and dark mode.</p>
+        </div>
+        <div class="showcase-image">
+          <div class="window-frame window-frame-dark">
+            <div class="window-toolbar">
+              <span class="traffic-light red"></span>
+              <span class="traffic-light yellow"></span>
+              <span class="traffic-light green"></span>
+            </div>
+            <picture>
+              <img src="assets/screenshots/dark-mode.png" alt="PaperShelf in dark mode"
+                   onerror="this.parentElement.outerHTML='<div class=\'screenshot-placeholder\'>dark-mode.png</div>'">
+            </picture>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="https://github.com/dakl/papershelf/releases/latest">Download</a>
+      <a href="https://github.com/dakl/papershelf">GitHub</a>
+      <a href="https://github.com/dakl/papershelf/issues">Report an Issue</a>
+    </div>
+    <p class="credit">Made with ❤️ in 🇸🇪 by Daniel Klevebring</p>
+  </footer>
+
+</body>
+</html>
