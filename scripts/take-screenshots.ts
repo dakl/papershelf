@@ -142,6 +142,8 @@ const FAVORITES = ['1706.03762', '2005.14165', '1810.04805'];
 
 // Clip region that crops the 38px titlebar (traffic lights + sidebar toggle)
 const FULL_CLIP = { x: 0, y: TITLEBAR_HEIGHT, width: WINDOW_WIDTH, height: WINDOW_HEIGHT - TITLEBAR_HEIGHT };
+// Showcase clips include the real app titlebar
+const SHOWCASE_CLIP = { x: 0, y: 0, width: 560, height: 500 + TITLEBAR_HEIGHT };
 
 async function main() {
   const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'papershelf-screenshots-'));
@@ -279,10 +281,9 @@ async function main() {
   await window.getByText('Mistral 7B').first().click();
   await window.waitForTimeout(1000);
 
-  // Crop to sidebar + paper list only
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'search.png'),
-    clip: { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 },
+    clip: SHOWCASE_CLIP,
   });
   console.log('  ✓ search.png');
 
@@ -296,10 +297,9 @@ async function main() {
   await window.getByText('Mistral 7B').first().click();
   await window.waitForTimeout(300);
 
-  // Crop to sidebar + paper list only
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'collections.png'),
-    clip: { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 },
+    clip: SHOWCASE_CLIP,
   });
   console.log('  ✓ collections.png');
 
@@ -319,10 +319,9 @@ async function main() {
   console.log('  Store debug:', storeDebug);
   await window.waitForTimeout(500);
 
-  // Include titlebar so the real app bar is visible
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'shortcuts.png'),
-    clip: { x: 0, y: 0, width: 560, height: 500 + TITLEBAR_HEIGHT },
+    clip: SHOWCASE_CLIP,
   });
 
   await window.evaluate(() => {
@@ -345,10 +344,9 @@ async function main() {
   await window.getByText('Mistral 7B').first().click();
   await window.waitForTimeout(1500);
 
-  // Crop to sidebar + paper list only
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'dark-mode.png'),
-    clip: { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 },
+    clip: SHOWCASE_CLIP,
   });
   console.log('  ✓ dark-mode.png');
 
