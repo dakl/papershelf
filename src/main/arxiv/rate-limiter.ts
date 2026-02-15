@@ -1,7 +1,6 @@
-import pkg from '../../../package.json';
+import { app } from 'electron';
 
 const MIN_INTERVAL_MS = 3000;
-const USER_AGENT = `PaperShelf/${pkg.version} (https://github.com/dakl/papershelf)`;
 let lastCallTime = 0;
 
 export async function rateLimitedFetch(url: string, init?: RequestInit): Promise<Response> {
@@ -11,8 +10,10 @@ export async function rateLimitedFetch(url: string, init?: RequestInit): Promise
     await new Promise((resolve) => setTimeout(resolve, MIN_INTERVAL_MS - elapsed));
   }
   lastCallTime = Date.now();
+  const version = app.getVersion();
+  const userAgent = `PaperShelf/${version} (https://github.com/dakl/papershelf)`;
   return fetch(url, {
     ...init,
-    headers: { ...init?.headers, 'User-Agent': USER_AGENT },
+    headers: { ...init?.headers, 'User-Agent': userAgent },
   });
 }
