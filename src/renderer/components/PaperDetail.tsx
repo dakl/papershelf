@@ -3,6 +3,7 @@ import type { Collection, LibraryPaper, Tag } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
+import { ConfirmPopup } from './ConfirmPopup';
 import { StarIcon, StarOutlineIcon } from './Icons';
 import { PdfViewer } from './PdfViewer';
 
@@ -19,6 +20,7 @@ export function PaperDetail() {
   const {
     selectedLibraryPaper,
     toggleFavorite,
+    deletePaper,
     collections,
     tags,
     addPaperToCollection,
@@ -127,6 +129,7 @@ export function PaperDetail() {
             setShowTagPicker={setShowTagPicker}
             handleToggleCollection={handleToggleCollection}
             handleToggleTag={handleToggleTag}
+            onDelete={paperId ? () => deletePaper(paperId) : undefined}
           />
         </div>
 
@@ -165,6 +168,7 @@ function InfoPopoverButton({
   setShowTagPicker,
   handleToggleCollection,
   handleToggleTag,
+  onDelete,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -189,18 +193,22 @@ function InfoPopoverButton({
   setShowTagPicker: (v: boolean) => void;
   handleToggleCollection: (id: string) => void;
   handleToggleTag: (id: string) => void;
+  onDelete?: () => void;
 }) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
       if (
         popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node) &&
+        !popoverRef.current.contains(target) &&
         buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
+        !buttonRef.current.contains(target) &&
+        !target.closest('.fixed.z-50')
       ) {
         onClose();
       }
@@ -349,7 +357,31 @@ function InfoPopoverButton({
             >
               Open on arXiv
             </a>
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  const rect = (e.target as HTMLElement).getBoundingClientRect();
+                  setConfirmDelete({ x: rect.left, y: rect.bottom + 4 });
+                }}
+                className="no-drag px-3 py-1 rounded-md text-mac-small font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
+              >
+                Remove from Library
+              </button>
+            )}
           </div>
+          {confirmDelete && onDelete && (
+            <ConfirmPopup
+              x={confirmDelete.x}
+              y={confirmDelete.y}
+              message={`Remove "${paper.title}" from your library?`}
+              confirmLabel="Remove"
+              onConfirm={() => {
+                onDelete();
+                setConfirmDelete(null);
+              }}
+              onCancel={() => setConfirmDelete(null)}
+            />
+          )}
         </div>
       )}
     </div>
