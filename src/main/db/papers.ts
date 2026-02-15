@@ -1,4 +1,4 @@
-import type { LibraryPaper, PaperFilter } from '../../shared/types';
+import type { LibraryPaper, PaperFilter, SortBy } from '../../shared/types';
 import { getCollectionsForPaper, getCollectionsForPapers } from './collections';
 import { generateId, getDb, type PaperRow, rowToLibraryPaper, serializeArray } from './connection';
 import { getTagsForPaper, getTagsForPapers } from './tags';
@@ -67,19 +67,40 @@ export function getPaperByArxivId(arxivId: string): LibraryPaper | null {
   return rowToLibraryPaper(row, collections, tags);
 }
 
+function buildOrderClause(filter: PaperFilter, tableAlias?: string): string {
+  const prefix = tableAlias ? `${tableAlias}.` : '';
+
+  if (filter.view === 'recent') {
+    return `ORDER BY ${prefix}created_at DESC`;
+  }
+
+  const sortBy = filter.sortBy ?? 'created_at';
+  const direction = filter.sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+  if (sortBy === 'first_author') {
+    return `ORDER BY json_extract(${prefix}authors, '$[0]') COLLATE NOCASE ${direction}`;
+  }
+
+  if (sortBy === 'title') {
+    return `ORDER BY ${prefix}title COLLATE NOCASE ${direction}`;
+  }
+
+  return `ORDER BY ${prefix}${sortBy} ${direction}`;
+}
+
 export function getPapers(filter: PaperFilter): LibraryPaper[] {
   const db = getDb();
   let rows: PaperRow[];
 
   switch (filter.view) {
     case 'all-papers':
-      rows = db.prepare('SELECT * FROM papers ORDER BY created_at DESC').all() as PaperRow[];
+      rows = db.prepare(`SELECT * FROM papers ${buildOrderClause(filter)}`).all() as PaperRow[];
       break;
     case 'favorites':
-      rows = db.prepare('SELECT * FROM papers WHERE is_favorite = 1 ORDER BY created_at DESC').all() as PaperRow[];
+      rows = db.prepare(`SELECT * FROM papers WHERE is_favorite = 1 ${buildOrderClause(filter)}`).all() as PaperRow[];
       break;
     case 'recent':
-      rows = db.prepare('SELECT * FROM papers ORDER BY created_at DESC LIMIT 50').all() as PaperRow[];
+      rows = db.prepare(`SELECT * FROM papers ${buildOrderClause(filter)} LIMIT 50`).all() as PaperRow[];
       break;
     case 'collection':
       rows = db
@@ -87,7 +108,7 @@ export function getPapers(filter: PaperFilter): LibraryPaper[] {
         SELECT p.* FROM papers p
         JOIN paper_collections pc ON p.id = pc.paper_id
         WHERE pc.collection_id = ?
-        ORDER BY p.created_at DESC
+        ${buildOrderClause(filter, 'p')}
       `)
         .all(filter.collectionId) as PaperRow[];
       break;
@@ -97,7 +118,7 @@ export function getPapers(filter: PaperFilter): LibraryPaper[] {
         SELECT p.* FROM papers p
         JOIN paper_tags pt ON p.id = pt.paper_id
         WHERE pt.tag_id = ?
-        ORDER BY p.created_at DESC
+        ${buildOrderClause(filter, 'p')}
       `)
         .all(filter.tagId) as PaperRow[];
       break;

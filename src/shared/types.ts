@@ -99,10 +99,15 @@ export interface ViewerState {
   scrollLeft: number;
 }
 
+export type SortBy = 'created_at' | 'published_date' | 'title' | 'first_author';
+export type SortOrder = 'asc' | 'desc';
+
 export interface PaperFilter {
   view: 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag';
   collectionId?: string;
   tagId?: string;
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
 }
 
 export interface SavePaperResult {
