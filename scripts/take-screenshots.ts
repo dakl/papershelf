@@ -319,10 +319,10 @@ async function main() {
   console.log('  Store debug:', storeDebug);
   await window.waitForTimeout(500);
 
-  // Crop to sidebar to show the shortcut badges
+  // Include titlebar so the sidebar-toggle ⌘B hint has a visible target
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'shortcuts.png'),
-    clip: { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 },
+    clip: { x: 0, y: 0, width: 560, height: 500 },
   });
 
   await window.evaluate(() => {
