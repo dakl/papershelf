@@ -26,7 +26,6 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: 'goSearch', label: 'Go to Search', keys: 'Meta+2' },
   { id: 'goFavorites', label: 'Go to Favorites', keys: 'Meta+3' },
   { id: 'goRecent', label: 'Go to Recently Added', keys: 'Meta+4' },
-  { id: 'goCitations', label: 'Go to Citations', keys: 'Meta+5' },
   { id: 'toggleFavorite', label: 'Toggle Favorite', keys: 'Meta+d' },
   { id: 'toggleSettings', label: 'Open Settings', keys: 'Meta+,' },
   { id: 'savePaper', label: 'Save Paper', keys: 'Meta+s' },

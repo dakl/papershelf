@@ -1,3 +1,1 @@
 export const DEFAULT_COLOR = '#007AFF';
-export const CITATION_CACHE_TTL_DAYS = 30;
-export const SEMANTIC_SCHOLAR_RATE_LIMIT_MS = 350;
