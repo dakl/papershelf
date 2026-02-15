@@ -201,36 +201,12 @@ img {
   border-bottom-color: #3a3a3c;
 }
 
-/* Sidebar toggle icon in CSS toolbar (mirrors Toolbar.tsx) */
+/* Sidebar toggle icon in CSS toolbar (mirrors Toolbar.tsx left:76px) */
 .toolbar-sidebar-toggle {
-  margin-left: auto;
-  position: relative;
+  margin-left: 8px;
   display: inline-flex;
   align-items: center;
   color: #86868b;
-}
-
-.shortcut-pill {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 2px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1.4;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  white-space: nowrap;
-}
-
-@media (prefers-color-scheme: dark) {
-  .shortcut-pill {
-    background: rgba(255, 255, 255, 0.85);
-    color: #1d1d1f;
-  }
 }
 
 /* ── Screenshot placeholder (until real screenshots exist) */
