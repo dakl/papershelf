@@ -20,12 +20,14 @@ import {
   getCollectionByName,
   getCollections,
   getCollectionsForPaper,
+  getCollectionsForPapers,
   getPaperByArxivId,
   getPaperById,
   getPapers,
   getTagByName,
   getTags,
   getTagsForPaper,
+  getTagsForPapers,
   initDatabase,
   insertPaper,
   removePaperFromCollection,
@@ -541,5 +543,76 @@ describe('getTagByName', () => {
 
     expect(getTagByName('important')).toBeNull();
     expect(getTagByName('IMPORTANT')).toBeNull();
+  });
+});
+
+// --- Batch fetching ---
+
+describe('batch collection and tag fetching', () => {
+  it('returns collections grouped by paper id', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2' }));
+    const p3 = insertPaper(makePaper({ arxivId: '3' }));
+    const colA = createCollection('ML', '#FF0000');
+    const colB = createCollection('NLP', '#00FF00');
+
+    addPaperToCollection(p1.id, colA.id);
+    addPaperToCollection(p1.id, colB.id);
+    addPaperToCollection(p2.id, colA.id);
+
+    const collectionsMap = getCollectionsForPapers([p1.id, p2.id, p3.id]);
+
+    expect(collectionsMap.get(p1.id)).toHaveLength(2);
+    expect(collectionsMap.get(p2.id)).toHaveLength(1);
+    expect(collectionsMap.get(p2.id)![0].name).toBe('ML');
+    expect(collectionsMap.get(p3.id)).toHaveLength(0);
+  });
+
+  it('returns tags grouped by paper id', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2' }));
+    const p3 = insertPaper(makePaper({ arxivId: '3' }));
+    const tagA = createTag('important', '#FF0000');
+    const tagB = createTag('to-read', '#00FF00');
+
+    addTagToPaper(p1.id, tagA.id);
+    addTagToPaper(p1.id, tagB.id);
+    addTagToPaper(p2.id, tagA.id);
+
+    const tagsMap = getTagsForPapers([p1.id, p2.id, p3.id]);
+
+    expect(tagsMap.get(p1.id)).toHaveLength(2);
+    expect(tagsMap.get(p2.id)).toHaveLength(1);
+    expect(tagsMap.get(p2.id)![0].name).toBe('important');
+    expect(tagsMap.get(p3.id)).toHaveLength(0);
+  });
+
+  it('returns empty maps for empty input', () => {
+    expect(getCollectionsForPapers([])).toEqual(new Map());
+    expect(getTagsForPapers([])).toEqual(new Map());
+  });
+
+  it('includes correct paper_count in batch collection results', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2' }));
+    const col = createCollection('ML', '#FF0000');
+
+    addPaperToCollection(p1.id, col.id);
+    addPaperToCollection(p2.id, col.id);
+
+    const collectionsMap = getCollectionsForPapers([p1.id]);
+    expect(collectionsMap.get(p1.id)![0].paperCount).toBe(2);
+  });
+
+  it('includes correct paper_count in batch tag results', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2' }));
+    const tag = createTag('important', '#FF0000');
+
+    addTagToPaper(p1.id, tag.id);
+    addTagToPaper(p2.id, tag.id);
+
+    const tagsMap = getTagsForPapers([p1.id]);
+    expect(tagsMap.get(p1.id)![0].paperCount).toBe(2);
   });
 });

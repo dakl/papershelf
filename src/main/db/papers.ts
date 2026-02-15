@@ -1,7 +1,17 @@
 import type { LibraryPaper, PaperFilter } from '../../shared/types';
-import { getCollectionsForPaper } from './collections';
+import { getCollectionsForPaper, getCollectionsForPapers } from './collections';
 import { generateId, getDb, type PaperRow, rowToLibraryPaper, serializeArray } from './connection';
-import { getTagsForPaper } from './tags';
+import { getTagsForPaper, getTagsForPapers } from './tags';
+
+function hydratePaperRows(rows: PaperRow[]): LibraryPaper[] {
+  if (rows.length === 0) return [];
+
+  const paperIds = rows.map((row) => row.id);
+  const collectionsMap = getCollectionsForPapers(paperIds);
+  const tagsMap = getTagsForPapers(paperIds);
+
+  return rows.map((row) => rowToLibraryPaper(row, collectionsMap.get(row.id) ?? [], tagsMap.get(row.id) ?? []));
+}
 
 export function insertPaper(paper: {
   arxivId: string;
@@ -95,11 +105,7 @@ export function getPapers(filter: PaperFilter): LibraryPaper[] {
       rows = [];
   }
 
-  return rows.map((row) => {
-    const collections = getCollectionsForPaper(row.id);
-    const tags = getTagsForPaper(row.id);
-    return rowToLibraryPaper(row, collections, tags);
-  });
+  return hydratePaperRows(rows);
 }
 
 export function deletePaper(id: string): void {
@@ -158,9 +164,5 @@ export function searchLibrary(query: string): LibraryPaper[] {
   `)
     .all(query) as PaperRow[];
 
-  return rows.map((row) => {
-    const collections = getCollectionsForPaper(row.id);
-    const tags = getTagsForPaper(row.id);
-    return rowToLibraryPaper(row, collections, tags);
-  });
+  return hydratePaperRows(rows);
 }
