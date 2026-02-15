@@ -1,4 +1,6 @@
 import { _electron } from '@playwright/test';
+import type { ElectronApplication } from '@playwright/test';
+import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -142,8 +144,8 @@ const FAVORITES = ['1706.03762', '2005.14165', '1810.04805'];
 
 // Clip region that crops the 38px titlebar (traffic lights + sidebar toggle)
 const FULL_CLIP = { x: 0, y: TITLEBAR_HEIGHT, width: WINDOW_WIDTH, height: WINDOW_HEIGHT - TITLEBAR_HEIGHT };
-// Showcase clips include the real app titlebar
-const SHOWCASE_CLIP = { x: 0, y: 0, width: 560, height: 500 + TITLEBAR_HEIGHT };
+// Showcase clips crop the titlebar — CSS window-frame adds traffic lights
+const SHOWCASE_CLIP = { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 };
 
 async function main() {
   const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'papershelf-screenshots-'));
