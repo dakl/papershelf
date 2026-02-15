@@ -5,6 +5,7 @@ import { LibraryList } from './LibraryList';
 import { LibrarySearchResults } from './LibrarySearchResults';
 import { SearchBar } from './SearchBar';
 import { SearchResults } from './SearchResults';
+import { SortControl } from './SortControl';
 
 function getViewTitle(
   view: string,
@@ -34,16 +35,23 @@ function getViewTitle(
 }
 
 export function PaperList({ width }: { width: number }) {
-  const { sidebarView, selectedPaper, setSelectedPaper, selectedCollectionId, selectedTagId } = useUIStore();
+  const {
+    sidebarView,
+    selectedPaper,
+    setSelectedPaper,
+    selectedCollectionId,
+    selectedTagId,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    toggleSortOrder,
+  } = useUIStore();
   const { collections, tags, selectedLibraryPaper, setSelectedLibraryPaper } = usePaperStore();
   const { results, libraryResults, loading, error, search, mode, setMode } = useSearch();
   const isSearch = sidebarView === 'search';
 
   return (
-    <div
-      className="shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30"
-      style={{ width }}
-    >
+    <div className="shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30" style={{ width }}>
       <div className="shrink-0 px-3 pt-2 pb-2">
         {isSearch && (
           <div className="no-drag">
@@ -51,9 +59,17 @@ export function PaperList({ width }: { width: number }) {
           </div>
         )}
         {!isSearch && (
-          <h2 className="no-drag text-mac-heading font-semibold capitalize">
-            {getViewTitle(sidebarView, collections, tags, selectedCollectionId, selectedTagId)}
-          </h2>
+          <div className="no-drag flex items-center justify-between">
+            <h2 className="text-mac-heading font-semibold capitalize">
+              {getViewTitle(sidebarView, collections, tags, selectedCollectionId, selectedTagId)}
+            </h2>
+            <SortControl
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortByChange={setSortBy}
+              onToggleSortOrder={toggleSortOrder}
+            />
+          </div>
         )}
       </div>
 

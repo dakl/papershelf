@@ -110,11 +110,11 @@ function createSchema(): void {
 
     -- Performance indexes
     CREATE INDEX IF NOT EXISTS idx_papers_created_at ON papers(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_papers_published_date ON papers(published_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_papers_title ON papers(title COLLATE NOCASE);
     CREATE INDEX IF NOT EXISTS idx_papers_is_favorite ON papers(is_favorite);
     CREATE INDEX IF NOT EXISTS idx_paper_collections_collection_id ON paper_collections(collection_id);
     CREATE INDEX IF NOT EXISTS idx_paper_tags_tag_id ON paper_tags(tag_id);
-    CREATE INDEX IF NOT EXISTS idx_citation_edges_cited_s2_id ON citation_edges(cited_s2_id);
-    CREATE INDEX IF NOT EXISTS idx_semantic_scholar_papers_arxiv_id ON semantic_scholar_papers(arxiv_id);
   `);
 }
 

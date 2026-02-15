@@ -211,6 +211,120 @@ describe('getPapers', () => {
   });
 });
 
+// --- Paper sorting ---
+
+describe('getPapers sorting', () => {
+  it('sorts by title ascending', () => {
+    insertPaper(makePaper({ arxivId: '1', title: 'Zebra Networks' }));
+    insertPaper(makePaper({ arxivId: '2', title: 'Alpha Models' }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'title', sortOrder: 'asc' });
+    expect(papers[0].title).toBe('Alpha Models');
+    expect(papers[1].title).toBe('Zebra Networks');
+  });
+
+  it('sorts by title descending', () => {
+    insertPaper(makePaper({ arxivId: '1', title: 'Alpha Models' }));
+    insertPaper(makePaper({ arxivId: '2', title: 'Zebra Networks' }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'title', sortOrder: 'desc' });
+    expect(papers[0].title).toBe('Zebra Networks');
+    expect(papers[1].title).toBe('Alpha Models');
+  });
+
+  it('sorts by title case-insensitively', () => {
+    insertPaper(makePaper({ arxivId: '1', title: 'zebra Networks' }));
+    insertPaper(makePaper({ arxivId: '2', title: 'Alpha Models' }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'title', sortOrder: 'asc' });
+    expect(papers[0].title).toBe('Alpha Models');
+    expect(papers[1].title).toBe('zebra Networks');
+  });
+
+  it('sorts by published_date ascending', () => {
+    insertPaper(makePaper({ arxivId: '1', publishedDate: '2024-01-01T00:00:00Z' }));
+    insertPaper(makePaper({ arxivId: '2', publishedDate: '2023-01-01T00:00:00Z' }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'published_date', sortOrder: 'asc' });
+    expect(papers[0].publishedDate).toBe('2023-01-01T00:00:00Z');
+    expect(papers[1].publishedDate).toBe('2024-01-01T00:00:00Z');
+  });
+
+  it('defaults to created_at DESC when sort not specified', () => {
+    insertPaper(makePaper({ arxivId: '1', publishedDate: '2023-01-01T00:00:00Z' }));
+    insertPaper(makePaper({ arxivId: '2', publishedDate: '2024-01-01T00:00:00Z' }));
+
+    const papers = getPapers({ view: 'all-papers' });
+    // Without explicit sort, defaults to created_at DESC — both have same created_at
+    // so just verify we get both papers back with default behavior
+    expect(papers).toHaveLength(2);
+  });
+
+  it('ignores sort for recent view (always created_at DESC)', () => {
+    insertPaper(makePaper({ arxivId: '1', title: 'Alpha', publishedDate: '2024-01-01T00:00:00Z' }));
+    insertPaper(makePaper({ arxivId: '2', title: 'Zebra', publishedDate: '2023-01-01T00:00:00Z' }));
+
+    // Even though we ask for title ASC, recent view should ignore it
+    const papersByTitle = getPapers({ view: 'recent', sortBy: 'title', sortOrder: 'asc' });
+    const papersByDate = getPapers({ view: 'recent' });
+    // Both should return same order (recent ignores sortBy)
+    expect(papersByTitle.map((p) => p.arxivId)).toEqual(papersByDate.map((p) => p.arxivId));
+  });
+
+  it('sorts within collection view', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1', title: 'Zebra Networks' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2', title: 'Alpha Models' }));
+    const col = createCollection('ML', '#FF0000');
+    addPaperToCollection(p1.id, col.id);
+    addPaperToCollection(p2.id, col.id);
+
+    const papers = getPapers({ view: 'collection', collectionId: col.id, sortBy: 'title', sortOrder: 'asc' });
+    expect(papers[0].title).toBe('Alpha Models');
+    expect(papers[1].title).toBe('Zebra Networks');
+  });
+
+  it('sorts within tag view', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1', title: 'Zebra Networks' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2', title: 'Alpha Models' }));
+    const tag = createTag('important', '#FF0000');
+    addTagToPaper(p1.id, tag.id);
+    addTagToPaper(p2.id, tag.id);
+
+    const papers = getPapers({ view: 'tag', tagId: tag.id, sortBy: 'title', sortOrder: 'asc' });
+    expect(papers[0].title).toBe('Alpha Models');
+    expect(papers[1].title).toBe('Zebra Networks');
+  });
+
+  it('sorts favorites by published_date', () => {
+    const p1 = insertPaper(makePaper({ arxivId: '1', publishedDate: '2024-06-01T00:00:00Z' }));
+    const p2 = insertPaper(makePaper({ arxivId: '2', publishedDate: '2023-01-01T00:00:00Z' }));
+    toggleFavorite(p1.id);
+    toggleFavorite(p2.id);
+
+    const papers = getPapers({ view: 'favorites', sortBy: 'published_date', sortOrder: 'asc' });
+    expect(papers[0].publishedDate).toBe('2023-01-01T00:00:00Z');
+    expect(papers[1].publishedDate).toBe('2024-06-01T00:00:00Z');
+  });
+
+  it('sorts by first author ascending', () => {
+    insertPaper(makePaper({ arxivId: '1', authors: ['Zara Smith', 'Alice Jones'] }));
+    insertPaper(makePaper({ arxivId: '2', authors: ['Alice Brown'] }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'first_author', sortOrder: 'asc' });
+    expect(papers[0].authors[0]).toBe('Alice Brown');
+    expect(papers[1].authors[0]).toBe('Zara Smith');
+  });
+
+  it('sorts by first author descending', () => {
+    insertPaper(makePaper({ arxivId: '1', authors: ['Alice Brown'] }));
+    insertPaper(makePaper({ arxivId: '2', authors: ['Zara Smith'] }));
+
+    const papers = getPapers({ view: 'all-papers', sortBy: 'first_author', sortOrder: 'desc' });
+    expect(papers[0].authors[0]).toBe('Zara Smith');
+    expect(papers[1].authors[0]).toBe('Alice Brown');
+  });
+});
+
 // --- Check in library ---
 
 describe('checkPapersInLibrary', () => {

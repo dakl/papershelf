@@ -6,12 +6,12 @@ import { useUIStore } from '../stores/uiStore';
 import { PaperListItem } from './PaperListItem';
 
 export function LibraryList() {
-  const { sidebarView, selectedCollectionId, selectedTagId } = useUIStore();
+  const { sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder } = useUIStore();
   const { papers, selectedLibraryPaper, setSelectedLibraryPaper, loadPapers, loading, addTagToPaper, tags } =
     usePaperStore();
 
   useEffect(() => {
-    const filter: PaperFilter = { view: sidebarView as PaperFilter['view'] };
+    const filter: PaperFilter = { view: sidebarView as PaperFilter['view'], sortBy, sortOrder };
     if (sidebarView === 'collection' && selectedCollectionId) {
       filter.collectionId = selectedCollectionId;
     }
@@ -20,7 +20,7 @@ export function LibraryList() {
     }
     loadPapers(filter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sidebarView, selectedCollectionId, selectedTagId]);
+  }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder]);
 
   if (loading) {
     return (
