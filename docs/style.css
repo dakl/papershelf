@@ -201,39 +201,9 @@ img {
   border-bottom-color: #3a3a3c;
 }
 
-/* App-style toolbar with sidebar toggle + shortcut pill */
-.window-toolbar-app {
-  position: relative;
-}
-
-.toolbar-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-secondary);
-}
-
-.shortcut-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .shortcut-pill {
-    background: rgba(255, 255, 255, 0.85);
-    color: #1d1d1f;
-  }
+/* Variant without CSS toolbar — screenshot already contains the real app titlebar */
+.window-frame-no-toolbar img {
+  border-radius: 12px 12px 0 0;
 }
 
 /* ── Screenshot placeholder (until real screenshots exist) */

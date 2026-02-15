@@ -319,10 +319,10 @@ async function main() {
   console.log('  Store debug:', storeDebug);
   await window.waitForTimeout(500);
 
-  // Crop titlebar; the website draws a mock toolbar with ⌘B hint
+  // Include titlebar so the real app bar is visible
   await window.screenshot({
     path: path.join(SCREENSHOT_DIR, 'shortcuts.png'),
-    clip: { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 },
+    clip: { x: 0, y: 0, width: 560, height: 500 + TITLEBAR_HEIGHT },
   });
 
   await window.evaluate(() => {
