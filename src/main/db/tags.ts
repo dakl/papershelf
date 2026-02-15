@@ -77,3 +77,34 @@ export function getTagsForPaper(paperId: string): Tag[] {
     .all(paperId) as TagRow[];
   return rows.map(rowToTag);
 }
+
+export function getTagsForPapers(paperIds: string[]): Map<string, Tag[]> {
+  const result = new Map<string, Tag[]>();
+  if (paperIds.length === 0) return result;
+
+  const db = getDb();
+  const placeholders = paperIds.map(() => '?').join(',');
+
+  const rows = db
+    .prepare(
+      `
+    SELECT pt.paper_id, t.*, COUNT(pt2.paper_id) as paper_count
+    FROM tags t
+    JOIN paper_tags pt ON t.id = pt.tag_id
+    LEFT JOIN paper_tags pt2 ON t.id = pt2.tag_id
+    WHERE pt.paper_id IN (${placeholders})
+    GROUP BY pt.paper_id, t.id
+  `,
+    )
+    .all(...paperIds) as (TagRow & { paper_id: string })[];
+
+  for (const paperId of paperIds) {
+    result.set(paperId, []);
+  }
+
+  for (const row of rows) {
+    result.get(row.paper_id)!.push(rowToTag(row));
+  }
+
+  return result;
+}

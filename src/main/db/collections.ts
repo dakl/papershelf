@@ -79,3 +79,34 @@ export function getCollectionsForPaper(paperId: string): Collection[] {
     .all(paperId) as CollectionRow[];
   return rows.map(rowToCollection);
 }
+
+export function getCollectionsForPapers(paperIds: string[]): Map<string, Collection[]> {
+  const result = new Map<string, Collection[]>();
+  if (paperIds.length === 0) return result;
+
+  const db = getDb();
+  const placeholders = paperIds.map(() => '?').join(',');
+
+  const rows = db
+    .prepare(
+      `
+    SELECT pc.paper_id, c.*, COUNT(pc2.paper_id) as paper_count
+    FROM collections c
+    JOIN paper_collections pc ON c.id = pc.collection_id
+    LEFT JOIN paper_collections pc2 ON c.id = pc2.collection_id
+    WHERE pc.paper_id IN (${placeholders})
+    GROUP BY pc.paper_id, c.id
+  `,
+    )
+    .all(...paperIds) as (CollectionRow & { paper_id: string })[];
+
+  for (const paperId of paperIds) {
+    result.set(paperId, []);
+  }
+
+  for (const row of rows) {
+    result.get(row.paper_id)!.push(rowToCollection(row));
+  }
+
+  return result;
+}

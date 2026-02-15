@@ -14,6 +14,7 @@ export {
   getCollectionByName,
   getCollections,
   getCollectionsForPaper,
+  getCollectionsForPapers,
   removePaperFromCollection,
   updateCollection,
 } from './collections';
@@ -38,6 +39,7 @@ export {
   getTagByName,
   getTags,
   getTagsForPaper,
+  getTagsForPapers,
   removeTagFromPaper,
   updateTag,
 } from './tags';
