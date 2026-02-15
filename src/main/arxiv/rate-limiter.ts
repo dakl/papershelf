@@ -1,6 +1,7 @@
+import pkg from '../../../package.json';
+
 const MIN_INTERVAL_MS = 3000;
-const USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const USER_AGENT = `PaperShelf/${pkg.version} (https://github.com/dakl/papershelf)`;
 let lastCallTime = 0;
 
 export async function rateLimitedFetch(url: string, init?: RequestInit): Promise<Response> {
