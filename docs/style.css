@@ -160,7 +160,7 @@ img {
 
 .window-toolbar {
   background: var(--window-toolbar);
-  padding: 8px 12px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -171,6 +171,17 @@ img {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+}
+
+/* Compact toolbar for showcase screenshots */
+.showcase-image .window-toolbar {
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.showcase-image .traffic-light {
+  width: 10px;
+  height: 10px;
 }
 
 .traffic-light.red {
