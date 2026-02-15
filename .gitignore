@@ -7,3 +7,5 @@ dist/
 *.db-wal
 *.db-shm
 release/
+playwright-report/
+test-results/
