@@ -4,7 +4,7 @@ import { usePaperStore } from '../stores/paperStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
 import { ConfirmPopup } from './ConfirmPopup';
-import { StarIcon, StarOutlineIcon } from './Icons';
+import { FolderPlusIcon, StarIcon, StarOutlineIcon, TagPlusIcon } from './Icons';
 import { PdfViewer } from './PdfViewer';
 
 function formatDate(dateStr: string): string {
@@ -31,6 +31,10 @@ export function PaperDetail() {
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
+  const [showHeaderCollectionPicker, setShowHeaderCollectionPicker] = useState(false);
+  const [showHeaderTagPicker, setShowHeaderTagPicker] = useState(false);
+  const headerCollectionRef = useRef<HTMLDivElement>(null);
+  const headerTagRef = useRef<HTMLDivElement>(null);
   const toggleFavoriteShortcut = useShortcutStore((state) => state.getShortcut('toggleFavorite'));
   const favoriteHint = toggleFavoriteShortcut ? ` (${formatKeys(toggleFavoriteShortcut.keys)})` : '';
 
@@ -54,7 +58,25 @@ export function PaperDetail() {
     setShowCollectionPicker(false);
     setShowTagPicker(false);
     setShowInfoPopover(false);
+    setShowHeaderCollectionPicker(false);
+    setShowHeaderTagPicker(false);
   }, [paperIdentity]);
+
+  // Click-outside handler for header pickers
+  useEffect(() => {
+    if (!showHeaderCollectionPicker && !showHeaderTagPicker) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showHeaderCollectionPicker && headerCollectionRef.current && !headerCollectionRef.current.contains(target)) {
+        setShowHeaderCollectionPicker(false);
+      }
+      if (showHeaderTagPicker && headerTagRef.current && !headerTagRef.current.contains(target)) {
+        setShowHeaderTagPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showHeaderCollectionPicker, showHeaderTagPicker]);
 
   if (!paper) {
     return (
@@ -113,9 +135,85 @@ export function PaperDetail() {
 
           <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
 
+          {isLibraryPaper && (
+            <>
+              <div ref={headerCollectionRef} className="relative">
+                <button
+                  onClick={() => {
+                    setShowHeaderCollectionPicker((v) => !v);
+                    setShowHeaderTagPicker(false);
+                    setShowInfoPopover(false);
+                    setShowCollectionPicker(false);
+                    setShowTagPicker(false);
+                  }}
+                  className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+                  title="Add to collection"
+                >
+                  <FolderPlusIcon />
+                </button>
+                {showHeaderCollectionPicker && collections.length > 0 && (
+                  <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
+                    {collections.map((col) => {
+                      const isIn = paperCollections.some((c) => c.id === col.id);
+                      return (
+                        <button
+                          key={col.id}
+                          onClick={() => handleToggleCollection(col.id)}
+                          className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
+                          <span className="flex-1">{col.name}</span>
+                          {isIn && <span className="text-mac-accent">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div ref={headerTagRef} className="relative">
+                <button
+                  onClick={() => {
+                    setShowHeaderTagPicker((v) => !v);
+                    setShowHeaderCollectionPicker(false);
+                    setShowInfoPopover(false);
+                    setShowCollectionPicker(false);
+                    setShowTagPicker(false);
+                  }}
+                  className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+                  title="Add tag"
+                >
+                  <TagPlusIcon />
+                </button>
+                {showHeaderTagPicker && tags.length > 0 && (
+                  <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
+                    {tags.map((tag) => {
+                      const has = paperTags.some((t) => t.id === tag.id);
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleToggleTag(tag.id)}
+                          className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                          <span className="flex-1">{tag.name}</span>
+                          {has && <span className="text-mac-accent">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <InfoPopoverButton
             open={showInfoPopover}
-            onToggle={() => setShowInfoPopover((v) => !v)}
+            onToggle={() => {
+              setShowInfoPopover((v) => !v);
+              setShowHeaderCollectionPicker(false);
+              setShowHeaderTagPicker(false);
+            }}
             onClose={closeInfoPopover}
             paper={paper}
             isLibraryPaper={isLibraryPaper}
