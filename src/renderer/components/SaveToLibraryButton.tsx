@@ -27,6 +27,9 @@ export function SaveToLibraryButton({ paper, alreadySaved }: SaveToLibraryButton
     setSaving(false);
     if (result.success) {
       setSaved(true);
+      if (result.alreadyExisted) {
+        toast('Paper already in library', 'info');
+      }
     } else {
       toast(result.error ?? 'Failed to save paper', 'error');
     }

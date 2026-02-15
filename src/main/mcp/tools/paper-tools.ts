@@ -48,17 +48,22 @@ export function registerPaperTools(server: McpServer, isEnabled: (name: string) 
         arxiv_id: z.string().describe('arXiv ID of the paper to save (e.g. "2401.00001")'),
       },
       async ({ arxiv_id }) => {
-        const existing = db.getPaperByArxivId(arxiv_id);
-        if (existing) {
-          return { content: [{ type: 'text' as const, text: `Paper already in library: ${existing.title}` }] };
-        }
-
         const arxivPaper = await fetchPaper(arxiv_id);
         if (!arxivPaper) {
           return { content: [{ type: 'text' as const, text: `Paper not found on arXiv: ${arxiv_id}` }] };
         }
 
         const result = await savePaperFromArxivPaper(arxivPaper);
+        if (result.alreadyExisted) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Paper already in library: ${result.paper.title}\nLibrary ID: ${result.paper.id}`,
+              },
+            ],
+          };
+        }
         return {
           content: [
             {

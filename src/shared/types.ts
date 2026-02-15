@@ -109,6 +109,7 @@ export interface SavePaperResult {
   success: boolean;
   paper?: LibraryPaper;
   pdfDownloaded?: boolean;
+  alreadyExisted?: boolean;
   error?: string;
 }
 

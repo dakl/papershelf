@@ -51,7 +51,12 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('papers:save', async (_event, paper: ArxivPaper): Promise<SavePaperResult> => {
     try {
       const result = await savePaperFromArxivPaper(paper);
-      return { success: true, paper: result.paper, pdfDownloaded: result.pdfDownloaded };
+      return {
+        success: true,
+        paper: result.paper,
+        pdfDownloaded: result.pdfDownloaded,
+        alreadyExisted: result.alreadyExisted,
+      };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to save paper' };
     }
