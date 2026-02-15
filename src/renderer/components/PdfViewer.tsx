@@ -1,6 +1,7 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ConfirmPopup } from './ConfirmPopup';
+import { HighlightIcon, StickyNoteIcon } from './Icons';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { usePdfDocument } from './pdf/usePdfDocument';
 import { ShortcutHint } from './ShortcutHint';
@@ -185,7 +186,6 @@ function StickyNotePopup({
     </div>
   );
 }
-
 
 export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
   const readOnly = !paperId;
@@ -660,12 +660,15 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     return () => document.removeEventListener('shortcut:highlightSelection', handleHighlightShortcut);
   }, [readOnly, paperId, reloadPdf]);
 
-  const cycleAnnotationMode = useCallback(() => {
-    setAnnotationMode((current) => {
-      if (current === 'read') return 'highlight';
-      if (current === 'highlight') return 'note';
-      return 'read';
-    });
+  const toggleHighlightMode = useCallback(() => {
+    setAnnotationMode((current) => (current === 'highlight' ? 'read' : 'highlight'));
+    setHighlightToolbar(null);
+    setStickyNotePopup(null);
+    setDeleteConfirm(null);
+  }, []);
+
+  const toggleNoteMode = useCallback(() => {
+    setAnnotationMode((current) => (current === 'note' ? 'read' : 'note'));
     setHighlightToolbar(null);
     setStickyNotePopup(null);
     setDeleteConfirm(null);
@@ -713,26 +716,31 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
         {numPages > 0 && <span className="text-mac-small text-gray-400 ml-2">{numPages} pages</span>}
 
         {!readOnly && (
-          <div className="ml-4 border-l border-mac-separator pl-4 flex items-center gap-2">
+          <div className="ml-4 border-l border-mac-separator pl-4 flex items-center gap-1">
             <ShortcutHint shortcutId="highlightSelection" label="highlight">
               <button
-                onClick={cycleAnnotationMode}
-                className={`no-drag px-2.5 py-0.5 rounded text-mac-small font-medium transition-colors ${
-                  annotationMode !== 'read' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                onClick={toggleHighlightMode}
+                className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
+                  annotationMode === 'highlight'
+                    ? 'bg-blue-500 text-white'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
-                title={
-                  annotationMode === 'read'
-                    ? 'Enter highlight mode'
-                    : annotationMode === 'highlight'
-                      ? 'Switch to sticky note mode'
-                      : 'Exit annotation mode'
-                }
+                title={annotationMode === 'highlight' ? 'Exit highlight mode' : 'Enter highlight mode'}
               >
-                {annotationMode === 'read' && 'Annotate'}
-                {annotationMode === 'highlight' && 'Highlight'}
-                {annotationMode === 'note' && 'Note'}
+                <HighlightIcon />
               </button>
             </ShortcutHint>
+            <button
+              onClick={toggleNoteMode}
+              className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
+                annotationMode === 'note'
+                  ? 'bg-blue-500 text-white'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+              }`}
+              title={annotationMode === 'note' ? 'Exit note mode' : 'Enter note mode'}
+            >
+              <StickyNoteIcon />
+            </button>
           </div>
         )}
       </div>

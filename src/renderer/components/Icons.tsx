@@ -84,3 +84,41 @@ export function TrashIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function HighlightIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M3 10.5L10.5 3l2.5 2.5L5.5 13H3v-2.5z" />
+      <line x1="9" y1="4.5" x2="11.5" y2="7" />
+    </svg>
+  );
+}
+
+export function StickyNoteIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M3 2.5h10a1.5 1.5 0 011.5 1.5v6.5l-4 4H3A1.5 1.5 0 011.5 13V4A1.5 1.5 0 013 2.5z" />
+      <path d="M10.5 10.5v4" />
+      <path d="M10.5 10.5h4" />
+    </svg>
+  );
+}
+
+export function FolderPlusIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M2 4.5V12a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0014 12V6.5A1.5 1.5 0 0012.5 5H8L6.5 3H3.5A1.5 1.5 0 002 4.5z" />
+      <line x1="8" y1="7.5" x2="8" y2="11.5" />
+      <line x1="6" y1="9.5" x2="10" y2="9.5" />
+    </svg>
+  );
+}
+
+export function TagPlusIcon(props: IconProps) {
+  return (
+    <svg {...defaults} {...props}>
+      <path d="M1.5 8.5V3.5a1 1 0 011-1h5l5.5 5.5-5 5z" />
+      <circle cx="5" cy="5.5" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
