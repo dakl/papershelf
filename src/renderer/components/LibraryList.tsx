@@ -20,7 +20,7 @@ export function LibraryList() {
     }
     loadPapers(filter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder]);
+  }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder, loadPapers]);
 
   if (loading) {
     return (

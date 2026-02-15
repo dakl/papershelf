@@ -44,8 +44,12 @@ test('favorite a seeded paper', async ({ electronApp, window }) => {
   await expect(window.getByText('Language Models are Few-Shot Learners')).toBeVisible({ timeout: 5000 });
 
   await window.getByText('Language Models are Few-Shot Learners').click();
-  await window.getByTitle('Add to favorites').click();
+  await window.getByTitle(/Add to favorites/).click();
+  await window.getByTitle(/Remove from favorites/).waitFor({ timeout: 5000 });
 
-  await window.getByRole('button', { name: 'Favorites', exact: true }).click();
-  await expect(window.getByText('Language Models are Few-Shot Learners').first()).toBeVisible();
+  // Navigate to Favorites view via the sidebar
+  const favoritesButton = window.locator('nav button', { hasText: 'Favorites' });
+  await favoritesButton.waitFor({ state: 'visible', timeout: 5000 });
+  await favoritesButton.click();
+  await expect(window.getByText('Language Models are Few-Shot Learners').first()).toBeVisible({ timeout: 5000 });
 });

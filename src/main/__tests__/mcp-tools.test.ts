@@ -66,7 +66,7 @@ describe('resolvePaperId', () => {
   });
 
   it('resolves by arXiv ID', () => {
-    const paper = insertPaper(makePaper({ arxivId: '2401.12345' }));
+    const _paper = insertPaper(makePaper({ arxivId: '2401.12345' }));
     const found = resolvePaperId('2401.12345');
 
     expect(found).not.toBeNull();
@@ -97,7 +97,7 @@ describe('resolveCollectionId', () => {
   });
 
   it('resolves by name', () => {
-    const col = createCollection('Machine Learning', '#FF0000');
+    const _col = createCollection('Machine Learning', '#FF0000');
     const found = resolveCollectionId('Machine Learning');
 
     expect(found).not.toBeNull();
@@ -129,7 +129,7 @@ describe('resolveTagId', () => {
   });
 
   it('resolves by name', () => {
-    const tag = createTag('important', '#FF0000');
+    const _tag = createTag('important', '#FF0000');
     const found = resolveTagId('important');
 
     expect(found).not.toBeNull();
