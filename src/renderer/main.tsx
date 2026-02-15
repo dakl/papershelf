@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { usePaperStore } from './stores/paperStore';
 import { buildKeyString, useShortcutStore } from './stores/shortcutStore';
 import { useUIStore } from './stores/uiStore';
@@ -88,6 +89,8 @@ document.addEventListener(
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 );
