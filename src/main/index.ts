@@ -88,7 +88,8 @@ if (isMcpMode) {
         },
       });
 
-      if (!app.isPackaged) {
+      const isDevMode = !app.isPackaged && !process.env.PAPERSHELF_E2E;
+      if (isDevMode) {
         mainWindow.loadURL('http://localhost:5173');
         mainWindow.webContents.openDevTools({ mode: 'detach' });
       } else {
@@ -101,8 +102,11 @@ if (isMcpMode) {
     }
 
     app.whenReady().then(async () => {
-      const { initDatabase } = await import('./database.js');
-      initDatabase();
+      const db = await import('./database.js');
+      db.initDatabase();
+      if (process.env.PAPERSHELF_E2E) {
+        (global as Record<string, unknown>).__papershelf_db = db;
+      }
       const { registerIpcHandlers } = await import('./ipc-handlers.js');
       registerIpcHandlers();
       buildAppMenu();
