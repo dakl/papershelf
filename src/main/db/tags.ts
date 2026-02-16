@@ -1,5 +1,6 @@
 import type { Tag } from '../../shared/types';
 import { generateId, getDb, rowToTag, type TagRow } from './connection';
+import { eventEmitter, DataChangeEvent } from '../event-emitter';
 
 export function getTagByName(name: string): Tag | null {
   const db = getDb();
@@ -33,7 +34,12 @@ export function createTag(name: string, color: string): Tag {
   const db = getDb();
   const id = generateId();
   db.prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)').run(id, name, color);
-  return { id, name, color, paperCount: 0, createdAt: new Date().toISOString() };
+  const tag = { id, name, color, paperCount: 0, createdAt: new Date().toISOString() };
+  
+  // Emit event when tag is created
+  eventEmitter.emit(DataChangeEvent.TAGS_CHANGED);
+  
+  return tag;
 }
 
 export function updateTag(id: string, name: string, color: string): Tag {
@@ -48,19 +54,32 @@ export function updateTag(id: string, name: string, color: string): Tag {
     GROUP BY t.id
   `)
     .get(id) as TagRow;
+  
+  // Emit event when tag is updated
+  eventEmitter.emit(DataChangeEvent.TAGS_CHANGED);
+  
   return rowToTag(row);
 }
 
 export function deleteTag(id: string): void {
   getDb().prepare('DELETE FROM tags WHERE id = ?').run(id);
+  
+  // Emit event when tag is deleted
+  eventEmitter.emit(DataChangeEvent.TAGS_CHANGED);
 }
 
 export function addTagToPaper(paperId: string, tagId: string): void {
   getDb().prepare('INSERT OR IGNORE INTO paper_tags (paper_id, tag_id) VALUES (?, ?)').run(paperId, tagId);
+  
+  // Emit event when tag is added to paper
+  eventEmitter.emit(DataChangeEvent.TAGS_CHANGED);
 }
 
 export function removeTagFromPaper(paperId: string, tagId: string): void {
   getDb().prepare('DELETE FROM paper_tags WHERE paper_id = ? AND tag_id = ?').run(paperId, tagId);
+  
+  // Emit event when tag is removed from paper
+  eventEmitter.emit(DataChangeEvent.TAGS_CHANGED);
 }
 
 export function getTagsForPaper(paperId: string): Tag[] {

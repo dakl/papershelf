@@ -256,4 +256,6 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     }
     await get().loadTags();
   },
+
+
 }));
