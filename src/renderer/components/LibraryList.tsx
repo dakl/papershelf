@@ -22,6 +22,29 @@ export function LibraryList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder]);
 
+  const focusedPaperIndex = useUIStore((s) => s.focusedPaperIndex);
+
+  useEffect(() => {
+    useUIStore.getState().setPaperListLength(papers.length);
+  }, [papers.length]);
+
+  useEffect(() => {
+    if (papers.length > 0 && !selectedLibraryPaper) {
+      setSelectedLibraryPaper(papers[0]);
+      useUIStore.getState().setFocusedPaperIndex(0);
+    }
+  }, [papers, selectedLibraryPaper, setSelectedLibraryPaper]);
+
+  useEffect(() => {
+    if (papers.length === 0) return;
+    const clamped = Math.min(focusedPaperIndex, papers.length - 1);
+    const paper = papers[clamped];
+    if (paper && selectedLibraryPaper?.id !== paper.id) {
+      setSelectedLibraryPaper(paper);
+    }
+    document.querySelector(`[data-paper-index="${clamped}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [focusedPaperIndex, papers, selectedLibraryPaper, setSelectedLibraryPaper]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -40,7 +63,7 @@ export function LibraryList() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {papers.map((paper) => (
+      {papers.map((paper, index) => (
         <PaperListItem
           key={paper.id}
           title={paper.title}
@@ -49,8 +72,13 @@ export function LibraryList() {
           categories={paper.categories}
           isSelected={selectedLibraryPaper?.id === paper.id}
           isFavorite={paper.isFavorite}
-          onClick={() => setSelectedLibraryPaper(paper)}
+          onClick={() => {
+            setSelectedLibraryPaper(paper);
+            useUIStore.getState().setFocusedPaperIndex(index);
+            useUIStore.getState().setActivePanel('list');
+          }}
           paperId={paper.id}
+          paperIndex={index}
           onTagDrop={async (tagId) => {
             await addTagToPaper(paper.id, tagId);
             const tagName = tags.find((t) => t.id === tagId)?.name;

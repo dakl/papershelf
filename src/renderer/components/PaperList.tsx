@@ -3,6 +3,7 @@ import { usePaperStore } from '../stores/paperStore';
 import { useUIStore } from '../stores/uiStore';
 import { LibraryList } from './LibraryList';
 import { LibrarySearchResults } from './LibrarySearchResults';
+import { NavigationHints } from './NavigationHints';
 import { SearchBar } from './SearchBar';
 import { SearchResults } from './SearchResults';
 import { SortControl } from './SortControl';
@@ -54,15 +55,17 @@ export function PaperList({ width }: { width: number }) {
     <div className="shrink-0 border-r sidebar-separator flex flex-col bg-white/60 dark:bg-black/30" style={{ width }}>
       <div className="shrink-0 px-3 pt-2 pb-2">
         {isSearch && (
-          <div className="no-drag">
+          <div className="no-drag space-y-1">
             <SearchBar onSearch={search} loading={loading} mode={mode} onModeChange={setMode} />
+            <NavigationHints panel="list" />
           </div>
         )}
         {!isSearch && (
           <div className="no-drag flex items-center justify-between">
-            <h2 className="text-mac-heading font-semibold capitalize">
+            <h2 className="text-mac-heading font-semibold capitalize flex-1">
               {getViewTitle(sidebarView, collections, tags, selectedCollectionId, selectedTagId)}
             </h2>
+            <NavigationHints panel="list" />
             <SortControl
               sortBy={sortBy}
               sortOrder={sortOrder}

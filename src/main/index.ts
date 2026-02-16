@@ -51,11 +51,7 @@ if (isMcpMode) {
           submenu: [
             ...(app.isPackaged
               ? []
-              : [
-                  { role: 'reload' as const },
-                  { role: 'forceReload' as const },
-                  { role: 'toggleDevTools' as const },
-                ]),
+              : [{ role: 'reload' as const }, { role: 'forceReload' as const }, { role: 'toggleDevTools' as const }]),
             { type: 'separator' as const },
             { role: 'resetZoom' },
             { role: 'zoomIn' },

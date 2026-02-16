@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -11,6 +11,11 @@ import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
 import { ShortcutHint } from './ShortcutHint';
 import { SidebarItem } from './SidebarItem';
 import { TagManager } from './TagManager';
+
+type SidebarNavigableItem =
+  | { type: 'nav'; id: SidebarView; label: string }
+  | { type: 'collection'; id: string; name: string }
+  | { type: 'tag'; id: string; name: string };
 
 const NAV_ITEMS: {
   id: SidebarView;
@@ -33,6 +38,8 @@ export function Sidebar() {
     selectedCollectionId,
     selectedTagId,
     sidebarCollapsed,
+    activePanel,
+    sidebarFocusIndex,
   } = useUIStore();
   const {
     collections,
@@ -53,6 +60,43 @@ export function Sidebar() {
   const [showNewTag, setShowNewTag] = useState(false);
   const [editCollection, setEditCollection] = useState<{ id: string; name: string; color: string } | null>(null);
   const [editTag, setEditTag] = useState<{ id: string; name: string; color: string } | null>(null);
+
+  const flatItems = useMemo<SidebarNavigableItem[]>(() => {
+    const items: SidebarNavigableItem[] = NAV_ITEMS.map((item) => ({
+      type: 'nav' as const,
+      id: item.id,
+      label: item.label,
+    }));
+    for (const col of collections) {
+      items.push({ type: 'collection', id: col.id, name: col.name });
+    }
+    for (const tag of tags) {
+      items.push({ type: 'tag', id: tag.id, name: tag.name });
+    }
+    return items;
+  }, [collections, tags]);
+
+  useEffect(() => {
+    useUIStore.getState().setSidebarItemCount(flatItems.length);
+  }, [flatItems.length]);
+
+  useEffect(() => {
+    if (activePanel !== 'sidebar') return;
+    const item = flatItems[sidebarFocusIndex];
+    if (!item) return;
+    if (item.type === 'nav') {
+      const ui = useUIStore.getState();
+      if (ui.sidebarView !== item.id) setSidebarView(item.id);
+    } else if (item.type === 'collection') {
+      navigateToCollection(item.id);
+    } else if (item.type === 'tag') {
+      navigateToTag(item.id);
+    }
+    // setSidebarView/navigateToCollection/navigateToTag reset activePanel to 'list',
+    // but we want to stay in the sidebar during keyboard navigation
+    useUIStore.getState().setActivePanel('sidebar');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sidebarFocusIndex, activePanel]);
 
   useEffect(() => {
     loadCollections();
@@ -76,6 +120,30 @@ export function Sidebar() {
     deleteTag(id);
   };
 
+  const findFlatIndex = (type: string, id: string) =>
+    flatItems.findIndex((item) => item.type === type && item.id === id);
+
+  const handleNavClick = (itemId: SidebarView) => {
+    setSidebarView(itemId);
+    const idx = findFlatIndex('nav', itemId);
+    if (idx >= 0) useUIStore.getState().setSidebarFocusIndex(idx);
+    useUIStore.getState().setActivePanel('sidebar');
+  };
+
+  const handleCollectionClick = (colId: string) => {
+    navigateToCollection(colId);
+    const idx = findFlatIndex('collection', colId);
+    if (idx >= 0) useUIStore.getState().setSidebarFocusIndex(idx);
+    useUIStore.getState().setActivePanel('sidebar');
+  };
+
+  const handleTagClick = (tagId: string) => {
+    navigateToTag(tagId);
+    const idx = findFlatIndex('tag', tagId);
+    if (idx >= 0) useUIStore.getState().setSidebarFocusIndex(idx);
+    useUIStore.getState().setActivePanel('sidebar');
+  };
+
   const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH;
 
   return (
@@ -90,13 +158,17 @@ export function Sidebar() {
       <nav className="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const shortcut = useShortcutStore.getState().getShortcut(item.shortcutId);
+          const isActive = sidebarView === item.id;
+          const selectionClass = isActive
+            ? activePanel === 'sidebar'
+              ? 'bg-mac-selection font-medium'
+              : 'bg-mac-selection-inactive font-medium'
+            : 'hover:bg-black/5 dark:hover:bg-white/5';
           return (
             <button
               key={item.id}
-              onClick={() => setSidebarView(item.id)}
-              className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${
-                sidebarView === item.id ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
-              }`}
+              onClick={() => handleNavClick(item.id)}
+              className={`no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors ${selectionClass}`}
             >
               <item.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
@@ -138,7 +210,7 @@ export function Sidebar() {
             color={col.color}
             paperCount={col.paperCount}
             isSelected={sidebarView === 'collection' && selectedCollectionId === col.id}
-            onClick={() => navigateToCollection(col.id)}
+            onClick={() => handleCollectionClick(col.id)}
             onRename={(id, newName) => updateCollection(id, newName, col.color)}
             onEdit={(id) => setEditCollection({ id, name: col.name, color: col.color })}
             onDelete={handleDeleteCollection}
@@ -170,7 +242,7 @@ export function Sidebar() {
             color={tag.color}
             paperCount={tag.paperCount}
             isSelected={sidebarView === 'tag' && selectedTagId === tag.id}
-            onClick={() => navigateToTag(tag.id)}
+            onClick={() => handleTagClick(tag.id)}
             onRename={(id, newName) => updateTag(id, newName, tag.color)}
             onEdit={(id) => setEditTag({ id, name: tag.name, color: tag.color })}
             onDelete={handleDeleteTag}
