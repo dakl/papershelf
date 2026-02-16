@@ -1,6 +1,6 @@
 import type { Collection } from '../../shared/types';
+import { DataChangeEvent, eventEmitter } from '../event-emitter';
 import { type CollectionRow, generateId, getDb, rowToCollection } from './connection';
-import { eventEmitter, DataChangeEvent } from '../event-emitter';
 
 export function getCollectionByName(name: string): Collection | null {
   const db = getDb();
@@ -35,10 +35,10 @@ export function createCollection(name: string, color: string): Collection {
   const id = generateId();
   db.prepare('INSERT INTO collections (id, name, color) VALUES (?, ?, ?)').run(id, name, color);
   const collection = { id, name, color, paperCount: 0, createdAt: new Date().toISOString() };
-  
+
   // Emit event when collection is created
   eventEmitter.emit(DataChangeEvent.COLLECTIONS_CHANGED);
-  
+
   return collection;
 }
 
@@ -54,16 +54,16 @@ export function updateCollection(id: string, name: string, color: string): Colle
     GROUP BY c.id
   `)
     .get(id) as CollectionRow;
-  
+
   // Emit event when collection is updated
   eventEmitter.emit(DataChangeEvent.COLLECTIONS_CHANGED);
-  
+
   return rowToCollection(row);
 }
 
 export function deleteCollection(id: string): void {
   getDb().prepare('DELETE FROM collections WHERE id = ?').run(id);
-  
+
   // Emit event when collection is deleted
   eventEmitter.emit(DataChangeEvent.COLLECTIONS_CHANGED);
 }
@@ -72,14 +72,14 @@ export function addPaperToCollection(paperId: string, collectionId: string): voi
   getDb()
     .prepare('INSERT OR IGNORE INTO paper_collections (paper_id, collection_id) VALUES (?, ?)')
     .run(paperId, collectionId);
-  
+
   // Emit event when paper is added to collection
   eventEmitter.emit(DataChangeEvent.COLLECTIONS_CHANGED);
 }
 
 export function removePaperFromCollection(paperId: string, collectionId: string): void {
   getDb().prepare('DELETE FROM paper_collections WHERE paper_id = ? AND collection_id = ?').run(paperId, collectionId);
-  
+
   // Emit event when paper is removed from collection
   eventEmitter.emit(DataChangeEvent.COLLECTIONS_CHANGED);
 }

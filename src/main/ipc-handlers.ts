@@ -10,7 +10,7 @@ import type {
 import { searchArxiv } from './arxiv-client';
 
 import * as db from './database';
-import { eventEmitter, DataChangeEvent } from './event-emitter';
+import { DataChangeEvent, eventEmitter } from './event-emitter';
 import {
   getMcpHttpServerStatus,
   restartMcpHttpServerIfRunning,
@@ -334,25 +334,25 @@ export function registerIpcHandlers(): void {
 
   // Setup event forwarding from main process to renderer
   eventEmitter.on(DataChangeEvent.COLLECTIONS_CHANGED, () => {
-    BrowserWindow.getAllWindows().forEach(window => {
+    BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:collections-changed');
     });
   });
 
   eventEmitter.on(DataChangeEvent.TAGS_CHANGED, () => {
-    BrowserWindow.getAllWindows().forEach(window => {
+    BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:tags-changed');
     });
   });
 
   eventEmitter.on(DataChangeEvent.PAPERS_CHANGED, () => {
-    BrowserWindow.getAllWindows().forEach(window => {
+    BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:papers-changed');
     });
   });
 
   eventEmitter.on(DataChangeEvent.ANNOTATIONS_CHANGED, () => {
-    BrowserWindow.getAllWindows().forEach(window => {
+    BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:annotations-changed');
     });
   });

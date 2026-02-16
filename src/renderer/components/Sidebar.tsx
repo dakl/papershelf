@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -98,27 +98,32 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarFocusIndex, activePanel, flatItems, setSidebarView, navigateToCollection, navigateToTag]);
 
+  // Create refs for stable store functions to avoid dependency issues
+  const loadCollectionsRef = useRef(loadCollections);
+  const loadTagsRef = useRef(loadTags);
+  const loadLibraryStatsRef = useRef(loadLibraryStats);
+  const loadMcpStatusRef = useRef(loadMcpStatus);
+
   // Initial data load (events will handle subsequent updates)
   useEffect(() => {
-    loadCollections();
-    loadTags();
-    loadLibraryStats();
-    loadMcpStatus();
-    
+    loadCollectionsRef.current();
+    loadTagsRef.current();
+    loadLibraryStatsRef.current();
+    loadMcpStatusRef.current();
+
     // Set up event listeners for real-time updates
     const collectionsUnsubscribe = window.electronAPI.onCollectionsChanged(() => {
-      loadCollections();
+      loadCollectionsRef.current();
     });
 
     const tagsUnsubscribe = window.electronAPI.onTagsChanged(() => {
-      loadTags();
+      loadTagsRef.current();
     });
 
     return () => {
       collectionsUnsubscribe();
       tagsUnsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDeleteCollection = (id: string) => {
