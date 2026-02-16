@@ -104,6 +104,20 @@ export function Sidebar() {
     loadTags();
     loadLibraryStats();
     loadMcpStatus();
+    
+    // Set up event listeners for real-time updates
+    const collectionsUnsubscribe = window.electronAPI.onCollectionsChanged(() => {
+      loadCollections();
+    });
+
+    const tagsUnsubscribe = window.electronAPI.onTagsChanged(() => {
+      loadTags();
+    });
+
+    return () => {
+      collectionsUnsubscribe();
+      tagsUnsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
