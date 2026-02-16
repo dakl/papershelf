@@ -24,6 +24,7 @@
     "format": "biome format --write src/",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "screenshots": "npm run rebuild:electron && npm run build && npx tsx scripts/take-screenshots.ts",
     "prepare": "husky"
   },
   "dependencies": {
