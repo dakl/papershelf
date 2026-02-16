@@ -96,7 +96,7 @@ export function Sidebar() {
     // but we want to stay in the sidebar during keyboard navigation
     useUIStore.getState().setActivePanel('sidebar');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sidebarFocusIndex, activePanel]);
+  }, [sidebarFocusIndex, activePanel, flatItems, setSidebarView, navigateToCollection, navigateToTag]);
 
   useEffect(() => {
     loadCollections();
@@ -104,7 +104,7 @@ export function Sidebar() {
     loadLibraryStats();
     loadMcpStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadCollections, loadMcpStatus, loadTags]);
+  }, [loadCollections, loadMcpStatus, loadTags, loadLibraryStats]);
 
   const handleDeleteCollection = (id: string) => {
     if (sidebarView === 'collection' && selectedCollectionId === id) {

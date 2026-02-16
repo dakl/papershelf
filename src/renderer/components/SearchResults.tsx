@@ -24,7 +24,7 @@ export function SearchResults({ results, selectedPaperId, onSelectPaper }: Searc
       onSelectPaper(results[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, checkPapersInLibrary]);
+  }, [results, checkPapersInLibrary, onSelectPaper]);
 
   // When focusedPaperIndex changes (keyboard navigation): select paper and scroll
   useEffect(() => {
@@ -59,7 +59,9 @@ export function SearchResults({ results, selectedPaperId, onSelectPaper }: Searc
             }}
             paperIndex={index}
             rightSlot={
-              inLibrary ? undefined : <SaveToLibraryButton paper={paper} alreadySaved={false} isSelected={selectedPaperId === paper.id} />
+              inLibrary ? undefined : (
+                <SaveToLibraryButton paper={paper} alreadySaved={false} isSelected={selectedPaperId === paper.id} />
+              )
             }
           />
         );

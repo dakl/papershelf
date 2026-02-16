@@ -19,7 +19,7 @@ test('seeded paper appears in library', async ({ electronApp, window }) => {
   });
 
   await window.getByRole('button', { name: 'My Library' }).click();
-  await expect(window.getByText('Attention Is All You Need')).toBeVisible({ timeout: 5000 });
+  await expect(window.getByText('Attention Is All You Need').first()).toBeVisible({ timeout: 5000 });
 });
 
 test('favorite a seeded paper', async ({ electronApp, window }) => {
@@ -41,9 +41,9 @@ test('favorite a seeded paper', async ({ electronApp, window }) => {
   });
 
   await window.getByRole('button', { name: 'My Library' }).click();
-  await expect(window.getByText('Language Models are Few-Shot Learners')).toBeVisible({ timeout: 5000 });
+  await expect(window.getByText('Language Models are Few-Shot Learners').first()).toBeVisible({ timeout: 5000 });
 
-  await window.getByText('Language Models are Few-Shot Learners').click();
+  await window.getByText('Language Models are Few-Shot Learners').first().click();
   await window.getByTitle(/Add to favorites/).click();
   await window.getByTitle(/Remove from favorites/).waitFor({ timeout: 5000 });
 
