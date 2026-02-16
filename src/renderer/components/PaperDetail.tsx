@@ -136,7 +136,6 @@ export function PaperDetail() {
 
           <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
 
-
           {isLibraryPaper && (
             <>
               <div ref={headerCollectionRef} className="relative">

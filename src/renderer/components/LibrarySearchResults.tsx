@@ -23,7 +23,7 @@ export function LibrarySearchResults({ results, selectedPaperId, onSelectPaper }
       onSelectPaper(results[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results]);
+  }, [results, onSelectPaper]);
 
   useEffect(() => {
     if (results.length === 0) return;

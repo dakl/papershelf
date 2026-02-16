@@ -23,13 +23,10 @@ export function handleCmdVertical(direction: 1 | -1): void {
 
 export function handleCmdHorizontal(direction: 'left' | 'right'): void {
   const ui = useUIStore.getState();
-  const panels = ui.sidebarCollapsed
-    ? (['list', 'detail'] as const)
-    : (['sidebar', 'list', 'detail'] as const);
+  const panels = ui.sidebarCollapsed ? (['list', 'detail'] as const) : (['sidebar', 'list', 'detail'] as const);
   const currentIndex = panels.indexOf(ui.activePanel);
-  const nextIndex = direction === 'right'
-    ? Math.min(panels.length - 1, currentIndex + 1)
-    : Math.max(0, currentIndex - 1);
+  const nextIndex =
+    direction === 'right' ? Math.min(panels.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
   if (nextIndex !== currentIndex) {
     useUIStore.getState().setActivePanel(panels[nextIndex]);
   }

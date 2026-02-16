@@ -109,8 +109,10 @@ describe('Cmd+Up/Down sidebar navigation', () => {
 
   it('does not navigate papers when sidebar is active', () => {
     resetStore({
-      sidebarItemCount: 4, sidebarFocusIndex: 0,
-      paperListLength: 10, focusedPaperIndex: 5,
+      sidebarItemCount: 4,
+      sidebarFocusIndex: 0,
+      paperListLength: 10,
+      focusedPaperIndex: 5,
       activePanel: 'sidebar',
     });
     handleCmdVertical(1);
