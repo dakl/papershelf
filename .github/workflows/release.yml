@@ -12,38 +12,11 @@ permissions:
   contents: write
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Unit tests
-        run: |
-          npm run rebuild:node
-          npx vitest run
-
-      - name: Build
-        run: npm run build
-
-      - name: E2E tests
-        run: xvfb-run --auto-servernum npx playwright test
-        env:
-          ELECTRON_DISABLE_SANDBOX: 1
+  ci:
+    uses: ./.github/workflows/ci.yml
 
   release:
-    needs: validate
+    needs: ci
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
