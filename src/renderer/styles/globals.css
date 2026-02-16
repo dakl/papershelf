@@ -12,6 +12,7 @@
 
   --color-mac-separator: rgba(0, 0, 0, 0.1);
   --color-mac-selection: rgba(0, 122, 255, 0.15);
+  --color-mac-selection-inactive: rgba(128, 128, 128, 0.12);
   --color-mac-accent: rgb(0, 122, 255);
 
   --shadow-mac: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);

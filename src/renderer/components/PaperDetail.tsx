@@ -5,6 +5,7 @@ import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
 import { ConfirmPopup } from './ConfirmPopup';
 import { FolderPlusIcon, StarIcon, StarOutlineIcon, TagPlusIcon } from './Icons';
+
 import { PdfViewer } from './PdfViewer';
 
 function formatDate(dateStr: string): string {
@@ -134,6 +135,7 @@ export function PaperDetail() {
           )}
 
           <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
+
 
           {isLibraryPaper && (
             <>

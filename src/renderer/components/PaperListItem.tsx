@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUIStore } from '../stores/uiStore';
 import { StarIcon } from './Icons';
 
 function formatDate(dateStr: string): string {
@@ -26,6 +27,7 @@ interface PaperListItemProps {
   rightSlot?: React.ReactNode;
   paperId?: string;
   onTagDrop?: (tagId: string) => void;
+  paperIndex?: number;
 }
 
 export function PaperListItem({
@@ -40,7 +42,9 @@ export function PaperListItem({
   rightSlot,
   paperId,
   onTagDrop,
+  paperIndex,
 }: PaperListItemProps) {
+  const activePanel = useUIStore((s) => s.activePanel);
   const [dragOver, setDragOver] = useState(false);
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -64,6 +68,12 @@ export function PaperListItem({
     if (tagId && onTagDrop) onTagDrop(tagId);
   };
 
+  const selectionClass = isSelected
+    ? activePanel === 'list'
+      ? 'bg-mac-selection'
+      : 'bg-mac-selection-inactive'
+    : 'hover:bg-black/3 dark:hover:bg-white/3';
+
   return (
     <button
       onClick={onClick}
@@ -72,9 +82,8 @@ export function PaperListItem({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`w-full text-left px-3 py-2.5 border-b border-mac-separator transition-colors ${
-        isSelected ? 'bg-mac-selection' : 'hover:bg-black/3 dark:hover:bg-white/3'
-      } ${dragOver ? 'ring-2 ring-mac-accent ring-inset' : ''}`}
+      data-paper-index={paperIndex}
+      className={`w-full text-left px-3 py-2.5 border-b border-mac-separator transition-colors ${selectionClass} ${dragOver ? 'ring-2 ring-mac-accent ring-inset' : ''}`}
     >
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">

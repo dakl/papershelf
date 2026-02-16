@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useUIStore } from '../stores/uiStore';
 import { ConfirmPopup } from './ConfirmPopup';
 import type { ContextMenuItem } from './ContextMenu';
 import { ContextMenu } from './ContextMenu';
@@ -74,6 +75,7 @@ export function SidebarItem({
     setConfirmDelete({ x: rect.left, y: rect.bottom + 4 });
   };
 
+  const activePanel = useUIStore((s) => s.activePanel);
   const isCollection = itemType === 'collection';
   const isTag = itemType === 'tag';
   const acceptedDragType = isCollection ? 'application/x-paper-id' : null;
@@ -114,7 +116,11 @@ export function SidebarItem({
     <>
       <div
         className={`group no-drag w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-mac-body text-left transition-colors cursor-default ${
-          isSelected ? 'bg-mac-selection font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5'
+          isSelected
+            ? activePanel === 'sidebar'
+              ? 'bg-mac-selection font-medium'
+              : 'bg-mac-selection-inactive font-medium'
+            : 'hover:bg-black/5 dark:hover:bg-white/5'
         } ${dragOver ? 'ring-2 ring-mac-accent ring-inset' : ''}`}
         onClick={isRenaming ? undefined : onClick}
         onContextMenu={handleContextMenu}

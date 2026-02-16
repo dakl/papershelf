@@ -3,6 +3,7 @@ import type { ArxivPaper, SortBy, SortOrder } from '../../shared/types';
 import { PAPER_LIST_DEFAULT_WIDTH, PAPER_LIST_MAX_WIDTH, PAPER_LIST_MIN_WIDTH } from '../constants';
 
 export type SidebarView = 'search' | 'all-papers' | 'favorites' | 'recent' | 'collection' | 'tag' | 'settings';
+export type ActivePanel = 'sidebar' | 'list' | 'detail';
 
 interface UIState {
   sidebarView: SidebarView;
@@ -13,6 +14,11 @@ interface UIState {
   paperListWidth: number;
   sortBy: SortBy;
   sortOrder: SortOrder;
+  activePanel: ActivePanel;
+  focusedPaperIndex: number;
+  paperListLength: number;
+  sidebarFocusIndex: number;
+  sidebarItemCount: number;
   setSidebarView: (view: SidebarView) => void;
   setSelectedPaper: (paper: ArxivPaper | null) => void;
   navigateToCollection: (collectionId: string) => void;
@@ -22,6 +28,11 @@ interface UIState {
   setSortBy: (sortBy: SortBy) => void;
   setSortOrder: (sortOrder: SortOrder) => void;
   toggleSortOrder: () => void;
+  setActivePanel: (panel: ActivePanel) => void;
+  setFocusedPaperIndex: (index: number) => void;
+  setPaperListLength: (length: number) => void;
+  setSidebarFocusIndex: (index: number) => void;
+  setSidebarItemCount: (count: number) => void;
 }
 
 function loadSidebarCollapsed(): boolean {
@@ -75,12 +86,19 @@ export const useUIStore = create<UIState>((set) => ({
   paperListWidth: loadPaperListWidth(),
   sortBy: loadSortBy(),
   sortOrder: loadSortOrder(),
+  activePanel: 'list',
+  focusedPaperIndex: 0,
+  paperListLength: 0,
+  sidebarFocusIndex: 0,
+  sidebarItemCount: 0,
   setSidebarView: (view) =>
     set({
       sidebarView: view,
       selectedPaper: null,
       selectedCollectionId: null,
       selectedTagId: null,
+      focusedPaperIndex: 0,
+      activePanel: 'list',
     }),
   setSelectedPaper: (paper) => set({ selectedPaper: paper }),
   navigateToCollection: (collectionId) =>
@@ -113,4 +131,9 @@ export const useUIStore = create<UIState>((set) => ({
       localStorage.setItem('sortOrder', sortOrder);
       return { sortOrder };
     }),
+  setActivePanel: (panel) => set({ activePanel: panel }),
+  setFocusedPaperIndex: (index) => set({ focusedPaperIndex: index }),
+  setPaperListLength: (length) => set({ paperListLength: length }),
+  setSidebarFocusIndex: (index) => set({ sidebarFocusIndex: index }),
+  setSidebarItemCount: (count) => set({ sidebarItemCount: count }),
 }));
