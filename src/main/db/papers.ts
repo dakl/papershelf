@@ -1,4 +1,4 @@
-import type { LibraryPaper, PaperFilter, SortBy } from '../../shared/types';
+import type { LibraryPaper, PaperFilter } from '../../shared/types';
 import { getCollectionsForPaper, getCollectionsForPapers } from './collections';
 import { generateId, getDb, type PaperRow, rowToLibraryPaper, serializeArray } from './connection';
 import { getTagsForPaper, getTagsForPapers } from './tags';

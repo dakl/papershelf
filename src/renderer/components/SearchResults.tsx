@@ -18,7 +18,7 @@ export function SearchResults({ results, selectedPaperId, onSelectPaper }: Searc
       checkPapersInLibrary(results.map((p) => p.id));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results]);
+  }, [results, checkPapersInLibrary]);
 
   if (results.length === 0) return null;
 

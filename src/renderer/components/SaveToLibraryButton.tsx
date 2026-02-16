@@ -17,7 +17,9 @@ export function SaveToLibraryButton({ paper, alreadySaved }: SaveToLibraryButton
   const saveShortcut = useShortcutStore((s) => s.getShortcut('savePaper'));
 
   if (saved) {
-    return <span className="px-2 py-1 rounded-sm text-mac-small text-green-600 dark:text-green-400 font-medium">Saved</span>;
+    return (
+      <span className="px-2 py-1 rounded-sm text-mac-small text-green-600 dark:text-green-400 font-medium">Saved</span>
+    );
   }
 
   const handleSave = async (e: React.MouseEvent) => {

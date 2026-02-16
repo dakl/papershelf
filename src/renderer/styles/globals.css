@@ -1,10 +1,9 @@
-@import 'pdfjs-dist/web/pdf_viewer.css' layer(base);
+@import "pdfjs-dist/web/pdf_viewer.css" layer(base);
 
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue, sans-serif;
 
   --text-mac-small: 11px;
   --text-mac-body: 13px;

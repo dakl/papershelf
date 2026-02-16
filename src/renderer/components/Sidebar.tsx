@@ -37,8 +37,10 @@ export function Sidebar() {
   const {
     collections,
     tags,
+    libraryStats,
     loadCollections,
     loadTags,
+    loadLibraryStats,
     updateCollection,
     updateTag,
     deleteCollection,
@@ -55,9 +57,10 @@ export function Sidebar() {
   useEffect(() => {
     loadCollections();
     loadTags();
+    loadLibraryStats();
     loadMcpStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadCollections, loadMcpStatus, loadTags]);
 
   const handleDeleteCollection = (id: string) => {
     if (sidebarView === 'collection' && selectedCollectionId === id) {
@@ -97,6 +100,12 @@ export function Sidebar() {
             >
               <item.icon className="w-4 h-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
+              {!commandDown && item.id === 'all-papers' && libraryStats != null && (
+                <span className="text-mac-small text-gray-400">{libraryStats.paperCount}</span>
+              )}
+              {!commandDown && item.id === 'favorites' && libraryStats != null && (
+                <span className="text-mac-small text-gray-400">{libraryStats.favoriteCount}</span>
+              )}
               {commandDown && shortcut && (
                 <span
                   className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs"

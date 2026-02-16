@@ -2,12 +2,18 @@ import { create } from 'zustand';
 import type { ArxivPaper, Collection, LibraryPaper, PaperFilter, SavePaperResult, Tag } from '../../shared/types';
 import { toast } from './toastStore';
 
+interface LibraryStats {
+  paperCount: number;
+  favoriteCount: number;
+}
+
 interface PaperState {
   papers: LibraryPaper[];
   selectedLibraryPaper: LibraryPaper | null;
   collections: Collection[];
   tags: Tag[];
   libraryPaperIds: Set<string>;
+  libraryStats: LibraryStats | null;
   loading: boolean;
 
   // Paper actions
@@ -18,6 +24,7 @@ interface PaperState {
   setSelectedLibraryPaper: (paper: LibraryPaper | null) => void;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<void>;
   searchLibrary: (query: string) => Promise<void>;
+  loadLibraryStats: () => Promise<void>;
 
   // Collection actions
   loadCollections: () => Promise<void>;
@@ -42,7 +49,15 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   collections: [],
   tags: [],
   libraryPaperIds: new Set(),
+  libraryStats: null,
   loading: false,
+
+  // --- Stats ---
+
+  loadLibraryStats: async () => {
+    const info = await window.electronAPI.getAppInfo();
+    set({ libraryStats: { paperCount: info.stats.paperCount, favoriteCount: info.stats.favoriteCount } });
+  },
 
   // --- Papers ---
 
@@ -58,6 +73,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       set((state) => ({
         libraryPaperIds: new Set([...state.libraryPaperIds, paper.id]),
       }));
+      get().loadLibraryStats();
     }
     return result;
   },
@@ -69,6 +85,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
         papers: state.papers.filter((p) => p.id !== id),
         selectedLibraryPaper: state.selectedLibraryPaper?.id === id ? null : state.selectedLibraryPaper,
       }));
+      get().loadLibraryStats();
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to delete paper', 'error');
       throw err;
@@ -84,6 +101,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
           ? { ...state.selectedLibraryPaper, isFavorite }
           : state.selectedLibraryPaper,
     }));
+    get().loadLibraryStats();
   },
 
   setSelectedLibraryPaper: (paper) => set({ selectedLibraryPaper: paper }),
