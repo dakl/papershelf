@@ -68,6 +68,27 @@ const api: ElectronAPI = {
   setMcpToolEnabled: (toolName, enabled) => ipcRenderer.invoke('mcp:setToolEnabled', toolName, enabled),
   setMcpToolMode: (toolName, mode) => ipcRenderer.invoke('mcp:setToolMode', toolName, mode),
   getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
+
+  // Event listeners for data changes
+  onCollectionsChanged: (callback) => {
+    ipcRenderer.on('data:collections-changed', callback);
+    return () => ipcRenderer.removeListener('data:collections-changed', callback);
+  },
+
+  onTagsChanged: (callback) => {
+    ipcRenderer.on('data:tags-changed', callback);
+    return () => ipcRenderer.removeListener('data:tags-changed', callback);
+  },
+
+  onPapersChanged: (callback) => {
+    ipcRenderer.on('data:papers-changed', callback);
+    return () => ipcRenderer.removeListener('data:papers-changed', callback);
+  },
+
+  onAnnotationsChanged: (callback) => {
+    ipcRenderer.on('data:annotations-changed', callback);
+    return () => ipcRenderer.removeListener('data:annotations-changed', callback);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

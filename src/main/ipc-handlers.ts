@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import type {
   ArxivPaper,
   HighlightAnnotation,
@@ -10,6 +10,7 @@ import type {
 import { searchArxiv } from './arxiv-client';
 
 import * as db from './database';
+import { eventEmitter, DataChangeEvent } from './event-emitter';
 import {
   getMcpHttpServerStatus,
   restartMcpHttpServerIfRunning,
@@ -329,5 +330,30 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('settings:saveShortcuts', (_event, overrides: Record<string, string>) => {
     saveShortcutOverrides(overrides);
+  });
+
+  // Setup event forwarding from main process to renderer
+  eventEmitter.on(DataChangeEvent.COLLECTIONS_CHANGED, () => {
+    BrowserWindow.getAllWindows().forEach(window => {
+      window.webContents.send('data:collections-changed');
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.TAGS_CHANGED, () => {
+    BrowserWindow.getAllWindows().forEach(window => {
+      window.webContents.send('data:tags-changed');
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.PAPERS_CHANGED, () => {
+    BrowserWindow.getAllWindows().forEach(window => {
+      window.webContents.send('data:papers-changed');
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.ANNOTATIONS_CHANGED, () => {
+    BrowserWindow.getAllWindows().forEach(window => {
+      window.webContents.send('data:annotations-changed');
+    });
   });
 }

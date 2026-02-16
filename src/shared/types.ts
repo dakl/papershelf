@@ -193,6 +193,12 @@ export interface ElectronAPI {
   setMcpToolEnabled: (toolName: string, enabled: boolean) => Promise<void>;
   setMcpToolMode: (toolName: string, mode: ToolNotificationMode) => Promise<void>;
   getToolStats: () => Promise<ToolCallStats[]>;
+
+  // Event listeners for real-time updates
+  onCollectionsChanged: (callback: () => void) => () => void;
+  onTagsChanged: (callback: () => void) => () => void;
+  onPapersChanged: (callback: () => void) => () => void;
+  onAnnotationsChanged: (callback: () => void) => () => void;
 }
 
 declare global {

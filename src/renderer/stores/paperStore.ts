@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ArxivPaper, Collection, LibraryPaper, PaperFilter, SavePaperResult, Tag } from '../../shared/types';
 import { toast } from './toastStore';
+import { useUIStore } from './uiStore';
 
 interface LibraryStats {
   paperCount: number;
@@ -255,5 +256,45 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       if (paper) set({ selectedLibraryPaper: paper });
     }
     await get().loadTags();
+  },
+
+  // Initialize event listeners for real-time updates
+  initializeEventListeners: () => {
+    const collectionsUnsubscribe = window.electronAPI.onCollectionsChanged(() => {
+      get().loadCollections();
+    });
+
+    const tagsUnsubscribe = window.electronAPI.onTagsChanged(() => {
+      get().loadTags();
+    });
+
+    const papersUnsubscribe = window.electronAPI.onPapersChanged(() => {
+      // Refresh the current view
+      const { sidebarView, selectedCollectionId, selectedTagId } = useUIStore.getState();
+      if (sidebarView === 'all-papers') {
+        get().loadPapers({ view: 'all-papers' });
+      } else if (sidebarView === 'favorites') {
+        get().loadPapers({ view: 'favorites' });
+      } else if (sidebarView === 'collection' && selectedCollectionId) {
+        get().loadPapers({ view: 'collection', collectionId: selectedCollectionId });
+      } else if (sidebarView === 'tag' && selectedTagId) {
+        get().loadPapers({ view: 'tag', tagId: selectedTagId });
+      }
+    });
+
+    const annotationsUnsubscribe = window.electronAPI.onAnnotationsChanged(() => {
+      // Annotations changes don't require full refresh, but could update selected paper
+      const { selectedLibraryPaper } = get();
+      if (selectedLibraryPaper) {
+        // Could add logic to refresh annotations for the selected paper
+      }
+    });
+
+    return () => {
+      collectionsUnsubscribe();
+      tagsUnsubscribe();
+      papersUnsubscribe();
+      annotationsUnsubscribe();
+    };
   },
 }));

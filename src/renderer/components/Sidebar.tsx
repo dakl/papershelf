@@ -98,13 +98,14 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarFocusIndex, activePanel, flatItems, setSidebarView, navigateToCollection, navigateToTag]);
 
+  // Initial data load (events will handle subsequent updates)
   useEffect(() => {
     loadCollections();
     loadTags();
     loadLibraryStats();
     loadMcpStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadCollections, loadMcpStatus, loadTags, loadLibraryStats]);
+  }, []);
 
   const handleDeleteCollection = (id: string) => {
     if (sidebarView === 'collection' && selectedCollectionId === id) {
