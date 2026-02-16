@@ -173,17 +173,6 @@ img {
   border-radius: 50%;
 }
 
-/* Compact toolbar for showcase screenshots */
-.showcase-image .window-toolbar {
-  padding: 6px 10px;
-  gap: 6px;
-}
-
-.showcase-image .traffic-light {
-  width: 10px;
-  height: 10px;
-}
-
 .traffic-light.red {
   background: #ff5f57;
 }
@@ -212,12 +201,26 @@ img {
   border-bottom-color: #3a3a3c;
 }
 
-/* Sidebar toggle icon in CSS toolbar (mirrors Toolbar.tsx left:76px) */
-.toolbar-sidebar-toggle {
-  margin-left: 16px;
-  display: inline-flex;
-  align-items: center;
-  color: #86868b;
+/* Showcase: transparent traffic-light overlay on top of screenshot */
+.showcase-image .window-frame {
+  position: relative;
+  container-type: inline-size;
+}
+
+.showcase-image .window-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background: none;
+  border-bottom: none;
+  padding: 2.5cqi 2.5cqi;
+  gap: 1.4cqi;
+}
+
+.showcase-image .traffic-light {
+  width: 2.5cqi;
+  height: 2.5cqi;
 }
 
 /* ── Screenshot placeholder (until real screenshots exist) */

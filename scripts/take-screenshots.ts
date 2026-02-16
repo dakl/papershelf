@@ -144,8 +144,8 @@ const FAVORITES = ['1706.03762', '2005.14165', '1810.04805'];
 
 // Clip region that crops the 38px titlebar (traffic lights + sidebar toggle)
 const FULL_CLIP = { x: 0, y: TITLEBAR_HEIGHT, width: WINDOW_WIDTH, height: WINDOW_HEIGHT - TITLEBAR_HEIGHT };
-// Showcase clips crop the titlebar — CSS window-frame adds traffic lights
-const SHOWCASE_CLIP = { x: 0, y: TITLEBAR_HEIGHT, width: 560, height: 500 };
+// Showcase clips include the titlebar — CSS overlays traffic lights on top
+const SHOWCASE_CLIP = { x: 0, y: 0, width: 560, height: 500 + TITLEBAR_HEIGHT };
 
 async function main() {
   const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'papershelf-screenshots-'));
