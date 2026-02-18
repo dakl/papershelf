@@ -1,5 +1,15 @@
 import { create } from 'zustand';
-import type { ArxivPaper, Collection, LibraryPaper, PaperFilter, SavePaperResult, Tag } from '../../shared/types';
+import type {
+  ArxivPaper,
+  Collection,
+  ImportBatchResult,
+  ImportProgress,
+  LibraryPaper,
+  PaperFilter,
+  PaperMetadataUpdate,
+  SavePaperResult,
+  Tag,
+} from '../../shared/types';
 import { toast } from './toastStore';
 
 interface LibraryStats {
@@ -15,6 +25,7 @@ interface PaperState {
   libraryPaperIds: Set<string>;
   libraryStats: LibraryStats | null;
   loading: boolean;
+  importProgress: ImportProgress | null;
 
   // Paper actions
   loadPapers: (filter: PaperFilter) => Promise<void>;
@@ -24,6 +35,8 @@ interface PaperState {
   setSelectedLibraryPaper: (paper: LibraryPaper | null) => void;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<void>;
   searchLibrary: (query: string) => Promise<void>;
+  importLocalPdfs: () => Promise<ImportBatchResult>;
+  updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<void>;
   loadLibraryStats: () => Promise<void>;
 
   // Collection actions
@@ -51,6 +64,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   libraryPaperIds: new Set(),
   libraryStats: null,
   loading: false,
+  importProgress: null,
 
   // --- Stats ---
 
@@ -115,6 +129,42 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     set({ loading: true });
     const papers = await window.electronAPI.searchLibrary(query);
     set({ papers, loading: false });
+  },
+
+  importLocalPdfs: async () => {
+    const unsubscribe = window.electronAPI.onImportProgress((progress) => {
+      set({ importProgress: progress });
+    });
+    const result = await window.electronAPI.importLocalPdfs();
+    unsubscribe();
+    set({ importProgress: null });
+    if (result.totalCount === 0) return result;
+
+    if (result.imported.length > 0) {
+      get().loadLibraryStats();
+      const msg =
+        result.failed.length > 0
+          ? `Imported ${result.imported.length} of ${result.totalCount} PDFs (${result.failed.length} failed)`
+          : `Imported ${result.imported.length} PDF${result.imported.length === 1 ? '' : 's'}`;
+      toast(msg, result.failed.length > 0 ? 'error' : 'success');
+    } else {
+      toast(`Failed to import ${result.failed.length} PDF${result.failed.length === 1 ? '' : 's'}`, 'error');
+    }
+
+    return result;
+  },
+
+  updatePaperMetadata: async (id, updates) => {
+    try {
+      const updated = await window.electronAPI.updatePaperMetadata(id, updates);
+      set((state) => ({
+        papers: state.papers.map((p) => (p.id === id ? updated : p)),
+        selectedLibraryPaper: state.selectedLibraryPaper?.id === id ? updated : state.selectedLibraryPaper,
+      }));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to update paper', 'error');
+      throw err;
+    }
   },
 
   // --- Collections ---

@@ -1,8 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import { getDataDir } from './paths';
+import { getPdfLibraryPath } from './settings';
 
-function getPapersDir(): string {
+export function getPapersDir(): string {
+  const customPath = getPdfLibraryPath();
+  const dir = customPath || path.join(getDataDir(), 'papers');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
+export function getDefaultPapersDir(): string {
   const dir = path.join(getDataDir(), 'papers');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -18,7 +28,7 @@ function getCacheDir(): string {
   return dir;
 }
 
-function sanitizeFilename(id: string): string {
+export function sanitizeFilename(id: string): string {
   return id.replace(/[/\\:*?"<>|]/g, '_');
 }
 
@@ -26,7 +36,7 @@ function getCachePath(arxivId: string): string {
   return path.join(getCacheDir(), `${sanitizeFilename(arxivId)}.pdf`);
 }
 
-async function extractText(buffer: Buffer): Promise<string | null> {
+export async function extractText(buffer: Buffer): Promise<string | null> {
   try {
     const { PDFParse } = await import('pdf-parse');
     const parser = new PDFParse({ data: new Uint8Array(buffer) });

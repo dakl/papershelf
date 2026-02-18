@@ -156,10 +156,10 @@ export function registerSearchTools(server: McpServer, isEnabled: (name: string)
         }
 
         const text = papers
-          .map(
-            (p, i) =>
-              `${i + 1}. **${p.title}** — ${p.authors.slice(0, 3).join(', ')}${p.authors.length > 3 ? ' et al.' : ''} (${p.arxivId})${p.isFavorite ? ' ⭐' : ''}`,
-          )
+          .map((p, i) => {
+            const identifier = p.arxivId ?? (p.doi ? `DOI: ${p.doi}` : 'local');
+            return `${i + 1}. **${p.title}** — ${p.authors.slice(0, 3).join(', ')}${p.authors.length > 3 ? ' et al.' : ''} (${identifier})${p.isFavorite ? ' ⭐' : ''}`;
+          })
           .join('\n');
 
         return { content: [{ type: 'text' as const, text: `${papers.length} papers:\n\n${text}` }] };

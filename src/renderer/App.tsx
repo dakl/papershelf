@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AboutDialog } from './components/AboutDialog';
+import { ImportProgressOverlay } from './components/ImportProgress';
 import { PaperDetail } from './components/PaperDetail';
 import { PaperList } from './components/PaperList';
 import { ResizeHandle } from './components/ResizeHandle';
@@ -41,6 +42,7 @@ export function App() {
         {renderContent()}
       </div>
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      <ImportProgressOverlay />
       <ToastContainer />
     </div>
   );

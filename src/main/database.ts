@@ -11,6 +11,7 @@ export {
   deleteCollection,
   deletePaper,
   deleteTag,
+  getAllPaperPdfPaths,
   getCollectionByName,
   getCollections,
   getCollectionsForPaper,
@@ -34,6 +35,8 @@ export {
   searchLibrary,
   toggleFavorite,
   updateCollection,
+  updatePaperMetadata,
   updatePaperPdf,
+  updatePaperPdfPath,
   updateTag,
 } from './db/index';

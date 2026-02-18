@@ -10,9 +10,13 @@ export interface ArxivPaper {
   pdfUrl: string;
 }
 
+export type PaperSource = 'arxiv' | 'local';
+
 export interface LibraryPaper {
   id: string;
-  arxivId: string;
+  arxivId: string | null;
+  doi: string | null;
+  source: PaperSource;
   title: string;
   authors: string[];
   abstract: string;
@@ -118,6 +122,33 @@ export interface SavePaperResult {
   error?: string;
 }
 
+export interface ImportBatchResult {
+  imported: LibraryPaper[];
+  failed: { filename: string; error: string }[];
+  totalCount: number;
+}
+
+export interface ImportProgress {
+  current: number;
+  total: number;
+  filename: string;
+}
+
+export interface PaperMetadataUpdate {
+  title?: string;
+  authors?: string[];
+  abstract?: string;
+  publishedDate?: string;
+  doi?: string | null;
+  categories?: string[];
+}
+
+export interface PdfLibraryPathResult {
+  path: string | null;
+  cancelled: boolean;
+  movedCount?: number;
+}
+
 export interface AppInfo {
   name: string;
   version: string;
@@ -148,6 +179,8 @@ export interface ElectronAPI {
   toggleFavorite: (id: string) => Promise<boolean>;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<string[]>;
   searchLibrary: (query: string) => Promise<LibraryPaper[]>;
+  importLocalPdfs: () => Promise<ImportBatchResult>;
+  updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<LibraryPaper>;
 
   // Collections
   getCollections: () => Promise<Collection[]>;
@@ -184,6 +217,9 @@ export interface ElectronAPI {
   // Settings
   getShortcutOverrides: () => Promise<Record<string, string>>;
   saveShortcutOverrides: (overrides: Record<string, string>) => Promise<void>;
+  getPdfLibraryPath: () => Promise<string | null>;
+  setPdfLibraryPath: () => Promise<PdfLibraryPathResult>;
+  resetPdfLibraryPath: () => Promise<void>;
 
   // MCP Server
   getMcpStatus: () => Promise<McpServerStatus>;
@@ -199,6 +235,7 @@ export interface ElectronAPI {
   onTagsChanged: (callback: () => void) => () => void;
   onPapersChanged: (callback: () => void) => () => void;
   onAnnotationsChanged: (callback: () => void) => () => void;
+  onImportProgress: (callback: (progress: ImportProgress) => void) => () => void;
 }
 
 declare global {

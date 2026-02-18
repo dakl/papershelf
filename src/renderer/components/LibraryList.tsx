@@ -19,6 +19,11 @@ export function LibraryList() {
       filter.tagId = selectedTagId;
     }
     loadPapers(filter);
+
+    const unsubscribe = window.electronAPI.onPapersChanged(() => {
+      loadPapers(filter);
+    });
+    return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder, loadPapers]);
 

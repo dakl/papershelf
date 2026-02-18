@@ -5,6 +5,7 @@ export enum DataChangeEvent {
   TAGS_CHANGED = 'tags:changed',
   PAPERS_CHANGED = 'papers:changed',
   ANNOTATIONS_CHANGED = 'annotations:changed',
+  IMPORT_PROGRESS = 'import:progress',
 }
 
 class AppEventEmitter extends EventEmitter {}

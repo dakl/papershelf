@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3';
 import crypto from 'crypto';
 import path from 'path';
-import type { Collection, LibraryPaper, Tag } from '../../shared/types';
+import type { Collection, LibraryPaper, PaperSource, Tag } from '../../shared/types';
 import { getDataDir } from '../paths';
+import { runMigrations } from './migrations';
 
 let db: Database.Database;
 
@@ -16,25 +17,67 @@ export function initDatabase(customPath?: string): void {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   createSchema();
+  runMigrations(db);
+  createIndexes();
 }
 
 export function closeDatabase(): void {
   if (db) db.close();
 }
 
+export const FTS_SQL = `
+    CREATE VIRTUAL TABLE IF NOT EXISTS papers_fts USING fts5(
+      title, abstract, full_text, authors,
+      content='papers',
+      content_rowid='rowid'
+    );
+`;
+
+export const FTS_TRIGGERS_SQL = `
+    CREATE TRIGGER IF NOT EXISTS papers_ai AFTER INSERT ON papers BEGIN
+      INSERT INTO papers_fts(rowid, title, abstract, full_text, authors)
+      VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS papers_ad AFTER DELETE ON papers BEGIN
+      INSERT INTO papers_fts(papers_fts, rowid, title, abstract, full_text, authors)
+      VALUES ('delete', old.rowid, old.title, old.abstract, old.full_text, old.authors);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS papers_au AFTER UPDATE ON papers BEGIN
+      INSERT INTO papers_fts(papers_fts, rowid, title, abstract, full_text, authors)
+      VALUES ('delete', old.rowid, old.title, old.abstract, old.full_text, old.authors);
+      INSERT INTO papers_fts(rowid, title, abstract, full_text, authors)
+      VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
+    END;
+`;
+
+export const PAPER_INDEXES_SQL = `
+    CREATE INDEX IF NOT EXISTS idx_papers_created_at ON papers(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_papers_published_date ON papers(published_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_papers_title ON papers(title COLLATE NOCASE);
+    CREATE INDEX IF NOT EXISTS idx_papers_is_favorite ON papers(is_favorite);
+    CREATE INDEX IF NOT EXISTS idx_papers_doi ON papers(doi);
+    CREATE INDEX IF NOT EXISTS idx_papers_source ON papers(source);
+    CREATE INDEX IF NOT EXISTS idx_paper_collections_collection_id ON paper_collections(collection_id);
+    CREATE INDEX IF NOT EXISTS idx_paper_tags_tag_id ON paper_tags(tag_id);
+`;
+
 function createSchema(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS papers (
       id TEXT PRIMARY KEY,
-      arxiv_id TEXT UNIQUE NOT NULL,
+      arxiv_id TEXT UNIQUE,
+      doi TEXT,
+      source TEXT NOT NULL DEFAULT 'arxiv',
       title TEXT NOT NULL,
       authors TEXT NOT NULL,
-      abstract TEXT NOT NULL,
-      published_date TEXT NOT NULL,
-      updated_date TEXT NOT NULL,
-      categories TEXT NOT NULL,
-      arxiv_url TEXT NOT NULL,
-      pdf_url TEXT NOT NULL,
+      abstract TEXT NOT NULL DEFAULT '',
+      published_date TEXT NOT NULL DEFAULT '',
+      updated_date TEXT NOT NULL DEFAULT '',
+      categories TEXT NOT NULL DEFAULT '[]',
+      arxiv_url TEXT NOT NULL DEFAULT '',
+      pdf_url TEXT NOT NULL DEFAULT '',
       pdf_path TEXT,
       full_text TEXT,
       is_favorite INTEGER NOT NULL DEFAULT 0,
@@ -67,28 +110,8 @@ function createSchema(): void {
       PRIMARY KEY (paper_id, tag_id)
     );
 
-    CREATE VIRTUAL TABLE IF NOT EXISTS papers_fts USING fts5(
-      title, abstract, full_text, authors,
-      content='papers',
-      content_rowid='rowid'
-    );
-
-    CREATE TRIGGER IF NOT EXISTS papers_ai AFTER INSERT ON papers BEGIN
-      INSERT INTO papers_fts(rowid, title, abstract, full_text, authors)
-      VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS papers_ad AFTER DELETE ON papers BEGIN
-      INSERT INTO papers_fts(papers_fts, rowid, title, abstract, full_text, authors)
-      VALUES ('delete', old.rowid, old.title, old.abstract, old.full_text, old.authors);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS papers_au AFTER UPDATE ON papers BEGIN
-      INSERT INTO papers_fts(papers_fts, rowid, title, abstract, full_text, authors)
-      VALUES ('delete', old.rowid, old.title, old.abstract, old.full_text, old.authors);
-      INSERT INTO papers_fts(rowid, title, abstract, full_text, authors)
-      VALUES (new.rowid, new.title, new.abstract, new.full_text, new.authors);
-    END;
+    ${FTS_SQL}
+    ${FTS_TRIGGERS_SQL}
 
     CREATE TABLE IF NOT EXISTS tool_call_log (
       id TEXT PRIMARY KEY,
@@ -108,14 +131,11 @@ function createSchema(): void {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    -- Performance indexes
-    CREATE INDEX IF NOT EXISTS idx_papers_created_at ON papers(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_papers_published_date ON papers(published_date DESC);
-    CREATE INDEX IF NOT EXISTS idx_papers_title ON papers(title COLLATE NOCASE);
-    CREATE INDEX IF NOT EXISTS idx_papers_is_favorite ON papers(is_favorite);
-    CREATE INDEX IF NOT EXISTS idx_paper_collections_collection_id ON paper_collections(collection_id);
-    CREATE INDEX IF NOT EXISTS idx_paper_tags_tag_id ON paper_tags(tag_id);
   `);
+}
+
+function createIndexes(): void {
+  db.exec(PAPER_INDEXES_SQL);
 }
 
 // --- Shared helpers ---
@@ -134,7 +154,9 @@ export function deserializeArray(json: string): string[] {
 
 export interface PaperRow {
   id: string;
-  arxiv_id: string;
+  arxiv_id: string | null;
+  doi: string | null;
+  source: string;
   title: string;
   authors: string;
   abstract: string;
@@ -153,6 +175,8 @@ export function rowToLibraryPaper(row: PaperRow, collections: Collection[] = [],
   return {
     id: row.id,
     arxivId: row.arxiv_id,
+    doi: row.doi,
+    source: row.source as PaperSource,
     title: row.title,
     authors: deserializeArray(row.authors),
     abstract: row.abstract,

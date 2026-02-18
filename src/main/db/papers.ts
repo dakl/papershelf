@@ -1,4 +1,5 @@
-import type { LibraryPaper, PaperFilter } from '../../shared/types';
+import type { LibraryPaper, PaperFilter, PaperMetadataUpdate, PaperSource } from '../../shared/types';
+import { DataChangeEvent, eventEmitter } from '../event-emitter';
 import { getCollectionsForPaper, getCollectionsForPapers } from './collections';
 import { generateId, getDb, type PaperRow, rowToLibraryPaper, serializeArray } from './connection';
 import { getTagsForPaper, getTagsForPapers } from './tags';
@@ -14,7 +15,9 @@ function hydratePaperRows(rows: PaperRow[]): LibraryPaper[] {
 }
 
 export function insertPaper(paper: {
-  arxivId: string;
+  arxivId: string | null;
+  doi?: string | null;
+  source?: PaperSource;
   title: string;
   authors: string[];
   abstract: string;
@@ -29,12 +32,14 @@ export function insertPaper(paper: {
   const db = getDb();
   const id = generateId();
   const stmt = db.prepare(`
-    INSERT INTO papers (id, arxiv_id, title, authors, abstract, published_date, updated_date, categories, arxiv_url, pdf_url, pdf_path, full_text)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO papers (id, arxiv_id, doi, source, title, authors, abstract, published_date, updated_date, categories, arxiv_url, pdf_url, pdf_path, full_text)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     id,
     paper.arxivId,
+    paper.doi ?? null,
+    paper.source ?? 'arxiv',
     paper.title,
     serializeArray(paper.authors),
     paper.abstract,
@@ -46,7 +51,9 @@ export function insertPaper(paper: {
     paper.pdfPath,
     paper.fullText,
   );
-  return getPaperById(id)!;
+  const result = getPaperById(id)!;
+  eventEmitter.emit(DataChangeEvent.PAPERS_CHANGED);
+  return result;
 }
 
 export function getPaperById(id: string): LibraryPaper | null {
@@ -131,6 +138,7 @@ export function getPapers(filter: PaperFilter): LibraryPaper[] {
 
 export function deletePaper(id: string): void {
   getDb().prepare('DELETE FROM papers WHERE id = ?').run(id);
+  eventEmitter.emit(DataChangeEvent.PAPERS_CHANGED);
 }
 
 export function toggleFavorite(id: string): boolean {
@@ -156,6 +164,18 @@ export function updatePaperPdf(id: string, pdfPath: string, fullText: string | n
   getDb().prepare('UPDATE papers SET pdf_path = ?, full_text = ? WHERE id = ?').run(pdfPath, fullText, id);
 }
 
+export function updatePaperPdfPath(id: string, pdfPath: string): void {
+  getDb().prepare('UPDATE papers SET pdf_path = ? WHERE id = ?').run(pdfPath, id);
+}
+
+export function getAllPaperPdfPaths(): { id: string; pdfPath: string }[] {
+  const rows = getDb().prepare('SELECT id, pdf_path FROM papers WHERE pdf_path IS NOT NULL').all() as {
+    id: string;
+    pdf_path: string;
+  }[];
+  return rows.map((r) => ({ id: r.id, pdfPath: r.pdf_path }));
+}
+
 export interface LibraryStats {
   paperCount: number;
   favoriteCount: number;
@@ -172,6 +192,32 @@ export function getLibraryStats(): LibraryStats {
   const collectionCount = (db.prepare('SELECT COUNT(*) as count FROM collections').get() as { count: number }).count;
   const tagCount = (db.prepare('SELECT COUNT(*) as count FROM tags').get() as { count: number }).count;
   return { paperCount, favoriteCount, collectionCount, tagCount };
+}
+
+export function updatePaperMetadata(id: string, updates: PaperMetadataUpdate): LibraryPaper {
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM papers WHERE id = ?').get(id);
+  if (!existing) throw new Error(`Paper not found: ${id}`);
+
+  const fieldMap: Record<string, unknown> = {};
+  if (updates.title !== undefined) fieldMap.title = updates.title;
+  if (updates.authors !== undefined) fieldMap.authors = serializeArray(updates.authors);
+  if (updates.abstract !== undefined) fieldMap.abstract = updates.abstract;
+  if (updates.publishedDate !== undefined) fieldMap.published_date = updates.publishedDate;
+  if (updates.doi !== undefined) fieldMap.doi = updates.doi;
+  if (updates.categories !== undefined) fieldMap.categories = serializeArray(updates.categories);
+
+  if (Object.keys(fieldMap).length > 0) {
+    const setClauses = Object.keys(fieldMap)
+      .map((col) => `${col} = ?`)
+      .join(', ');
+    const values = Object.values(fieldMap);
+    db.prepare(`UPDATE papers SET ${setClauses} WHERE id = ?`).run(...values, id);
+  }
+
+  const result = getPaperById(id)!;
+  eventEmitter.emit(DataChangeEvent.PAPERS_CHANGED);
+  return result;
 }
 
 export function searchLibrary(query: string): LibraryPaper[] {

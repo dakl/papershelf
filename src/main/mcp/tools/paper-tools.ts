@@ -118,6 +118,8 @@ export function registerPaperTools(server: McpServer, isEnabled: (name: string) 
           paper = {
             id: '',
             arxivId: arxivPaper.id,
+            doi: null,
+            source: 'arxiv',
             title: arxivPaper.title,
             authors: arxivPaper.authors,
             abstract: arxivPaper.abstract,

@@ -35,6 +35,7 @@ import {
   searchLibrary,
   toggleFavorite,
   updateCollection,
+  updatePaperMetadata,
   updateTag,
 } from '../database';
 
@@ -42,7 +43,7 @@ let dbPath: string;
 
 function makePaper(overrides: Partial<Parameters<typeof insertPaper>[0]> = {}) {
   return {
-    arxivId: '2401.00001',
+    arxivId: '2401.00001' as string | null,
     title: 'Attention Is All You Need',
     authors: ['Ashish Vaswani', 'Noam Shazeer'],
     abstract:
@@ -114,6 +115,47 @@ describe('papers', () => {
   it('enforces unique arxiv_id', () => {
     insertPaper(makePaper());
     expect(() => insertPaper(makePaper())).toThrow();
+  });
+
+  it('inserts a paper with null arxivId (local source)', () => {
+    const paper = insertPaper(
+      makePaper({
+        arxivId: null,
+        source: 'local',
+        arxivUrl: '',
+        pdfUrl: '',
+      }),
+    );
+
+    expect(paper.arxivId).toBeNull();
+    expect(paper.source).toBe('local');
+    expect(paper.doi).toBeNull();
+  });
+
+  it('allows multiple papers with null arxivId', () => {
+    insertPaper(makePaper({ arxivId: null, source: 'local', arxivUrl: '', pdfUrl: '' }));
+    const second = insertPaper(
+      makePaper({ arxivId: null, source: 'local', title: 'Second Local Paper', arxivUrl: '', pdfUrl: '' }),
+    );
+
+    expect(second.arxivId).toBeNull();
+    expect(second.source).toBe('local');
+  });
+
+  it('stores and retrieves doi', () => {
+    const paper = insertPaper(
+      makePaper({
+        arxivId: null,
+        doi: '10.1234/test.2024',
+        source: 'local',
+        arxivUrl: '',
+        pdfUrl: '',
+      }),
+    );
+
+    expect(paper.doi).toBe('10.1234/test.2024');
+    const found = getPaperById(paper.id);
+    expect(found!.doi).toBe('10.1234/test.2024');
   });
 
   it('deletes a paper', () => {
@@ -728,5 +770,76 @@ describe('batch collection and tag fetching', () => {
 
     const tagsMap = getTagsForPapers([p1.id]);
     expect(tagsMap.get(p1.id)![0].paperCount).toBe(2);
+  });
+});
+
+// --- Update paper metadata ---
+
+describe('updatePaperMetadata', () => {
+  it('updates title', () => {
+    const paper = insertPaper(makePaper());
+    const updated = updatePaperMetadata(paper.id, { title: 'New Title' });
+
+    expect(updated.title).toBe('New Title');
+    expect(getPaperById(paper.id)!.title).toBe('New Title');
+  });
+
+  it('updates multiple fields at once', () => {
+    const paper = insertPaper(makePaper());
+    const updated = updatePaperMetadata(paper.id, {
+      title: 'Updated Title',
+      authors: ['New Author'],
+      abstract: 'Updated abstract',
+      publishedDate: '2025-01-01',
+      doi: '10.5555/test',
+      categories: ['cs.LG'],
+    });
+
+    expect(updated.title).toBe('Updated Title');
+    expect(updated.authors).toEqual(['New Author']);
+    expect(updated.abstract).toBe('Updated abstract');
+    expect(updated.publishedDate).toBe('2025-01-01');
+    expect(updated.doi).toBe('10.5555/test');
+    expect(updated.categories).toEqual(['cs.LG']);
+  });
+
+  it('preserves unchanged fields', () => {
+    const paper = insertPaper(makePaper());
+    updatePaperMetadata(paper.id, { title: 'New Title' });
+    const found = getPaperById(paper.id)!;
+
+    expect(found.authors).toEqual(['Ashish Vaswani', 'Noam Shazeer']);
+    expect(found.categories).toEqual(['cs.CL', 'cs.AI']);
+    expect(found.arxivId).toBe('2401.00001');
+  });
+
+  it('updates FTS index so search finds new title', () => {
+    const paper = insertPaper(makePaper({ title: 'Original Title' }));
+    updatePaperMetadata(paper.id, { title: 'Quantum Entanglement Research' });
+
+    const results = searchLibrary('Quantum Entanglement');
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe(paper.id);
+
+    const oldResults = searchLibrary('Original Title');
+    expect(oldResults).toHaveLength(0);
+  });
+
+  it('throws for non-existent paper', () => {
+    expect(() => updatePaperMetadata('nonexistent', { title: 'Test' })).toThrow('Paper not found');
+  });
+
+  it('handles empty updates without error', () => {
+    const paper = insertPaper(makePaper());
+    const updated = updatePaperMetadata(paper.id, {});
+
+    expect(updated.title).toBe('Attention Is All You Need');
+  });
+
+  it('can set doi to null', () => {
+    const paper = insertPaper(makePaper({ doi: '10.1234/test' }));
+    const updated = updatePaperMetadata(paper.id, { doi: null });
+
+    expect(updated.doi).toBeNull();
   });
 });

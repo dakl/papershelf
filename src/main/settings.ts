@@ -6,6 +6,7 @@ const SETTINGS_FILE = 'settings.json';
 
 interface AppSettings {
   shortcuts?: Record<string, string>;
+  pdfLibraryPath?: string;
 }
 
 function getSettingsPath(): string {
@@ -39,6 +40,20 @@ export function saveShortcutOverrides(overrides: Record<string, string>): void {
     delete settings.shortcuts;
   } else {
     settings.shortcuts = overrides;
+  }
+  saveSettings(settings);
+}
+
+export function getPdfLibraryPath(): string | null {
+  return loadSettings().pdfLibraryPath ?? null;
+}
+
+export function setPdfLibraryPath(libraryPath: string | null): void {
+  const settings = loadSettings();
+  if (libraryPath) {
+    settings.pdfLibraryPath = libraryPath;
+  } else {
+    delete settings.pdfLibraryPath;
   }
   saveSettings(settings);
 }

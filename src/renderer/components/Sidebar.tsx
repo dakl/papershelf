@@ -53,6 +53,7 @@ export function Sidebar() {
     deleteCollection,
     deleteTag,
     addPaperToCollection,
+    importLocalPdfs,
   } = usePaperStore();
   const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
@@ -284,13 +285,11 @@ export function Sidebar() {
           <span className={`w-2 h-2 rounded-full ${mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'}`} />
           <span>MCP</span>
         </button>
-        <ShortcutHint shortcutId="toggleSettings" position="above">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setSidebarView('settings')}
-            className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
-              sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
-            }`}
-            title="Settings"
+            onClick={() => importLocalPdfs()}
+            className="no-drag flex items-center gap-1.5 text-mac-small text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+            title="Import PDFs"
           >
             <svg
               width="16"
@@ -302,11 +301,36 @@ export function Sidebar() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
-              <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
+              <path d="M14 10v2.67A1.33 1.33 0 0112.67 14H3.33A1.33 1.33 0 012 12.67V10" />
+              <polyline points="5 7 8 4 11 7" />
+              <line x1="8" y1="4" x2="8" y2="12" />
             </svg>
+            <span>Import</span>
           </button>
-        </ShortcutHint>
+          <ShortcutHint shortcutId="toggleSettings" position="above">
+            <button
+              onClick={() => setSidebarView('settings')}
+              className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
+                sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
+              }`}
+              title="Settings"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
+                <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
+              </svg>
+            </button>
+          </ShortcutHint>
+        </div>
       </div>
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
