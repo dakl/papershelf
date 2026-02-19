@@ -14,6 +14,7 @@ export type { LibraryStats } from './papers';
 export {
   checkPapersInLibrary,
   deletePaper,
+  getAllPaperPdfPaths,
   getLibraryStats,
   getPaperByArxivId,
   getPaperById,
@@ -21,7 +22,9 @@ export {
   insertPaper,
   searchLibrary,
   toggleFavorite,
+  updatePaperMetadata,
   updatePaperPdf,
+  updatePaperPdfPath,
 } from './papers';
 export {
   addTagToPaper,

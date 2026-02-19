@@ -24,6 +24,9 @@ const api: ElectronAPI = {
   toggleFavorite: (id) => ipcRenderer.invoke('papers:toggleFavorite', id),
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),
   searchLibrary: (query) => ipcRenderer.invoke('papers:search', query),
+  importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
+  updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
+  resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
 
   // Collections
   getCollections: () => ipcRenderer.invoke('collections:list'),
@@ -59,6 +62,9 @@ const api: ElectronAPI = {
   // Settings
   getShortcutOverrides: () => ipcRenderer.invoke('settings:getShortcuts'),
   saveShortcutOverrides: (overrides) => ipcRenderer.invoke('settings:saveShortcuts', overrides),
+  getPdfLibraryPath: () => ipcRenderer.invoke('settings:getPdfLibraryPath'),
+  setPdfLibraryPath: () => ipcRenderer.invoke('settings:setPdfLibraryPath'),
+  resetPdfLibraryPath: () => ipcRenderer.invoke('settings:resetPdfLibraryPath'),
 
   // MCP Server
   getMcpStatus: () => ipcRenderer.invoke('mcp:getStatus'),
@@ -88,6 +94,18 @@ const api: ElectronAPI = {
   onAnnotationsChanged: (callback) => {
     ipcRenderer.on('data:annotations-changed', callback);
     return () => ipcRenderer.removeListener('data:annotations-changed', callback);
+  },
+
+  onImportProgress: (callback) => {
+    const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
+    ipcRenderer.on('data:import-progress', handler);
+    return () => ipcRenderer.removeListener('data:import-progress', handler);
+  },
+
+  onMetadataResolutionProgress: (callback) => {
+    const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
+    ipcRenderer.on('data:metadata-resolution-progress', handler);
+    return () => ipcRenderer.removeListener('data:metadata-resolution-progress', handler);
   },
 };
 

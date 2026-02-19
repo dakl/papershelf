@@ -23,10 +23,12 @@ export function formatPaper(paper: LibraryPaper): string {
   return [
     `**${paper.title}**`,
     `Authors: ${paper.authors.join(', ')}`,
-    `arXiv ID: ${paper.arxivId}`,
+    paper.arxivId ? `arXiv ID: ${paper.arxivId}` : '',
+    paper.doi ? `DOI: ${paper.doi}` : '',
+    `Source: ${paper.source}`,
     `Published: ${paper.publishedDate}`,
-    `Categories: ${paper.categories.join(', ')}`,
-    `URL: ${paper.arxivUrl}`,
+    paper.categories.length > 0 ? `Categories: ${paper.categories.join(', ')}` : '',
+    paper.arxivUrl ? `URL: ${paper.arxivUrl}` : '',
     paper.isFavorite ? 'Favorited' : '',
     paper.collections.length > 0 ? `Collections: ${paper.collections.map((c) => c.name).join(', ')}` : '',
     paper.tags.length > 0 ? `Tags: ${paper.tags.map((t) => t.name).join(', ')}` : '',
@@ -38,20 +40,38 @@ export function formatPaper(paper: LibraryPaper): string {
 }
 
 export function generateBibtex(paper: LibraryPaper): string {
-  const id = paper.arxivId.replace(/[/.]/g, '_');
+  const bibtexKey = paper.arxivId
+    ? paper.arxivId.replace(/[/.]/g, '_')
+    : paper.doi
+      ? paper.doi.replace(/[/.]/g, '_')
+      : paper.id.slice(0, 8);
   const year = paper.publishedDate ? new Date(paper.publishedDate).getFullYear() : 'unknown';
   const authors = paper.authors.join(' and ');
   const primaryCategory = paper.categories[0] || '';
 
-  return [
-    `@article{${id},`,
+  const lines = [
+    `@article{${bibtexKey},`,
     `  title     = {${paper.title}},`,
     `  author    = {${authors}},`,
     `  year      = {${year}},`,
-    `  eprint    = {${paper.arxivId}},`,
-    `  archivePrefix = {arXiv},`,
-    `  primaryClass  = {${primaryCategory}},`,
-    `  url       = {${paper.arxivUrl}}`,
-    `}`,
-  ].join('\n');
+  ];
+
+  if (paper.arxivId) {
+    lines.push(`  eprint    = {${paper.arxivId}},`);
+    lines.push(`  archivePrefix = {arXiv},`);
+  }
+  if (primaryCategory) {
+    lines.push(`  primaryClass  = {${primaryCategory}},`);
+  }
+  if (paper.doi) {
+    lines.push(`  doi       = {${paper.doi}},`);
+  }
+
+  const url = paper.arxivUrl || (paper.doi ? `https://doi.org/${paper.doi}` : '');
+  if (url) {
+    lines.push(`  url       = {${url}}`);
+  }
+
+  lines.push(`}`);
+  return lines.join('\n');
 }

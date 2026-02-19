@@ -148,6 +148,82 @@ function KeyboardShortcutsSection() {
   );
 }
 
+function PdfLibrarySection() {
+  const [libraryPath, setLibraryPath] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.electronAPI.getPdfLibraryPath().then(setLibraryPath);
+  }, []);
+
+  const handleChooseFolder = async () => {
+    setLoading(true);
+    setStatusMessage(null);
+    try {
+      const result = await window.electronAPI.setPdfLibraryPath();
+      if (!result.cancelled && result.path) {
+        setLibraryPath(result.path);
+        if (result.movedCount && result.movedCount > 0) {
+          setStatusMessage(`Moved ${result.movedCount} PDF${result.movedCount === 1 ? '' : 's'} to new location`);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setLoading(true);
+    setStatusMessage(null);
+    try {
+      await window.electronAPI.resetPdfLibraryPath();
+      setLibraryPath(null);
+      setStatusMessage('Reset to default location');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-mac-body font-semibold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+        PDF Library
+      </h2>
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 p-4 space-y-3">
+        <div>
+          <div className="text-mac-body font-medium">Storage Location</div>
+          <div className="text-mac-small text-gray-500 dark:text-gray-400">
+            Where downloaded and imported PDFs are stored
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-mac-small text-gray-600 dark:text-gray-300 truncate">
+            {libraryPath || 'Default (app data)'}
+          </div>
+          <button
+            onClick={handleChooseFolder}
+            disabled={loading}
+            className="px-3 py-1 rounded text-mac-small bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Moving...' : 'Choose Folder...'}
+          </button>
+          {libraryPath && (
+            <button
+              onClick={handleReset}
+              disabled={loading}
+              className="px-3 py-1 rounded text-mac-small text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+        {statusMessage && <div className="text-mac-small text-green-600 dark:text-green-400">{statusMessage}</div>}
+      </div>
+    </section>
+  );
+}
+
 export function SettingsPanel() {
   const [showAbout, setShowAbout] = useState(false);
   const {
@@ -214,6 +290,9 @@ export function SettingsPanel() {
 
         {/* Keyboard Shortcuts Section */}
         <KeyboardShortcutsSection />
+
+        {/* PDF Library Section */}
+        <PdfLibrarySection />
 
         {/* MCP Server Section */}
         <section className="mb-8">

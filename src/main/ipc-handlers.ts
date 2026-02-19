@@ -1,8 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import fs from 'fs';
+import path from 'path';
 import type {
   ArxivPaper,
   HighlightAnnotation,
+  ImportBatchResult,
   PaperFilter,
+  PaperMetadataUpdate,
+  PdfLibraryPathResult,
   SavePaperResult,
   StickyNoteAnnotation,
   ToolNotificationMode,
@@ -19,8 +24,8 @@ import {
 } from './mcp/http-server';
 import { getDisabledTools, getToolModes, setDisabledTools, setMcpServerEnabled, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
-import { fetchAndCachePdf } from './pdf-processor';
-
+import { fetchAndCachePdf, getDefaultPapersDir } from './pdf-processor';
+import { importLocalPdfs } from './services/import-pdf';
 import {
   addHighlightAnnotation,
   addStickyNoteAnnotation,
@@ -28,8 +33,9 @@ import {
   removeAnnotation,
 } from './services/pdf-annotator';
 import { readPdfForPaper } from './services/pdf-reader';
+import { resolveMetadata, resolveMetadataForPapers } from './services/resolve-metadata';
 import { savePaperFromArxivPaper } from './services/save-paper';
-import { getShortcutOverrides, saveShortcutOverrides } from './settings';
+import { getPdfLibraryPath, getShortcutOverrides, saveShortcutOverrides, setPdfLibraryPath } from './settings';
 
 export function registerIpcHandlers(): void {
   // --- App ---
@@ -71,8 +77,28 @@ export function registerIpcHandlers(): void {
     return db.getPaperById(id);
   });
 
-  ipcMain.handle('papers:delete', (_event, id: string) => {
+  ipcMain.handle('papers:delete', async (_event, id: string) => {
     try {
+      const paper = db.getPaperById(id);
+      if (paper?.pdfPath) {
+        const window = BrowserWindow.getFocusedWindow();
+        if (window) {
+          const result = await dialog.showMessageBox(window, {
+            type: 'question',
+            buttons: ['Keep PDF', 'Delete PDF'],
+            defaultId: 0,
+            title: 'Delete Paper',
+            message: 'Also delete the PDF file from disk?',
+          });
+          if (result.response === 1) {
+            try {
+              fs.unlinkSync(paper.pdfPath);
+            } catch {
+              // File may not exist
+            }
+          }
+        }
+      }
       db.deletePaper(id);
       return { success: true };
     } catch (err) {
@@ -101,6 +127,54 @@ export function registerIpcHandlers(): void {
       return await fetchAndCachePdf(url, arxivId);
     } catch {
       return null;
+    }
+  });
+
+  ipcMain.handle('papers:importLocal', async (): Promise<ImportBatchResult> => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (!window) return { imported: [], failed: [], totalCount: 0 };
+
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Import PDFs',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { imported: [], failed: [], totalCount: 0 };
+    }
+
+    const importResult = await importLocalPdfs(result.filePaths);
+
+    // Fire-and-forget background metadata resolution for imported papers
+    if (importResult.imported.length > 0) {
+      const localPapers = importResult.imported
+        .filter((p) => p.source === 'local')
+        .map((p) => ({ id: p.id, title: p.title }));
+      if (localPapers.length > 0) {
+        resolveMetadataForPapers(localPapers).catch((err) => {
+          console.warn('Background metadata resolution failed:', err);
+        });
+      }
+    }
+
+    return importResult;
+  });
+
+  ipcMain.handle('papers:updateMetadata', (_event, id: string, updates: PaperMetadataUpdate) => {
+    return db.updatePaperMetadata(id, updates);
+  });
+
+  ipcMain.handle('papers:resolveMetadata', async (_event, paperId: string) => {
+    const paper = db.getPaperById(paperId);
+    if (!paper) return { success: false, error: 'Paper not found' };
+    try {
+      const resolved = await resolveMetadata(paper.title);
+      if (!resolved) return { success: false, error: 'No match found' };
+      db.updatePaperMetadata(paperId, resolved.updates);
+      return { success: true, source: resolved.source };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Resolution failed' };
     }
   });
 
@@ -332,6 +406,72 @@ export function registerIpcHandlers(): void {
     saveShortcutOverrides(overrides);
   });
 
+  ipcMain.handle('settings:getPdfLibraryPath', () => {
+    return getPdfLibraryPath();
+  });
+
+  ipcMain.handle('settings:setPdfLibraryPath', async (): Promise<PdfLibraryPathResult> => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (!window) return { path: null, cancelled: true };
+
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Choose PDF Library Folder',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { path: getPdfLibraryPath(), cancelled: true };
+    }
+
+    const newPath = result.filePaths[0];
+    setPdfLibraryPath(newPath);
+
+    // Move PDFs that aren't already in the target folder
+    let movedCount = 0;
+    const papers = db.getAllPaperPdfPaths();
+    for (const paper of papers) {
+      if (!paper.pdfPath.startsWith(newPath)) {
+        const filename = path.basename(paper.pdfPath);
+        const newPdfPath = path.join(newPath, filename);
+        try {
+          if (fs.existsSync(paper.pdfPath) && !fs.existsSync(newPdfPath)) {
+            fs.copyFileSync(paper.pdfPath, newPdfPath);
+            fs.unlinkSync(paper.pdfPath);
+          }
+          db.updatePaperPdfPath(paper.id, newPdfPath);
+          movedCount++;
+        } catch (err) {
+          console.warn(`Failed to move PDF ${paper.pdfPath}:`, err);
+        }
+      }
+    }
+
+    return { path: newPath, cancelled: false, movedCount };
+  });
+
+  ipcMain.handle('settings:resetPdfLibraryPath', () => {
+    const defaultPath = getDefaultPapersDir();
+    setPdfLibraryPath(null);
+
+    // Move PDFs not already in the default folder back to it
+    const papers = db.getAllPaperPdfPaths();
+    for (const paper of papers) {
+      if (!paper.pdfPath.startsWith(defaultPath)) {
+        const filename = path.basename(paper.pdfPath);
+        const newPdfPath = path.join(defaultPath, filename);
+        try {
+          if (fs.existsSync(paper.pdfPath) && !fs.existsSync(newPdfPath)) {
+            fs.copyFileSync(paper.pdfPath, newPdfPath);
+            fs.unlinkSync(paper.pdfPath);
+          }
+          db.updatePaperPdfPath(paper.id, newPdfPath);
+        } catch (err) {
+          console.warn(`Failed to move PDF ${paper.pdfPath}:`, err);
+        }
+      }
+    }
+  });
+
   // Setup event forwarding from main process to renderer
   eventEmitter.on(DataChangeEvent.COLLECTIONS_CHANGED, () => {
     BrowserWindow.getAllWindows().forEach((window) => {
@@ -354,6 +494,18 @@ export function registerIpcHandlers(): void {
   eventEmitter.on(DataChangeEvent.ANNOTATIONS_CHANGED, () => {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:annotations-changed');
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.IMPORT_PROGRESS, (progress) => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send('data:import-progress', progress);
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.METADATA_RESOLUTION_PROGRESS, (progress) => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send('data:metadata-resolution-progress', progress);
     });
   });
 }
