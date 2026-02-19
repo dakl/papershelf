@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import fs from 'fs';
 import path from 'path';
 import type {
@@ -47,6 +48,10 @@ export function registerIpcHandlers(): void {
       electronVersion: process.versions.electron,
       stats,
     };
+  });
+
+  ipcMain.handle('app:getVersion', () => {
+    return app.getVersion();
   });
 
   // --- ArXiv ---
@@ -495,6 +500,45 @@ export function registerIpcHandlers(): void {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:annotations-changed');
     });
+  });
+
+  // --- Updater ---
+  ipcMain.handle('updater:check', async () => {
+    try {
+      const result = await autoUpdater.checkForUpdates();
+      if (!result || !result.updateInfo) {
+        return {
+          available: false,
+          error: 'No update information available',
+        };
+      }
+      return {
+        available: result.updateInfo.version !== app.getVersion(),
+        version: result.updateInfo.version,
+        releaseNotes: result.updateInfo.releaseNotes,
+      };
+    } catch (error) {
+      return {
+        available: false,
+        error: error instanceof Error ? error.message : 'Failed to check for updates',
+      };
+    }
+  });
+
+  ipcMain.handle('updater:download', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to download update',
+      };
+    }
+  });
+
+  ipcMain.handle('updater:quitAndInstall', () => {
+    autoUpdater.quitAndInstall();
   });
 
   eventEmitter.on(DataChangeEvent.IMPORT_PROGRESS, (progress) => {

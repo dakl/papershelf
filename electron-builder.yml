@@ -22,3 +22,9 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
   notarize: true
+
+publish:
+  - provider: github
+    owner: dakl
+    repo: papershelf
+    releaseType: release

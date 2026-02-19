@@ -120,6 +120,10 @@ if (isMcpMode) {
           createWindow();
         }
       });
+
+      // Setup auto-updater
+      const { setupUpdater } = await import('./updater.js');
+      setupUpdater();
     });
 
     app.on('window-all-closed', () => {

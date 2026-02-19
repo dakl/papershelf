@@ -75,6 +75,29 @@ const api: ElectronAPI = {
   setMcpToolMode: (toolName, mode) => ipcRenderer.invoke('mcp:setToolMode', toolName, mode),
   getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
 
+  // App Updates
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+  downloadUpdate: () => ipcRenderer.invoke('updater:download'),
+  quitAndInstall: () => ipcRenderer.invoke('updater:quitAndInstall'),
+  
+  // Updater event listeners
+  onUpdaterProgress: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:progress', handler);
+    return () => ipcRenderer.removeListener('updater:progress', handler);
+  },
+  onUpdaterError: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:error', handler);
+    return () => ipcRenderer.removeListener('updater:error', handler);
+  },
+  onUpdaterUpdateDownloaded: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:update-downloaded', handler);
+    return () => ipcRenderer.removeListener('updater:update-downloaded', handler);
+  },
+
   // Event listeners for data changes
   onCollectionsChanged: (callback) => {
     ipcRenderer.on('data:collections-changed', callback);
