@@ -26,6 +26,7 @@ interface PaperState {
   libraryStats: LibraryStats | null;
   loading: boolean;
   importProgress: ImportProgress | null;
+  resolvingPaperIds: Set<string>;
 
   // Paper actions
   loadPapers: (filter: PaperFilter) => Promise<void>;
@@ -37,6 +38,7 @@ interface PaperState {
   searchLibrary: (query: string) => Promise<void>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<void>;
+  resolveMetadata: (paperId: string) => Promise<void>;
   loadLibraryStats: () => Promise<void>;
 
   // Collection actions
@@ -65,6 +67,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   libraryStats: null,
   loading: false,
   importProgress: null,
+  resolvingPaperIds: new Set(),
 
   // --- Stats ---
 
@@ -164,6 +167,28 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to update paper', 'error');
       throw err;
+    }
+  },
+
+  resolveMetadata: async (paperId) => {
+    set((state) => ({
+      resolvingPaperIds: new Set([...state.resolvingPaperIds, paperId]),
+    }));
+    try {
+      const result = await window.electronAPI.resolveMetadata(paperId);
+      if (result.success) {
+        toast(`Metadata resolved via ${result.source}`, 'success');
+      } else {
+        toast(result.error ?? 'No metadata found', 'info');
+      }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Resolution failed', 'error');
+    } finally {
+      set((state) => {
+        const next = new Set(state.resolvingPaperIds);
+        next.delete(paperId);
+        return { resolvingPaperIds: next };
+      });
     }
   },
 

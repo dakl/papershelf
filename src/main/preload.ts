@@ -26,6 +26,7 @@ const api: ElectronAPI = {
   searchLibrary: (query) => ipcRenderer.invoke('papers:search', query),
   importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
   updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
+  resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
 
   // Collections
   getCollections: () => ipcRenderer.invoke('collections:list'),
@@ -99,6 +100,12 @@ const api: ElectronAPI = {
     const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
     ipcRenderer.on('data:import-progress', handler);
     return () => ipcRenderer.removeListener('data:import-progress', handler);
+  },
+
+  onMetadataResolutionProgress: (callback) => {
+    const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
+    ipcRenderer.on('data:metadata-resolution-progress', handler);
+    return () => ipcRenderer.removeListener('data:metadata-resolution-progress', handler);
   },
 };
 

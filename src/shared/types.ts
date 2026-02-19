@@ -143,6 +143,14 @@ export interface PaperMetadataUpdate {
   categories?: string[];
 }
 
+export type MetadataResolutionStatus = 'resolving' | 'resolved' | 'failed' | 'no-match';
+
+export interface MetadataResolutionProgress {
+  paperId: string;
+  status: MetadataResolutionStatus;
+  source?: string;
+}
+
 export interface PdfLibraryPathResult {
   path: string | null;
   cancelled: boolean;
@@ -181,6 +189,7 @@ export interface ElectronAPI {
   searchLibrary: (query: string) => Promise<LibraryPaper[]>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<LibraryPaper>;
+  resolveMetadata: (paperId: string) => Promise<{ success: boolean; source?: string; error?: string }>;
 
   // Collections
   getCollections: () => Promise<Collection[]>;
@@ -236,6 +245,7 @@ export interface ElectronAPI {
   onPapersChanged: (callback: () => void) => () => void;
   onAnnotationsChanged: (callback: () => void) => () => void;
   onImportProgress: (callback: (progress: ImportProgress) => void) => () => void;
+  onMetadataResolutionProgress: (callback: (progress: MetadataResolutionProgress) => void) => () => void;
 }
 
 declare global {

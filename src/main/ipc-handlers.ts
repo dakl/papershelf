@@ -33,6 +33,7 @@ import {
   removeAnnotation,
 } from './services/pdf-annotator';
 import { readPdfForPaper } from './services/pdf-reader';
+import { resolveMetadata, resolveMetadataForPapers } from './services/resolve-metadata';
 import { savePaperFromArxivPaper } from './services/save-paper';
 import { getPdfLibraryPath, getShortcutOverrides, saveShortcutOverrides, setPdfLibraryPath } from './settings';
 
@@ -143,11 +144,38 @@ export function registerIpcHandlers(): void {
       return { imported: [], failed: [], totalCount: 0 };
     }
 
-    return importLocalPdfs(result.filePaths);
+    const importResult = await importLocalPdfs(result.filePaths);
+
+    // Fire-and-forget background metadata resolution for imported papers
+    if (importResult.imported.length > 0) {
+      const localPapers = importResult.imported
+        .filter((p) => p.source === 'local')
+        .map((p) => ({ id: p.id, title: p.title }));
+      if (localPapers.length > 0) {
+        resolveMetadataForPapers(localPapers).catch((err) => {
+          console.warn('Background metadata resolution failed:', err);
+        });
+      }
+    }
+
+    return importResult;
   });
 
   ipcMain.handle('papers:updateMetadata', (_event, id: string, updates: PaperMetadataUpdate) => {
     return db.updatePaperMetadata(id, updates);
+  });
+
+  ipcMain.handle('papers:resolveMetadata', async (_event, paperId: string) => {
+    const paper = db.getPaperById(paperId);
+    if (!paper) return { success: false, error: 'Paper not found' };
+    try {
+      const resolved = await resolveMetadata(paper.title);
+      if (!resolved) return { success: false, error: 'No match found' };
+      db.updatePaperMetadata(paperId, resolved.updates);
+      return { success: true, source: resolved.source };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Resolution failed' };
+    }
   });
 
   // --- Collections ---
@@ -472,6 +500,12 @@ export function registerIpcHandlers(): void {
   eventEmitter.on(DataChangeEvent.IMPORT_PROGRESS, (progress) => {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:import-progress', progress);
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.METADATA_RESOLUTION_PROGRESS, (progress) => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send('data:metadata-resolution-progress', progress);
     });
   });
 }

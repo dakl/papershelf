@@ -282,6 +282,7 @@ function InfoPopoverButton({
     doi?: string | null;
     id?: string;
     arxivId?: string | null;
+    source?: string;
   };
   isLibraryPaper: boolean;
   paperCollections: Collection[];
@@ -307,6 +308,8 @@ function InfoPopoverButton({
   const [editDoi, setEditDoi] = useState('');
   const [editCategories, setEditCategories] = useState('');
   const updatePaperMetadata = usePaperStore((s) => s.updatePaperMetadata);
+  const resolveMetadata = usePaperStore((s) => s.resolveMetadata);
+  const isResolving = usePaperStore((s) => s.resolvingPaperIds.has(paper.id ?? ''));
 
   const startEditing = () => {
     setEditTitle(paper.title);
@@ -467,15 +470,58 @@ function InfoPopoverButton({
               <div className="flex items-start justify-between gap-2">
                 <h2 className="text-mac-body font-semibold leading-snug">{paper.title}</h2>
                 {isLibraryPaper && (
-                  <button
-                    onClick={startEditing}
-                    className="no-drag shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600"
-                    title="Edit metadata"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2">
-                      <path d="M8.5 2.5l3 3M1.5 9.5l6-6 3 3-6 6H1.5v-3z" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {paper.source === 'local' && !paper.doi && (
+                      <button
+                        onClick={() => paper.id && resolveMetadata(paper.id)}
+                        disabled={isResolving}
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        title="Look up metadata from CrossRef/Semantic Scholar"
+                      >
+                        {isResolving ? (
+                          <svg
+                            className="animate-spin"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          >
+                            <path d="M7 1a6 6 0 1 0 6 6" />
+                          </svg>
+                        ) : (
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.2"
+                          >
+                            <circle cx="6" cy="6" r="4.5" />
+                            <line x1="9.5" y1="9.5" x2="12.5" y2="12.5" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                    <button
+                      onClick={startEditing}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600"
+                      title="Edit metadata"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                      >
+                        <path d="M8.5 2.5l3 3M1.5 9.5l6-6 3 3-6 6H1.5v-3z" />
+                      </svg>
+                    </button>
+                  </div>
                 )}
               </div>
 
