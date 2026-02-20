@@ -99,3 +99,7 @@ The full path for surfacing new backend data in the renderer:
 - `npm run lint` — biome check
 - `npm run lint:fix` — biome auto-fix
 - `PAPERSHELF_DATA_DIR=/tmp/papershelf-dev npm run dev` — dev mode with isolated data
+
+### macOS Development Notes
+
+- Use `ditto` (not `cp`) when copying .app bundles from DMGs — `cp` strips extended attributes and breaks code signatures
