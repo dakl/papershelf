@@ -249,7 +249,7 @@ export interface ElectronAPI {
   }>;
   downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
   quitAndInstall: () => Promise<void>;
-  
+
   // Auto-update settings
   getAutoUpdateSettings: () => Promise<{
     autoCheckEnabled: boolean;
@@ -260,9 +260,11 @@ export interface ElectronAPI {
   setUpdateCheckInterval: (hours: number) => Promise<void>;
   startPeriodicUpdateChecks: () => Promise<void>;
   stopPeriodicUpdateChecks: () => Promise<void>;
-  
+
   // Updater event listeners
-  onUpdaterProgress: (callback: (progress: { percent: number; bytesPerSecond?: number; transferred?: number; total?: number }) => void) => () => void;
+  onUpdaterProgress: (
+    callback: (progress: { percent: number; bytesPerSecond?: number; transferred?: number; total?: number }) => void,
+  ) => () => void;
   onUpdaterError: (callback: (error: { error: string }) => void) => () => void;
   onUpdaterUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
   onUpdateAvailable: (callback: (version: string) => void) => () => void;

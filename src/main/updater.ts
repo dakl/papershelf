@@ -1,98 +1,105 @@
-import { autoUpdater } from 'electron-updater'
-import { ipcMain, app, BrowserWindow } from 'electron'
-import log from 'electron-log'
+import { app, BrowserWindow, ipcMain } from 'electron';
+import log from 'electron-log';
+import { autoUpdater } from 'electron-updater';
 
 // Auto-update settings storage
-let autoCheckEnabled = true
-let checkIntervalHours = 6
-let checkInterval: NodeJS.Timeout | null = null
-let lastCheckTime = 0
+let autoCheckEnabled = true;
+let checkIntervalHours = 6;
+let checkInterval: NodeJS.Timeout | null = null;
+let lastCheckTime = 0;
 
 // Start periodic update checks
 export function setupUpdater() {
   // Configure logger
-  autoUpdater.logger = log
+  autoUpdater.logger = log;
 
   // Don't auto-download, let user decide
-  autoUpdater.autoDownload = false
+  autoUpdater.autoDownload = false;
 
   // Set update feed URL (GitHub)
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: 'dakl',
     repo: 'papershelf',
-    private: false
-  })
+    private: false,
+  });
 
   // Start periodic checks if enabled
   if (autoCheckEnabled) {
-    startPeriodicChecks()
+    startPeriodicChecks();
   }
 
   // Register IPC handlers
-  registerIpcHandlers()
+  registerIpcHandlers();
 
   // Set up event listeners
-  setupEventListeners()
+  setupEventListeners();
 }
 
 // Start periodic update checks
 function startPeriodicChecks() {
   // Clear any existing interval
   if (checkInterval) {
-    clearInterval(checkInterval)
+    clearInterval(checkInterval);
   }
 
   // Initial check after delay
-  setTimeout(() => {
-    checkForUpdatesSilently()
-  }, 30 * 60 * 1000) // 30 minutes after startup
+  setTimeout(
+    () => {
+      checkForUpdatesSilently();
+    },
+    30 * 60 * 1000,
+  ); // 30 minutes after startup
 
   // Periodic checks
-  checkInterval = setInterval(() => {
-    checkForUpdatesSilently()
-  }, checkIntervalHours * 60 * 60 * 1000)
+  checkInterval = setInterval(
+    () => {
+      checkForUpdatesSilently();
+    },
+    checkIntervalHours * 60 * 60 * 1000,
+  );
 
-  log.info(`Started periodic update checks every ${checkIntervalHours} hours`)
+  log.info(`Started periodic update checks every ${checkIntervalHours} hours`);
 }
 
 // Stop periodic update checks
 function stopPeriodicChecks() {
   if (checkInterval) {
-    clearInterval(checkInterval)
-    checkInterval = null
+    clearInterval(checkInterval);
+    checkInterval = null;
   }
-  log.info('Stopped periodic update checks')
+  log.info('Stopped periodic update checks');
 }
 
 // Check for updates silently (no user interaction)
 async function checkForUpdatesSilently() {
   // Don't check too frequently
-  const now = Date.now()
-  if (now - lastCheckTime < 2 * 60 * 60 * 1000) { // 2 hour cooldown
-    return
+  const now = Date.now();
+  if (now - lastCheckTime < 2 * 60 * 60 * 1000) {
+    // 2 hour cooldown
+    return;
   }
 
-  lastCheckTime = now
-  log.info('Checking for updates in background...')
+  lastCheckTime = now;
+  log.info('Checking for updates in background...');
 
   try {
-    const result = await autoUpdater.checkForUpdates()
-    if (result && result.updateInfo && result.updateInfo.version !== app.getVersion()) {
-      log.info(`Update available: ${result.updateInfo.version}`)
+    const result = await autoUpdater.checkForUpdates();
+    if (result?.updateInfo && result.updateInfo.version !== app.getVersion()) {
+      log.info(`Update available: ${result.updateInfo.version}`);
       // Notify all windows about available update
-      notifyUpdateAvailable(result.updateInfo.version)
+      notifyUpdateAvailable(result.updateInfo.version);
     }
   } catch (error) {
-    log.error('Background update check failed:', error instanceof Error ? error.message : error)
+    log.error('Background update check failed:', error instanceof Error ? error.message : error);
   }
 }
 
 // Notify all windows about available update
 function notifyUpdateAvailable(version: string) {
   BrowserWindow.getAllWindows().forEach((window) => {
-    window.webContents.send('updater:update-available', version)
-  })
+    window.webContents.send('updater:update-available', version);
+  });
 }
 
 // Register IPC handlers
@@ -102,103 +109,103 @@ function registerIpcHandlers() {
     return {
       autoCheckEnabled,
       checkIntervalHours,
-      checkOnStartup: true
-    }
-  })
+      checkOnStartup: true,
+    };
+  });
 
   // Set auto-check enabled
   ipcMain.handle('updater:setAutoCheck', (_, enabled: boolean) => {
-    autoCheckEnabled = enabled
+    autoCheckEnabled = enabled;
     if (enabled) {
-      startPeriodicChecks()
+      startPeriodicChecks();
     } else {
-      stopPeriodicChecks()
+      stopPeriodicChecks();
     }
-    return Promise.resolve()
-  })
+    return Promise.resolve();
+  });
 
   // Set check interval
   ipcMain.handle('updater:setInterval', (_, hours: number) => {
-    checkIntervalHours = hours
+    checkIntervalHours = hours;
     if (autoCheckEnabled) {
       // Restart with new interval
-      startPeriodicChecks()
+      startPeriodicChecks();
     }
-    return Promise.resolve()
-  })
+    return Promise.resolve();
+  });
 
   // Start periodic checks
   ipcMain.handle('updater:startPeriodicChecks', () => {
-    startPeriodicChecks()
-    return Promise.resolve()
-  })
+    startPeriodicChecks();
+    return Promise.resolve();
+  });
 
   // Stop periodic checks
   ipcMain.handle('updater:stopPeriodicChecks', () => {
-    stopPeriodicChecks()
-    return Promise.resolve()
-  })
+    stopPeriodicChecks();
+    return Promise.resolve();
+  });
 
   // Manual update check
   ipcMain.handle('updater:check', async () => {
     try {
-      const result = await autoUpdater.checkForUpdates()
+      const result = await autoUpdater.checkForUpdates();
       if (!result || !result.updateInfo) {
-        return { available: false, error: 'No update information available' }
+        return { available: false, error: 'No update information available' };
       }
       return {
         available: result.updateInfo.version !== app.getVersion(),
         version: result.updateInfo.version,
-        releaseNotes: result.updateInfo.releaseNotes
-      }
+        releaseNotes: result.updateInfo.releaseNotes,
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      log.error('Update check failed:', errorMessage)
-      return { available: false, error: errorMessage }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.error('Update check failed:', errorMessage);
+      return { available: false, error: errorMessage };
     }
-  })
+  });
 
   // Download update
   ipcMain.handle('updater:download', async () => {
     try {
-      await autoUpdater.downloadUpdate()
-      return { success: true }
+      await autoUpdater.downloadUpdate();
+      return { success: true };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      log.error('Update download failed:', errorMessage)
-      return { success: false, error: errorMessage }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.error('Update download failed:', errorMessage);
+      return { success: false, error: errorMessage };
     }
-  })
+  });
 
   // Quit and install
   ipcMain.handle('updater:quitAndInstall', () => {
-    autoUpdater.quitAndInstall()
-  })
+    autoUpdater.quitAndInstall();
+  });
 }
 
 // Set up event listeners
 function setupEventListeners() {
   // Update available event
   autoUpdater.on('update-available', (info) => {
-    log.info('Update available:', info.version)
-    notifyUpdateAvailable(info.version)
-  })
+    log.info('Update available:', info.version);
+    notifyUpdateAvailable(info.version);
+  });
 
   // Update downloaded event
   autoUpdater.on('update-downloaded', (info) => {
-    log.info('Update downloaded:', info.version)
+    log.info('Update downloaded:', info.version);
     BrowserWindow.getAllWindows().forEach((window) => {
-      window.webContents.send('updater:update-downloaded', { version: info.version })
-    })
-  })
+      window.webContents.send('updater:update-downloaded', { version: info.version });
+    });
+  });
 
   // Error event
   autoUpdater.on('error', (error) => {
-    log.error('Update error:', error)
+    log.error('Update error:', error);
     BrowserWindow.getAllWindows().forEach((window) => {
-      window.webContents.send('updater:error', { error: error.message || 'Unknown update error' })
-    })
-  })
+      window.webContents.send('updater:error', { error: error.message || 'Unknown update error' });
+    });
+  });
 
   // Download progress event
   autoUpdater.on('download-progress', (progress) => {
@@ -207,15 +214,15 @@ function setupEventListeners() {
         percent: progress.percent,
         bytesPerSecond: progress.bytesPerSecond,
         transferred: progress.transferred,
-        total: progress.total
-      })
-    })
-  })
+        total: progress.total,
+      });
+    });
+  });
 }
 
 // Check if app is idle (for smart checking)
 export function isAppIdle(): boolean {
   // TODO: Implement actual idle detection
   // For now, always return true
-  return true
+  return true;
 }

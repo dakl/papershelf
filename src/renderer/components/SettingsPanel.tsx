@@ -225,79 +225,79 @@ function PdfLibrarySection() {
 }
 
 function UpdatesSection() {
-  const [checking, setChecking] = useState(false)
-  const [downloading, setDownloading] = useState(false)
-  const [updateAvailable, setUpdateAvailable] = useState(false)
-  const [currentVersion, setCurrentVersion] = useState('')
-  const [latestVersion, setLatestVersion] = useState('')
-  const [releaseNotes, setReleaseNotes] = useState('')
-  const [progress, setProgress] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [autoCheckEnabled, setAutoCheckEnabled] = useState(false)
-  const [checkInterval, setCheckInterval] = useState(6)
+  const [checking, setChecking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState('');
+  const [latestVersion, setLatestVersion] = useState('');
+  const [releaseNotes, setReleaseNotes] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
+  const [checkInterval, setCheckInterval] = useState(6);
 
   useEffect(() => {
     // Get current version and auto-check settings
-    window.electronAPI.getAppVersion().then(setCurrentVersion)
-    window.electronAPI.getAutoUpdateSettings().then(settings => {
-      setAutoCheckEnabled(settings.autoCheckEnabled)
-      setCheckInterval(settings.checkIntervalHours)
-    })
-  }, [])
+    window.electronAPI.getAppVersion().then(setCurrentVersion);
+    window.electronAPI.getAutoUpdateSettings().then((settings) => {
+      setAutoCheckEnabled(settings.autoCheckEnabled);
+      setCheckInterval(settings.checkIntervalHours);
+    });
+  }, []);
 
   const handleAutoCheckToggle = async (enabled: boolean) => {
-    setAutoCheckEnabled(enabled)
-    await window.electronAPI.setAutoUpdateEnabled(enabled)
+    setAutoCheckEnabled(enabled);
+    await window.electronAPI.setAutoUpdateEnabled(enabled);
     if (enabled) {
       // Start periodic checks
-      await window.electronAPI.startPeriodicUpdateChecks()
+      await window.electronAPI.startPeriodicUpdateChecks();
     } else {
       // Stop periodic checks
-      await window.electronAPI.stopPeriodicUpdateChecks()
+      await window.electronAPI.stopPeriodicUpdateChecks();
     }
-  }
+  };
 
   const handleIntervalChange = async (hours: number) => {
-    setCheckInterval(hours)
-    await window.electronAPI.setUpdateCheckInterval(hours)
-  }
+    setCheckInterval(hours);
+    await window.electronAPI.setUpdateCheckInterval(hours);
+  };
 
   const checkForUpdates = async () => {
-    setChecking(true)
-    setError(null)
+    setChecking(true);
+    setError(null);
     try {
-      const result = await window.electronAPI.checkForUpdates()
+      const result = await window.electronAPI.checkForUpdates();
       if (result.available) {
-        setUpdateAvailable(true)
-        setLatestVersion(result.version)
-        setReleaseNotes(result.releaseNotes || 'No release notes available')
+        setUpdateAvailable(true);
+        setLatestVersion(result.version);
+        setReleaseNotes(result.releaseNotes || 'No release notes available');
       } else {
-        setUpdateAvailable(false)
+        setUpdateAvailable(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check for updates')
+      setError(err instanceof Error ? err.message : 'Failed to check for updates');
     } finally {
-      setChecking(false)
+      setChecking(false);
     }
-  }
+  };
 
   const downloadUpdate = async () => {
-    setDownloading(true)
-    setError(null)
-    setProgress(0)
-    
+    setDownloading(true);
+    setError(null);
+    setProgress(0);
+
     try {
-      const result = await window.electronAPI.downloadUpdate()
+      const result = await window.electronAPI.downloadUpdate();
       if (result.success) {
         // Update will be installed on next launch
-        setUpdateAvailable(false)
+        setUpdateAvailable(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to download update')
+      setError(err instanceof Error ? err.message : 'Failed to download update');
     } finally {
-      setDownloading(false)
+      setDownloading(false);
     }
-  }
+  };
 
   return (
     <section className="mb-8">
@@ -308,16 +308,11 @@ function UpdatesSection() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="text-mac-body font-medium">Current Version</div>
-            <div className="text-mac-small text-gray-500 dark:text-gray-400">
-              {currentVersion || 'Loading...'}
-            </div>
+            <div className="text-mac-small text-gray-500 dark:text-gray-400">{currentVersion || 'Loading...'}</div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-mac-small text-gray-500 dark:text-gray-400">Auto-check</span>
-            <ToggleSwitch
-              enabled={autoCheckEnabled}
-              onChange={() => handleAutoCheckToggle(!autoCheckEnabled)}
-            />
+            <ToggleSwitch enabled={autoCheckEnabled} onChange={() => handleAutoCheckToggle(!autoCheckEnabled)} />
           </div>
         </div>
 
@@ -351,19 +346,13 @@ function UpdatesSection() {
           </button>
         </div>
 
-        {error && (
-          <div className="text-mac-small text-red-500 dark:text-red-400">
-            {error}
-          </div>
-        )}
+        {error && <div className="text-mac-small text-red-500 dark:text-red-400">{error}</div>}
 
         {updateAvailable && (
           <div className="rounded border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3">
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                <div className="text-mac-body font-medium text-green-700 dark:text-green-300">
-                  Update Available
-                </div>
+                <div className="text-mac-body font-medium text-green-700 dark:text-green-300">Update Available</div>
                 <div className="text-mac-small text-gray-600 dark:text-gray-300">
                   Version {latestVersion} is available
                 </div>
@@ -394,7 +383,7 @@ function UpdatesSection() {
         )}
       </div>
     </section>
-  )
+  );
 }
 
 export function SettingsPanel() {
