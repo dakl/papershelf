@@ -239,6 +239,34 @@ export interface ElectronAPI {
   setMcpToolMode: (toolName: string, mode: ToolNotificationMode) => Promise<void>;
   getToolStats: () => Promise<ToolCallStats[]>;
 
+  // App Updates
+  getAppVersion: () => Promise<string>;
+  checkForUpdates: () => Promise<{
+    available: boolean;
+    version?: string;
+    releaseNotes?: string;
+    error?: string;
+  }>;
+  downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
+  quitAndInstall: () => Promise<void>;
+  
+  // Auto-update settings
+  getAutoUpdateSettings: () => Promise<{
+    autoCheckEnabled: boolean;
+    checkIntervalHours: number;
+    checkOnStartup: boolean;
+  }>;
+  setAutoUpdateEnabled: (enabled: boolean) => Promise<void>;
+  setUpdateCheckInterval: (hours: number) => Promise<void>;
+  startPeriodicUpdateChecks: () => Promise<void>;
+  stopPeriodicUpdateChecks: () => Promise<void>;
+  
+  // Updater event listeners
+  onUpdaterProgress: (callback: (progress: { percent: number; bytesPerSecond?: number; transferred?: number; total?: number }) => void) => () => void;
+  onUpdaterError: (callback: (error: { error: string }) => void) => () => void;
+  onUpdaterUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
+  onUpdateAvailable: (callback: (version: string) => void) => () => void;
+
   // Event listeners for real-time updates
   onCollectionsChanged: (callback: () => void) => () => void;
   onTagsChanged: (callback: () => void) => () => void;

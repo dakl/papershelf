@@ -233,11 +233,34 @@ function UpdatesSection() {
   const [releaseNotes, setReleaseNotes] = useState('')
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [autoCheckEnabled, setAutoCheckEnabled] = useState(false)
+  const [checkInterval, setCheckInterval] = useState(6)
 
   useEffect(() => {
-    // Get current version
+    // Get current version and auto-check settings
     window.electronAPI.getAppVersion().then(setCurrentVersion)
+    window.electronAPI.getAutoUpdateSettings().then(settings => {
+      setAutoCheckEnabled(settings.autoCheckEnabled)
+      setCheckInterval(settings.checkIntervalHours)
+    })
   }, [])
+
+  const handleAutoCheckToggle = async (enabled: boolean) => {
+    setAutoCheckEnabled(enabled)
+    await window.electronAPI.setAutoUpdateEnabled(enabled)
+    if (enabled) {
+      // Start periodic checks
+      await window.electronAPI.startPeriodicUpdateChecks()
+    } else {
+      // Stop periodic checks
+      await window.electronAPI.stopPeriodicUpdateChecks()
+    }
+  }
+
+  const handleIntervalChange = async (hours: number) => {
+    setCheckInterval(hours)
+    await window.electronAPI.setUpdateCheckInterval(hours)
+  }
 
   const checkForUpdates = async () => {
     setChecking(true)
@@ -282,12 +305,41 @@ function UpdatesSection() {
         Updates
       </h2>
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 p-4 space-y-4">
-        <div>
-          <div className="text-mac-body font-medium">Current Version</div>
-          <div className="text-mac-small text-gray-500 dark:text-gray-400">
-            {currentVersion || 'Loading...'}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-mac-body font-medium">Current Version</div>
+            <div className="text-mac-small text-gray-500 dark:text-gray-400">
+              {currentVersion || 'Loading...'}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-mac-small text-gray-500 dark:text-gray-400">Auto-check</span>
+            <ToggleSwitch
+              enabled={autoCheckEnabled}
+              onChange={() => handleAutoCheckToggle(!autoCheckEnabled)}
+            />
           </div>
         </div>
+
+        {autoCheckEnabled && (
+          <div className="mb-4">
+            <div className="text-mac-body font-medium mb-2">Check Interval</div>
+            <div className="flex items-center gap-2">
+              <select
+                value={checkInterval}
+                onChange={(e) => handleIntervalChange(Number(e.target.value))}
+                className="px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-mac-small"
+              >
+                <option value={1}>Every 1 hour</option>
+                <option value={2}>Every 2 hours</option>
+                <option value={4}>Every 4 hours</option>
+                <option value={6}>Every 6 hours</option>
+                <option value={12}>Every 12 hours</option>
+                <option value={24}>Every 24 hours</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <button
