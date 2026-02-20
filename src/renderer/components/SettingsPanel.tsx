@@ -224,6 +224,127 @@ function PdfLibrarySection() {
   );
 }
 
+function UpdatesSection() {
+  const [checking, setChecking] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+  const [currentVersion, setCurrentVersion] = useState('')
+  const [latestVersion, setLatestVersion] = useState('')
+  const [releaseNotes, setReleaseNotes] = useState('')
+  const [progress, setProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Get current version
+    window.electronAPI.getAppVersion().then(setCurrentVersion)
+  }, [])
+
+  const checkForUpdates = async () => {
+    setChecking(true)
+    setError(null)
+    try {
+      const result = await window.electronAPI.checkForUpdates()
+      if (result.available) {
+        setUpdateAvailable(true)
+        setLatestVersion(result.version)
+        setReleaseNotes(result.releaseNotes || 'No release notes available')
+      } else {
+        setUpdateAvailable(false)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to check for updates')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  const downloadUpdate = async () => {
+    setDownloading(true)
+    setError(null)
+    setProgress(0)
+    
+    try {
+      const result = await window.electronAPI.downloadUpdate()
+      if (result.success) {
+        // Update will be installed on next launch
+        setUpdateAvailable(false)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to download update')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-mac-body font-semibold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+        Updates
+      </h2>
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-white/5 p-4 space-y-4">
+        <div>
+          <div className="text-mac-body font-medium">Current Version</div>
+          <div className="text-mac-small text-gray-500 dark:text-gray-400">
+            {currentVersion || 'Loading...'}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={checkForUpdates}
+            disabled={checking || downloading}
+            className="px-4 py-2 rounded text-mac-small bg-mac-accent text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:bg-opacity-70"
+          >
+            {checking ? 'Checking...' : 'Check for Updates'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="text-mac-small text-red-500 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        {updateAvailable && (
+          <div className="rounded border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <div className="text-mac-body font-medium text-green-700 dark:text-green-300">
+                  Update Available
+                </div>
+                <div className="text-mac-small text-gray-600 dark:text-gray-300">
+                  Version {latestVersion} is available
+                </div>
+                {releaseNotes && (
+                  <details className="mt-2">
+                    <summary className="text-mac-small text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200">
+                      Release Notes
+                    </summary>
+                    <div className="mt-1 text-mac-small text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                      {releaseNotes}
+                    </div>
+                  </details>
+                )}
+              </div>
+              <button
+                onClick={downloadUpdate}
+                disabled={downloading}
+                className={`px-3 py-1 rounded text-mac-small transition-colors ${
+                  downloading
+                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    : 'bg-mac-accent text-white hover:bg-opacity-90'
+                }`}
+              >
+                {downloading ? `${progress}% Downloading...` : 'Download & Install'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 export function SettingsPanel() {
   const [showAbout, setShowAbout] = useState(false);
   const {
@@ -293,6 +414,9 @@ export function SettingsPanel() {
 
         {/* PDF Library Section */}
         <PdfLibrarySection />
+
+        {/* Updates Section */}
+        <UpdatesSection />
 
         {/* MCP Server Section */}
         <section className="mb-8">
