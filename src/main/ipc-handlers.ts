@@ -39,6 +39,8 @@ import { getPdfLibraryPath, getShortcutOverrides, saveShortcutOverrides, setPdfL
 
 export function registerIpcHandlers(): void {
   // --- App ---
+  ipcMain.handle('app:getVersion', () => app.getVersion());
+
   ipcMain.handle('app:getInfo', () => {
     const stats = db.getLibraryStats();
     return {
