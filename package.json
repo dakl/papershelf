@@ -30,6 +30,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
     "better-sqlite3": "^12.6.2",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3",
     "fast-xml-parser": "^4.3.4",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",

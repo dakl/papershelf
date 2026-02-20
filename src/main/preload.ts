@@ -107,6 +107,41 @@ const api: ElectronAPI = {
     ipcRenderer.on('data:metadata-resolution-progress', handler);
     return () => ipcRenderer.removeListener('data:metadata-resolution-progress', handler);
   },
+
+  // App Updates
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+  downloadUpdate: () => ipcRenderer.invoke('updater:download'),
+  quitAndInstall: () => ipcRenderer.invoke('updater:quitAndInstall'),
+  
+  // Auto-update settings
+  getAutoUpdateSettings: () => ipcRenderer.invoke('updater:getSettings'),
+  setAutoUpdateEnabled: (enabled) => ipcRenderer.invoke('updater:setAutoCheck', enabled),
+  setUpdateCheckInterval: (hours) => ipcRenderer.invoke('updater:setInterval', hours),
+  startPeriodicUpdateChecks: () => ipcRenderer.invoke('updater:startPeriodicChecks'),
+  stopPeriodicUpdateChecks: () => ipcRenderer.invoke('updater:stopPeriodicChecks'),
+  
+  // Updater event listeners
+  onUpdaterProgress: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:progress', handler);
+    return () => ipcRenderer.removeListener('updater:progress', handler);
+  },
+  onUpdaterError: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:error', handler);
+    return () => ipcRenderer.removeListener('updater:error', handler);
+  },
+  onUpdaterUpdateDownloaded: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:update-downloaded', handler);
+    return () => ipcRenderer.removeListener('updater:update-downloaded', handler);
+  },
+  onUpdateAvailable: (callback) => {
+    const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);
+    ipcRenderer.on('updater:update-available', handler);
+    return () => ipcRenderer.removeListener('updater:update-available', handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);
