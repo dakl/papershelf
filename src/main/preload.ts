@@ -113,14 +113,14 @@ const api: ElectronAPI = {
   checkForUpdates: () => ipcRenderer.invoke('updater:check'),
   downloadUpdate: () => ipcRenderer.invoke('updater:download'),
   quitAndInstall: () => ipcRenderer.invoke('updater:quitAndInstall'),
-  
+
   // Auto-update settings
   getAutoUpdateSettings: () => ipcRenderer.invoke('updater:getSettings'),
   setAutoUpdateEnabled: (enabled) => ipcRenderer.invoke('updater:setAutoCheck', enabled),
   setUpdateCheckInterval: (hours) => ipcRenderer.invoke('updater:setInterval', hours),
   startPeriodicUpdateChecks: () => ipcRenderer.invoke('updater:startPeriodicChecks'),
   stopPeriodicUpdateChecks: () => ipcRenderer.invoke('updater:stopPeriodicChecks'),
-  
+
   // Updater event listeners
   onUpdaterProgress: (callback) => {
     const handler = (_event: unknown, data: Parameters<typeof callback>[0]) => callback(data);

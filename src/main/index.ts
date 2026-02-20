@@ -105,11 +105,11 @@ if (isMcpMode) {
       }
       const { registerIpcHandlers } = await import('./ipc-handlers.js');
       registerIpcHandlers();
-      
+
       // Setup auto-updater
       const { setupUpdater } = await import('./updater.js');
       setupUpdater();
-      
+
       buildAppMenu();
       createWindow();
       const { isMcpServerEnabled } = await import('./mcp/tool-config.js');
