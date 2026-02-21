@@ -20,6 +20,7 @@ function readConfig(): ToolConfig {
     return {
       disabledTools: parsed.disabledTools ?? [],
       toolModes: parsed.toolModes ?? {},
+      mcpServerEnabled: parsed.mcpServerEnabled ?? false,
     };
   } catch {
     return { disabledTools: [], toolModes: {} };

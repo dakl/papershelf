@@ -15,7 +15,7 @@ function getMcpPort(): number {
 
 let httpServer: Server | null = null;
 let activeSessions = new Map<string, StreamableHTTPServerTransport>();
-let currentPort = DEV_PORT;
+let currentPort = getMcpPort();
 
 export async function startMcpHttpServer(port?: number): Promise<void> {
   if (httpServer) return;
