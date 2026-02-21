@@ -18,9 +18,10 @@ import * as db from './database';
 import { DataChangeEvent, eventEmitter } from './event-emitter';
 import {
   getMcpHttpServerStatus,
-  restartMcpHttpServerIfRunning,
   startMcpHttpServer,
   stopMcpHttpServer,
+  updateToolEnabled,
+  updateToolMode,
 } from './mcp/http-server';
 import { getDisabledTools, getToolModes, setDisabledTools, setMcpServerEnabled, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
@@ -365,7 +366,7 @@ export function registerIpcHandlers(): void {
     return db.getToolStats();
   });
 
-  ipcMain.handle('mcp:setToolEnabled', async (_event, toolName: string, enabled: boolean) => {
+  ipcMain.handle('mcp:setToolEnabled', (_event, toolName: string, enabled: boolean) => {
     const disabled = new Set(getDisabledTools());
     if (enabled) {
       disabled.delete(toolName);
@@ -373,12 +374,12 @@ export function registerIpcHandlers(): void {
       disabled.add(toolName);
     }
     setDisabledTools([...disabled]);
-    await restartMcpHttpServerIfRunning();
+    updateToolEnabled(toolName, enabled);
   });
 
-  ipcMain.handle('mcp:setToolMode', async (_event, toolName: string, mode: ToolNotificationMode) => {
+  ipcMain.handle('mcp:setToolMode', (_event, toolName: string, mode: ToolNotificationMode) => {
     setToolMode(toolName, mode);
-    await restartMcpHttpServerIfRunning();
+    updateToolMode(toolName, mode);
   });
 
   // --- Viewer State ---
