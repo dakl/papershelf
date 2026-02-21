@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import log from 'electron-log';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater, type ReleaseNoteInfo } from 'electron-updater';
 
 // Strip HTML tags from release notes and clean up whitespace
 function stripHtml(html: string): string {
@@ -20,12 +20,12 @@ function stripHtml(html: string): string {
 
 // Extract plain text from electron-updater releaseNotes
 function formatReleaseNotes(
-  notes: string | Array<{ version: string; note: string }> | undefined | null,
+  notes: string | ReleaseNoteInfo[] | undefined | null,
 ): string | undefined {
   if (!notes) return undefined;
   if (typeof notes === 'string') return stripHtml(notes);
   if (Array.isArray(notes)) {
-    return notes.map((n) => `${n.version}: ${stripHtml(n.note)}`).join('\n\n');
+    return notes.map((n) => `${n.version}: ${stripHtml(n.note || '')}`).join('\n\n');
   }
   return undefined;
 }

@@ -233,6 +233,7 @@ function UpdatesSection() {
   const [releaseNotes, setReleaseNotes] = useState('');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [downloaded, setDownloaded] = useState(false);
   const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
   const [checkInterval, setCheckInterval] = useState(6);
 
@@ -243,6 +244,25 @@ function UpdatesSection() {
       setAutoCheckEnabled(settings.autoCheckEnabled);
       setCheckInterval(settings.checkIntervalHours);
     });
+
+    // Listen for updater events
+    const removeProgress = window.electronAPI.onUpdaterProgress((data) => {
+      setProgress(Math.round(data.percent));
+    });
+    const removeError = window.electronAPI.onUpdaterError((data) => {
+      setError(data.error);
+      setDownloading(false);
+    });
+    const removeDownloaded = window.electronAPI.onUpdaterUpdateDownloaded(() => {
+      setDownloading(false);
+      setDownloaded(true);
+    });
+
+    return () => {
+      removeProgress();
+      removeError();
+      removeDownloaded();
+    };
   }, []);
 
   const handleAutoCheckToggle = async (enabled: boolean) => {
@@ -291,15 +311,20 @@ function UpdatesSection() {
 
     try {
       const result = await window.electronAPI.downloadUpdate();
-      if (result.success) {
-        // Update will be installed on next launch
-        setUpdateAvailable(false);
+      if (!result.success) {
+        setError(result.error || 'Failed to start download');
+        setDownloading(false);
       }
+      // On success, download runs in background — progress/downloaded/error
+      // events will update the UI
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to download update');
-    } finally {
       setDownloading(false);
     }
+  };
+
+  const handleQuitAndInstall = () => {
+    window.electronAPI.quitAndInstall();
   };
 
   return (
@@ -370,17 +395,26 @@ function UpdatesSection() {
                   </details>
                 )}
               </div>
-              <button
-                onClick={downloadUpdate}
-                disabled={downloading}
-                className={`px-3 py-1 rounded text-mac-small transition-colors ${
-                  downloading
-                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : 'bg-mac-accent text-white hover:bg-opacity-90'
-                }`}
-              >
-                {downloading ? `${progress}% Downloading...` : 'Download & Install'}
-              </button>
+              {downloaded ? (
+                <button
+                  onClick={handleQuitAndInstall}
+                  className="px-3 py-1 rounded text-mac-small bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  Restart to Update
+                </button>
+              ) : (
+                <button
+                  onClick={downloadUpdate}
+                  disabled={downloading}
+                  className={`px-3 py-1 rounded text-mac-small transition-colors ${
+                    downloading
+                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-mac-accent text-white hover:bg-opacity-90'
+                  }`}
+                >
+                  {downloading ? `${Math.round(progress)}% Downloading...` : 'Download & Install'}
+                </button>
+              )}
             </div>
           </div>
         )}
