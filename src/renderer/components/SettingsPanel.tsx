@@ -273,6 +273,9 @@ function UpdatesSection() {
         setReleaseNotes(result.releaseNotes || 'No release notes available');
       } else {
         setUpdateAvailable(false);
+        if (result.error) {
+          setError(result.error);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to check for updates');
