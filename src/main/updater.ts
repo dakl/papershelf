@@ -2,6 +2,34 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 
+// Strip HTML tags from release notes and clean up whitespace
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Extract plain text from electron-updater releaseNotes
+function formatReleaseNotes(
+  notes: string | Array<{ version: string; note: string }> | undefined | null,
+): string | undefined {
+  if (!notes) return undefined;
+  if (typeof notes === 'string') return stripHtml(notes);
+  if (Array.isArray(notes)) {
+    return notes.map((n) => `${n.version}: ${stripHtml(n.note)}`).join('\n\n');
+  }
+  return undefined;
+}
+
 // Auto-update settings storage
 let autoCheckEnabled = true;
 let checkIntervalHours = 6;
@@ -156,7 +184,7 @@ function registerIpcHandlers() {
       return {
         available: result.updateInfo.version !== app.getVersion(),
         version: result.updateInfo.version,
-        releaseNotes: result.updateInfo.releaseNotes,
+        releaseNotes: formatReleaseNotes(result.updateInfo.releaseNotes),
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
