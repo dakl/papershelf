@@ -52,21 +52,19 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Package
+      - name: Package and publish
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npx electron-builder --mac --arm64 --publish never
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --arm64 --publish always
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (source repo)
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: v${{ github.event.inputs.version }}
           generate_release_notes: true
-          files: |
-            release/*.dmg
-            release/*.zip

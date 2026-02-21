@@ -11,6 +11,10 @@ asarUnpack:
   - "**/node_modules/bindings/**"
   - "**/node_modules/file-uri-to-path/**"
 icon: resources/icon.icns
+publish:
+  provider: github
+  owner: dakl
+  repo: papershelf
 mac:
   target:
     - target: dmg
