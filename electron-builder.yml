@@ -15,6 +15,7 @@ publish:
   provider: github
   owner: dakl
   repo: papershelf
+  releaseType: release
 mac:
   target:
     - target: dmg

@@ -62,9 +62,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --mac --arm64 --publish always
 
-      - name: Create GitHub Release (source repo)
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: v${{ github.event.inputs.version }}
-          generate_release_notes: true
+      - name: Add release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NOTES=$(gh api repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="v${{ github.event.inputs.version }}" \
+            --jq '.body')
+          gh release edit "v${{ github.event.inputs.version }}" --notes "$NOTES"
