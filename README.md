@@ -22,24 +22,22 @@ Download the latest `.dmg` from [Releases](https://github.com/dakl/papershelf/re
 
 PaperShelf includes a built-in MCP server that lets AI assistants search your library, read papers, and manage collections.
 
-### Streamable HTTP
+### Setup
 
-Start the server from Settings and connect your MCP client to `http://localhost:<port>/mcp`.
-
-### Claude Desktop (stdio)
-
-Add this to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+1. Open PaperShelf Settings and enable the MCP server
+2. Add to your MCP client config (e.g. Claude Desktop's `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "papershelf": {
-      "command": "/Applications/PaperShelf.app/Contents/MacOS/PaperShelf",
-      "args": ["--mcp-mode"]
+      "url": "http://127.0.0.1:3847/mcp"
     }
   }
 }
 ```
+
+Port 3847 in production, 13847 in development.
 
 ### Available tools
 

@@ -17,10 +17,9 @@ Expose PaperShelf's capabilities as an MCP server so Claude (and other MCP clien
 **Why first:** High leverage — turns PaperShelf into a research tool that Claude can use directly. Small surface area (reuses existing arXiv client + database). No UI work needed.
 
 **Deliverables:**
-- MCP server running inside Electron main process (HTTP transport on localhost)
-- Stdio mode via `--mcp-mode` flag for Claude Desktop
+- MCP server running inside Electron main process (Streamable HTTP on 127.0.0.1)
 - Tools: search_arxiv, search_library, get_paper, list_papers, save_paper, fetch_paper_html, get_bibtex, list_collections, list_tags
-- Claude Desktop integration config
+- MCP client config via `"url"` field
 
 ---
 

@@ -8,7 +8,7 @@ Inspired by [arxbar](../arxbar), which pioneered this pattern as a menu bar + MC
 
 ## Architecture
 
-### Dual-Mode Operation
+### Architecture
 
 ```
 ┌───────────────────────────────────────────────┐
@@ -16,7 +16,7 @@ Inspired by [arxbar](../arxbar), which pioneered this pattern as a menu bar + MC
 │                                               │
 │  ┌─────────────┐  ┌────────────────────────┐  │
 │  │  App Window  │  │  MCP HTTP Server       │  │
-│  │  (React UI)  │  │  (localhost:3847)      │  │
+│  │  (React UI)  │  │  (127.0.0.1:3847)     │  │
 │  └──────┬───────┘  └──────────┬─────────────┘  │
 │         │                     │                │
 │         ├─────────────────────┤                │
@@ -30,15 +30,12 @@ Inspired by [arxbar](../arxbar), which pioneered this pattern as a menu bar + MC
 └───────────────────────────────────────────────┘
 ```
 
-**App mode (default):** Full Electron window + MCP HTTP server on `localhost:3847`. Both the UI and MCP clients share the same database and services.
-
-**MCP-only mode (`--mcp-mode`):** Stdio transport, no Electron window. For Claude Desktop integration. Skips Electron entirely — runs as a plain Node.js process.
+The Electron app runs both the UI and an MCP HTTP server on `127.0.0.1:3847`. Both share the same database and services. MCP clients connect via the `"url"` config field — no stdio bridge needed.
 
 ### Technology
 
 - `@modelcontextprotocol/sdk` — MCP protocol implementation
-- `StdioServerTransport` — for `--mcp-mode` (Claude Desktop)
-- `StreamableHTTPServerTransport` — for HTTP mode (localhost:3847)
+- `StreamableHTTPServerTransport` — HTTP server on 127.0.0.1:3847
 - `zod` — tool parameter validation
 
 ## Project Structure
@@ -65,27 +62,9 @@ src/main/
 
 The key refactor is extracting the existing `arxiv-client.ts` into a proper `arxiv/` module with separated concerns, and adding the `mcp/` module.
 
-## Entry Point Changes
+## Entry Point
 
-```typescript
-// src/main/index.ts
-async function main() {
-  if (process.argv.includes('--mcp-mode')) {
-    // Pure MCP server, no Electron
-    const { startMcpStdioServer } = await import('./mcp/server.js');
-    await startMcpStdioServer();
-    return;
-  }
-
-  // Normal Electron app + MCP HTTP server
-  const { app } = await import('electron');
-  app.on('ready', async () => {
-    createWindow();
-    const { startMcpHttpServer } = await import('./mcp/http-server.js');
-    await startMcpHttpServer(3847);
-  });
-}
-```
+The Electron app starts normally and launches the MCP HTTP server from `app.whenReady()` if enabled in Settings.
 
 ## MCP Tools
 
@@ -252,26 +231,21 @@ export async function waitForRateLimit(): Promise<void> {
 }
 ```
 
-## Claude Desktop Integration
+## MCP Client Configuration
 
-### Stdio Mode (recommended)
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+Add to your MCP client config (e.g. Claude Desktop's `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "papershelf": {
-      "command": "node",
-      "args": ["/path/to/papershelf/dist/main/index.js", "--mcp-mode"]
+      "url": "http://127.0.0.1:3847/mcp"
     }
   }
 }
 ```
 
-### HTTP Mode (when app is running)
-
-For MCP clients that support HTTP transport, connect to `http://localhost:3847/mcp` while the app is running.
+Port 3847 in production, 13847 in development. PaperShelf must be running with the MCP server enabled in Settings.
 
 ## Response Format
 
