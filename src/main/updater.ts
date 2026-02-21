@@ -1,5 +1,6 @@
 import type { ReleaseNoteInfo } from 'builder-util-runtime';
 import { app, BrowserWindow, ipcMain } from 'electron';
+import type { ReleaseNoteInfo } from 'builder-util-runtime';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 
