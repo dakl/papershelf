@@ -5,11 +5,11 @@ import { createServer } from './server';
 const PROD_PORT = 3847;
 const DEV_PORT = 13847;
 
-export function isPackaged(): boolean {
+function isPackaged(): boolean {
   return __dirname.includes('.app/') || __dirname.includes('.asar');
 }
 
-export function getMcpPort(): number {
+function getMcpPort(): number {
   return isPackaged() ? PROD_PORT : DEV_PORT;
 }
 
@@ -25,6 +25,14 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
   activeSessions = sessions;
 
   const server = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
+    const host = req.headers.host;
+    const allowedHosts = [`127.0.0.1:${currentPort}`, `localhost:${currentPort}`];
+    if (host && !allowedHosts.includes(host)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+
     if (req.url !== '/mcp') {
       res.writeHead(404);
       res.end('Not found');
