@@ -269,6 +269,9 @@ export interface ElectronAPI {
   onUpdaterUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
 
+  // MCP event listeners
+  onMcpToolsChanged: (callback: () => void) => () => void;
+
   // Event listeners for real-time updates
   onCollectionsChanged: (callback: () => void) => () => void;
   onTagsChanged: (callback: () => void) => () => void;

@@ -75,6 +75,11 @@ const api: ElectronAPI = {
   setMcpToolMode: (toolName, mode) => ipcRenderer.invoke('mcp:setToolMode', toolName, mode),
   getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
 
+  onMcpToolsChanged: (callback) => {
+    ipcRenderer.on('mcp:tools-changed', callback);
+    return () => ipcRenderer.removeListener('mcp:tools-changed', callback);
+  },
+
   // Event listeners for data changes
   onCollectionsChanged: (callback) => {
     ipcRenderer.on('data:collections-changed', callback);
