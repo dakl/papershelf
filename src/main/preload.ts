@@ -25,6 +25,7 @@ const api: ElectronAPI = {
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),
   searchLibrary: (query) => ipcRenderer.invoke('papers:search', query),
   importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
+  importFiles: (filePaths) => ipcRenderer.invoke('papers:importFiles', filePaths),
   updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
   resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
 

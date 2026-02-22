@@ -30,6 +30,8 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: 'toggleSettings', label: 'Open Settings', keys: 'Meta+,' },
   { id: 'savePaper', label: 'Save Paper', keys: 'Meta+s' },
   { id: 'highlightSelection', label: 'Highlight Selection', keys: 'Meta+e' },
+  { id: 'importPdfs', label: 'Import PDFs', keys: 'Meta+i' },
+  { id: 'toggleMcp', label: 'Toggle MCP Server', keys: 'Meta+t' },
 ];
 
 function buildOverridesFromShortcuts(shortcuts: Shortcut[]): Record<string, string> {

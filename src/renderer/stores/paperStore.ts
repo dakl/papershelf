@@ -37,6 +37,7 @@ interface PaperState {
   checkPapersInLibrary: (arxivIds: string[]) => Promise<void>;
   searchLibrary: (query: string) => Promise<void>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
+  importFiles: (filePaths: string[]) => Promise<ImportBatchResult>;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<void>;
   resolveMetadata: (paperId: string) => Promise<void>;
   loadLibraryStats: () => Promise<void>;
@@ -56,6 +57,33 @@ interface PaperState {
   deleteTag: (id: string) => Promise<void>;
   addTagToPaper: (paperId: string, tagId: string) => Promise<void>;
   removeTagFromPaper: (paperId: string, tagId: string) => Promise<void>;
+}
+
+async function runImport(
+  apiCall: () => Promise<ImportBatchResult>,
+  set: (partial: Partial<PaperState>) => void,
+  get: () => PaperState,
+): Promise<ImportBatchResult> {
+  const unsubscribe = window.electronAPI.onImportProgress((progress) => {
+    set({ importProgress: progress });
+  });
+  const result = await apiCall();
+  unsubscribe();
+  set({ importProgress: null });
+  if (result.totalCount === 0) return result;
+
+  if (result.imported.length > 0) {
+    get().loadLibraryStats();
+    const msg =
+      result.failed.length > 0
+        ? `Imported ${result.imported.length} of ${result.totalCount} PDFs (${result.failed.length} failed)`
+        : `Imported ${result.imported.length} PDF${result.imported.length === 1 ? '' : 's'}`;
+    toast(msg, result.failed.length > 0 ? 'error' : 'success');
+  } else {
+    toast(`Failed to import ${result.failed.length} PDF${result.failed.length === 1 ? '' : 's'}`, 'error');
+  }
+
+  return result;
 }
 
 export const usePaperStore = create<PaperState>((set, get) => ({
@@ -135,26 +163,11 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   importLocalPdfs: async () => {
-    const unsubscribe = window.electronAPI.onImportProgress((progress) => {
-      set({ importProgress: progress });
-    });
-    const result = await window.electronAPI.importLocalPdfs();
-    unsubscribe();
-    set({ importProgress: null });
-    if (result.totalCount === 0) return result;
+    return runImport(() => window.electronAPI.importLocalPdfs(), set, get);
+  },
 
-    if (result.imported.length > 0) {
-      get().loadLibraryStats();
-      const msg =
-        result.failed.length > 0
-          ? `Imported ${result.imported.length} of ${result.totalCount} PDFs (${result.failed.length} failed)`
-          : `Imported ${result.imported.length} PDF${result.imported.length === 1 ? '' : 's'}`;
-      toast(msg, result.failed.length > 0 ? 'error' : 'success');
-    } else {
-      toast(`Failed to import ${result.failed.length} PDF${result.failed.length === 1 ? '' : 's'}`, 'error');
-    }
-
-    return result;
+  importFiles: async (filePaths) => {
+    return runImport(() => window.electronAPI.importFiles(filePaths), set, get);
   },
 
   updatePaperMetadata: async (id, updates) => {

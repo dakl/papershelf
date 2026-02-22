@@ -2,13 +2,11 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SIDEBAR_TRANSITION_MS, SIDEBAR_WIDTH } from '../constants';
 import { usePaperStore } from '../stores/paperStore';
-import { useSettingsStore } from '../stores/settingsStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { toast } from '../stores/toastStore';
 import { type SidebarView, useUIStore } from '../stores/uiStore';
 import { CollectionManager } from './CollectionManager';
 import { ClockIcon, DocTextIcon, SearchIcon, StarIcon } from './Icons';
-import { ShortcutHint } from './ShortcutHint';
 import { SidebarItem } from './SidebarItem';
 import { TagManager } from './TagManager';
 
@@ -53,9 +51,7 @@ export function Sidebar() {
     deleteCollection,
     deleteTag,
     addPaperToCollection,
-    importLocalPdfs,
   } = usePaperStore();
-  const { mcpStatus, mcpLoading, loadMcpStatus, toggleMcpServer } = useSettingsStore();
   const commandDown = useShortcutStore((s) => s.commandDown);
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
@@ -103,14 +99,12 @@ export function Sidebar() {
   const loadCollectionsRef = useRef(loadCollections);
   const loadTagsRef = useRef(loadTags);
   const loadLibraryStatsRef = useRef(loadLibraryStats);
-  const loadMcpStatusRef = useRef(loadMcpStatus);
 
   // Initial data load (events will handle subsequent updates)
   useEffect(() => {
     loadCollectionsRef.current();
     loadTagsRef.current();
     loadLibraryStatsRef.current();
-    loadMcpStatusRef.current();
 
     // Set up event listeners for real-time updates
     const collectionsUnsubscribe = window.electronAPI.onCollectionsChanged(() => {
@@ -271,67 +265,6 @@ export function Sidebar() {
           />
         ))}
       </nav>
-
-      {/* Footer bar */}
-      <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
-        <button
-          onClick={() => toggleMcpServer(mcpStatus.port)}
-          disabled={mcpLoading}
-          className={`no-drag flex items-center gap-1.5 text-mac-small transition-colors ${
-            mcpLoading ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer'
-          } text-gray-500 dark:text-gray-400`}
-          title={mcpStatus.running ? 'Stop MCP server' : 'Start MCP server'}
-        >
-          <span className={`w-2 h-2 rounded-full ${mcpStatus.running ? 'bg-green-500' : 'bg-gray-400'}`} />
-          <span>MCP</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => importLocalPdfs()}
-            className="no-drag flex items-center gap-1.5 text-mac-small text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
-            title="Import PDFs"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M14 10v2.67A1.33 1.33 0 0112.67 14H3.33A1.33 1.33 0 012 12.67V10" />
-              <polyline points="5 7 8 4 11 7" />
-              <line x1="8" y1="4" x2="8" y2="12" />
-            </svg>
-            <span>Import</span>
-          </button>
-          <ShortcutHint shortcutId="toggleSettings" position="above">
-            <button
-              onClick={() => setSidebarView('settings')}
-              className={`no-drag flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer ${
-                sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''
-              }`}
-              title="Settings"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" />
-                <path d="M13.3 10a1.1 1.1 0 00.2 1.2l.04.04a1.34 1.34 0 11-1.9 1.9l-.04-.04a1.1 1.1 0 00-1.2-.2 1.1 1.1 0 00-.67 1.01v.11a1.34 1.34 0 01-2.68 0v-.06a1.1 1.1 0 00-.72-1.01 1.1 1.1 0 00-1.2.2l-.04.04a1.34 1.34 0 11-1.9-1.9l.04-.04a1.1 1.1 0 00.2-1.2 1.1 1.1 0 00-1.01-.67h-.11a1.34 1.34 0 010-2.68h.06a1.1 1.1 0 001.01-.72 1.1 1.1 0 00-.2-1.2l-.04-.04a1.34 1.34 0 111.9-1.9l.04.04a1.1 1.1 0 001.2.2h.05a1.1 1.1 0 00.67-1.01v-.11a1.34 1.34 0 012.68 0v.06a1.1 1.1 0 00.67 1.01 1.1 1.1 0 001.2-.2l.04-.04a1.34 1.34 0 111.9 1.9l-.04.04a1.1 1.1 0 00-.2 1.2v.05a1.1 1.1 0 001.01.67h.11a1.34 1.34 0 010 2.68h-.06a1.1 1.1 0 00-1.01.67z" />
-              </svg>
-            </button>
-          </ShortcutHint>
-        </div>
-      </div>
 
       {showNewCollection && <CollectionManager onClose={() => setShowNewCollection(false)} />}
       {showNewTag && <TagManager onClose={() => setShowNewTag(false)} />}
