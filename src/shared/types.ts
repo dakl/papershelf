@@ -189,6 +189,7 @@ export interface ElectronAPI {
   searchLibrary: (query: string) => Promise<LibraryPaper[]>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
   importFiles: (filePaths: string[]) => Promise<ImportBatchResult>;
+  getPathForFile: (file: File) => string;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<LibraryPaper>;
   resolveMetadata: (paperId: string) => Promise<{ success: boolean; source?: string; error?: string }>;
 

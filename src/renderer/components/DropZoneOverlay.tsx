@@ -56,7 +56,7 @@ export function DropZoneOverlay() {
 
       const paths: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        const filePath = (files[i] as File & { path?: string }).path;
+        const filePath = window.electronAPI.getPathForFile(files[i]);
         if (filePath) paths.push(filePath);
       }
 
