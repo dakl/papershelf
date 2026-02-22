@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { handleCmdHorizontal, handleCmdVertical } from './keyboard-navigation';
 import { usePaperStore } from './stores/paperStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { buildKeyString, useShortcutStore } from './stores/shortcutStore';
 import { toast } from './stores/toastStore';
 import { useUIStore } from './stores/uiStore';
@@ -87,6 +88,14 @@ document.addEventListener('keydown', (event) => {
     case 'highlightSelection':
       document.dispatchEvent(new CustomEvent('shortcut:highlightSelection'));
       break;
+    case 'importPdfs':
+      usePaperStore.getState().importLocalPdfs();
+      break;
+    case 'toggleMcp': {
+      const settings = useSettingsStore.getState();
+      settings.toggleMcpServer(settings.mcpStatus.port);
+      break;
+    }
   }
 });
 

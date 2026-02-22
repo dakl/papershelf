@@ -38,6 +38,23 @@ import { resolveMetadata, resolveMetadataForPapers } from './services/resolve-me
 import { savePaperFromArxivPaper } from './services/save-paper';
 import { getPdfLibraryPath, getShortcutOverrides, saveShortcutOverrides, setPdfLibraryPath } from './settings';
 
+async function importAndResolve(filePaths: string[]): Promise<ImportBatchResult> {
+  const importResult = await importLocalPdfs(filePaths);
+
+  if (importResult.imported.length > 0) {
+    const localPapers = importResult.imported
+      .filter((p) => p.source === 'local')
+      .map((p) => ({ id: p.id, title: p.title }));
+    if (localPapers.length > 0) {
+      resolveMetadataForPapers(localPapers).catch((err) => {
+        console.warn('Background metadata resolution failed:', err);
+      });
+    }
+  }
+
+  return importResult;
+}
+
 export function registerIpcHandlers(): void {
   // --- App ---
   ipcMain.handle('app:getVersion', () => app.getVersion());
@@ -147,21 +164,13 @@ export function registerIpcHandlers(): void {
       return { imported: [], failed: [], totalCount: 0 };
     }
 
-    const importResult = await importLocalPdfs(result.filePaths);
+    return importAndResolve(result.filePaths);
+  });
 
-    // Fire-and-forget background metadata resolution for imported papers
-    if (importResult.imported.length > 0) {
-      const localPapers = importResult.imported
-        .filter((p) => p.source === 'local')
-        .map((p) => ({ id: p.id, title: p.title }));
-      if (localPapers.length > 0) {
-        resolveMetadataForPapers(localPapers).catch((err) => {
-          console.warn('Background metadata resolution failed:', err);
-        });
-      }
-    }
-
-    return importResult;
+  ipcMain.handle('papers:importFiles', async (_event, filePaths: string[]): Promise<ImportBatchResult> => {
+    const pdfPaths = filePaths.filter((p) => p.toLowerCase().endsWith('.pdf'));
+    if (pdfPaths.length === 0) return { imported: [], failed: [], totalCount: 0 };
+    return importAndResolve(pdfPaths);
   });
 
   ipcMain.handle('papers:updateMetadata', (_event, id: string, updates: PaperMetadataUpdate) => {

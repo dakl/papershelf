@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { ElectronAPI } from '../shared/types';
 
 const api: ElectronAPI = {
@@ -25,6 +25,8 @@ const api: ElectronAPI = {
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),
   searchLibrary: (query) => ipcRenderer.invoke('papers:search', query),
   importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
+  importFiles: (filePaths) => ipcRenderer.invoke('papers:importFiles', filePaths),
+  getPathForFile: (file) => webUtils.getPathForFile(file),
   updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
   resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
 

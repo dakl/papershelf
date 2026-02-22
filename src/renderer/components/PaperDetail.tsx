@@ -4,7 +4,7 @@ import { usePaperStore } from '../stores/paperStore';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
 import { ConfirmPopup } from './ConfirmPopup';
-import { FolderPlusIcon, StarIcon, StarOutlineIcon, TagPlusIcon } from './Icons';
+import { FolderPlusIcon, InfoCircleIcon, StarIcon, StarOutlineIcon, TagPlusIcon } from './Icons';
 
 import { PdfViewer } from './PdfViewer';
 
@@ -381,11 +381,7 @@ function InfoPopoverButton({
         className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
         title="Paper info"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <circle cx="8" cy="8" r="6.5" />
-          <line x1="8" y1="7" x2="8" y2="11.5" />
-          <circle cx="8" cy="5" r="0.5" fill="currentColor" />
-        </svg>
+        <InfoCircleIcon width={16} height={16} />
       </button>
 
       {open && (
