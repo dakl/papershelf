@@ -1,5 +1,5 @@
 import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { dialog, Notification } from 'electron';
+import { BrowserWindow, Notification } from 'electron';
 import type { ToolNotificationMode } from '../../../shared/types';
 import { logToolCall } from '../../db/tool-stats';
 import { setToolMode } from '../tool-config';
@@ -60,6 +60,45 @@ function formatNotificationBody(toolName: string, args: unknown): string {
   return detail ? `${label} — ${detail}` : label;
 }
 
+const APPROVAL_TIMEOUT_MS = 5 * 60 * 1000;
+const pendingNotifications = new Set<Notification>();
+
+function requestApprovalViaNotification(toolName: string, detail: string): Promise<'allow' | 'always' | 'deny'> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (result: 'allow' | 'always' | 'deny') => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      pendingNotifications.delete(notification);
+      resolve(result);
+    };
+
+    const notification = new Notification({
+      title: `Allow "${humanToolName(toolName)}"?`,
+      body: detail,
+      actions: [
+        { type: 'button' as const, text: 'Allow Once' },
+        { type: 'button' as const, text: 'Always Allow' },
+      ],
+      closeButtonText: 'Deny',
+    });
+
+    notification.on('action', (_event: Electron.Event, index: number) => {
+      settle(index === 0 ? 'allow' : 'always');
+    });
+
+    notification.on('close', () => {
+      settle('deny');
+    });
+
+    const timer = setTimeout(() => settle('deny'), APPROVAL_TIMEOUT_MS);
+
+    pendingNotifications.add(notification);
+    notification.show();
+  });
+}
+
 function createInstrumentedServer(
   server: McpServer,
   toolModes: Record<string, ToolNotificationMode>,
@@ -80,20 +119,15 @@ function createInstrumentedServer(
                 ? `An MCP client wants to call this tool with:\n${argsDetail}`
                 : 'An MCP client wants to call this tool.';
 
-              const response = dialog.showMessageBoxSync({
-                type: 'question',
-                buttons: ['Allow Once', 'Always Allow', 'Deny'],
-                defaultId: 0,
-                cancelId: 2,
-                title: 'MCP Tool Call',
-                message: `Allow "${humanToolName(name)}"?`,
-                detail,
-              });
+              const approval = await requestApprovalViaNotification(name, detail);
 
-              if (response === 1) {
+              if (approval === 'always') {
                 setToolMode(name, 'notify');
                 toolModes[name] = 'notify';
-              } else if (response === 2) {
+                for (const window of BrowserWindow.getAllWindows()) {
+                  window.webContents.send('mcp:tools-changed');
+                }
+              } else if (approval === 'deny') {
                 logToolCall(name, argsString, 0, 'denied');
                 return {
                   content: [{ type: 'text' as const, text: 'Tool call denied by user' }],
