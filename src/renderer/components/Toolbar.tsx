@@ -28,7 +28,11 @@ export function Toolbar() {
           position="below"
           label={sidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
         >
-          <button onClick={toggleSidebar} className={toolbarButtonClass}>
+          <button
+            onClick={toggleSidebar}
+            className={toolbarButtonClass}
+            aria-label={sidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
+          >
             <SidebarLeftIcon width={16} height={16} />
           </button>
         </ShortcutHint>
@@ -42,6 +46,7 @@ export function Toolbar() {
             onClick={() => toggleMcpServer(mcpStatus.port)}
             disabled={mcpLoading}
             className={`relative ${toolbarButtonClass} ${mcpLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label={mcpStatus.running ? 'Stop MCP Server' : 'Start MCP Server'}
           >
             <ServerRackIcon width={16} height={16} />
             <span
@@ -51,7 +56,7 @@ export function Toolbar() {
         </ShortcutHint>
 
         <ShortcutHint shortcutId="importPdfs" position="below" label="Import PDFs">
-          <button onClick={() => importLocalPdfs()} className={toolbarButtonClass}>
+          <button onClick={() => importLocalPdfs()} className={toolbarButtonClass} aria-label="Import PDFs">
             <TrayArrowDownIcon width={16} height={16} />
           </button>
         </ShortcutHint>
@@ -60,6 +65,7 @@ export function Toolbar() {
           <button
             onClick={() => setSidebarView('settings')}
             className={`${toolbarButtonClass} ${sidebarView === 'settings' ? 'text-gray-800 dark:text-gray-200' : ''}`}
+            aria-label="Settings"
           >
             <GearIcon width={16} height={16} />
           </button>
