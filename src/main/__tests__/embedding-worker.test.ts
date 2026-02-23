@@ -1,10 +1,14 @@
 import { fork } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 const WORKER_SCRIPT = path.join(__dirname, '../../..', 'dist/main/main/services/embedding-worker.js');
+const workerExists = fs.existsSync(WORKER_SCRIPT);
 
-describe('embedding-worker child process', () => {
+// These tests fork the compiled worker and require native modules (onnxruntime-node).
+// They are skipped in CI where the worker isn't built and native deps aren't available.
+describe.skipIf(!workerExists)('embedding-worker child process', () => {
   const children: ReturnType<typeof fork>[] = [];
 
   afterEach(() => {
