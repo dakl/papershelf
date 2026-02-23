@@ -56,8 +56,17 @@ export const useStore = create<StoreState>((set, get) => ({
 - **Framework**: Vitest with `globals: true`
 - **Database tests**: Create temp SQLite file in `os.tmpdir()`, clean up in `afterEach`
 - **Mock paths**: `vi.mock('../paths', () => ({ getDataDir: () => '' }))`
-- **Test file location**: `src/main/__tests__/`
+- **Test file location**: `src/main/__tests__/`, `src/renderer/__tests__/`
 - **Run**: `npm run test` (rebuilds native modules before/after)
+
+### Test Requirements
+
+Tests are **mandatory** for all code changes. Always run `npm run test` after making changes.
+
+- **Data flow defaults**: When a DB query can return `undefined`/`null` for a field that the UI consumes, test that the hydration layer provides a sensible default. The UI should never receive `undefined` for a field it conditionally renders on.
+- **Event-driven UI state**: When backend events drive UI state changes (e.g., `INDEXING_PROGRESS` → badge states), test the full state machine: every event type must be covered, including transitions between states and the final/reset state.
+- **Conditional rendering**: When UI elements render conditionally (e.g., `{value && <Component />}`), ensure tests verify that the condition is met for all expected cases — not just the happy path. A missing default value that makes a field `undefined` will silently hide UI elements.
+- **Renderer logic tests**: Extract non-trivial derivation logic (state machines, computed props) into pure functions and test them in `src/renderer/__tests__/`. This avoids needing a DOM environment while still catching logic bugs.
 
 ### Adding a New DB Domain
 

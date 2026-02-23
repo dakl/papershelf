@@ -24,6 +24,10 @@ const api: ElectronAPI = {
   toggleFavorite: (id) => ipcRenderer.invoke('papers:toggleFavorite', id),
   checkPapersInLibrary: (arxivIds) => ipcRenderer.invoke('papers:checkInLibrary', arxivIds),
   searchLibrary: (query) => ipcRenderer.invoke('papers:search', query),
+  semanticSearch: (query) => ipcRenderer.invoke('search:semantic', query),
+  getIndexingStats: () => ipcRenderer.invoke('indexing:stats'),
+  reindexAllPapers: () => ipcRenderer.invoke('indexing:reindexAll'),
+  reindexPaper: (paperId) => ipcRenderer.invoke('indexing:reindexPaper', paperId),
   importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
   updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
   resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
@@ -106,6 +110,18 @@ const api: ElectronAPI = {
     const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
     ipcRenderer.on('data:metadata-resolution-progress', handler);
     return () => ipcRenderer.removeListener('data:metadata-resolution-progress', handler);
+  },
+
+  onEmbeddingProgress: (callback) => {
+    const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
+    ipcRenderer.on('data:embedding-progress', handler);
+    return () => ipcRenderer.removeListener('data:embedding-progress', handler);
+  },
+
+  onIndexingProgress: (callback) => {
+    const handler = (_event: unknown, progress: Parameters<typeof callback>[0]) => callback(progress);
+    ipcRenderer.on('data:indexing-progress', handler);
+    return () => ipcRenderer.removeListener('data:indexing-progress', handler);
   },
 
   // App Updates

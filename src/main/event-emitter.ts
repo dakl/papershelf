@@ -7,6 +7,8 @@ export enum DataChangeEvent {
   ANNOTATIONS_CHANGED = 'annotations:changed',
   IMPORT_PROGRESS = 'import:progress',
   METADATA_RESOLUTION_PROGRESS = 'metadata:resolution-progress',
+  EMBEDDING_PROGRESS = 'embedding:progress',
+  INDEXING_PROGRESS = 'indexing:progress',
 }
 
 class AppEventEmitter extends EventEmitter {}

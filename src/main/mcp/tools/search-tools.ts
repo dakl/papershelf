@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ARXIV_CATEGORIES } from '../../arxiv/categories';
 import { searchArxiv } from '../../arxiv-client';
 import * as db from '../../database';
+import { embedQuery } from '../../services/embedding-service';
 import { formatPaper, resolveCollectionId, resolveTagId } from './resolvers';
 
 export function registerSearchTools(server: McpServer, isEnabled: (name: string) => boolean): void {
@@ -62,7 +63,7 @@ export function registerSearchTools(server: McpServer, isEnabled: (name: string)
   if (isEnabled('search_library'))
     server.tool(
       'search_library',
-      'Full-text search across papers saved in the PaperShelf library. Searches titles, abstracts, authors, and extracted PDF text. Optionally filter results by collection, tag, or favorites.',
+      'Full-text search across papers saved in the PaperShelf library. Searches titles, abstracts, authors, and extracted PDF text. Optionally filter results by collection, tag, or favorites. Supports keyword, semantic (vector), or hybrid search modes.',
       {
         query: z
           .string()
@@ -70,9 +71,28 @@ export function registerSearchTools(server: McpServer, isEnabled: (name: string)
         collection: z.string().optional().describe('Filter by collection (ID or name)'),
         tag: z.string().optional().describe('Filter by tag (ID or name)'),
         favorites_only: z.boolean().optional().default(false).describe('Only return favorited papers'),
+        mode: z
+          .enum(['keyword', 'semantic', 'hybrid'])
+          .default('hybrid')
+          .describe('Search mode: keyword (FTS5), semantic (vector), or hybrid (both combined via RRF)'),
       },
-      async ({ query, collection, tag, favorites_only }) => {
-        let papers = db.searchLibrary(query);
+      async ({ query, collection, tag, favorites_only, mode }) => {
+        let papers: db.SemanticSearchResult[] | null = null;
+        let plainPapers: ReturnType<typeof db.searchLibrary> | null = null;
+
+        if (mode === 'keyword') {
+          plainPapers = db.searchLibrary(query);
+        } else {
+          try {
+            const queryEmbedding = await embedQuery(query);
+            papers = db.hybridSearch(query, queryEmbedding);
+          } catch {
+            plainPapers = db.searchLibrary(query);
+          }
+        }
+
+        // Normalize to LibraryPaper[] for filtering
+        let filteredPapers = papers ? papers.map((r) => r.paper) : (plainPapers ?? []);
 
         if (collection) {
           const resolved = resolveCollectionId(collection);
@@ -80,7 +100,7 @@ export function registerSearchTools(server: McpServer, isEnabled: (name: string)
             return { content: [{ type: 'text' as const, text: `Collection not found: ${collection}` }] };
           }
           const collectionId = resolved.id;
-          papers = papers.filter((p) => p.collections.some((c) => c.id === collectionId));
+          filteredPapers = filteredPapers.filter((p) => p.collections.some((c) => c.id === collectionId));
         }
 
         if (tag) {
@@ -89,18 +109,18 @@ export function registerSearchTools(server: McpServer, isEnabled: (name: string)
             return { content: [{ type: 'text' as const, text: `Tag not found: ${tag}` }] };
           }
           const tagId = resolved.id;
-          papers = papers.filter((p) => p.tags.some((t) => t.id === tagId));
+          filteredPapers = filteredPapers.filter((p) => p.tags.some((t) => t.id === tagId));
         }
 
         if (favorites_only) {
-          papers = papers.filter((p) => p.isFavorite);
+          filteredPapers = filteredPapers.filter((p) => p.isFavorite);
         }
 
-        if (papers.length === 0) {
+        if (filteredPapers.length === 0) {
           return { content: [{ type: 'text' as const, text: 'No matching papers in library.' }] };
         }
 
-        const text = papers.map((p, i) => `### ${i + 1}. ${formatPaper(p)}`).join('\n\n---\n\n');
+        const text = filteredPapers.map((p, i) => `### ${i + 1}. ${formatPaper(p)}`).join('\n\n---\n\n');
         return { content: [{ type: 'text' as const, text }] };
       },
     );

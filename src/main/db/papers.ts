@@ -3,6 +3,7 @@ import { DataChangeEvent, eventEmitter } from '../event-emitter';
 import { getCollectionsForPaper, getCollectionsForPapers } from './collections';
 import { generateId, getDb, type PaperRow, rowToLibraryPaper, serializeArray } from './connection';
 import { getTagsForPaper, getTagsForPapers } from './tags';
+import { getEmbeddingStatusForPapers } from './vector-store';
 
 function hydratePaperRows(rows: PaperRow[]): LibraryPaper[] {
   if (rows.length === 0) return [];
@@ -10,8 +11,16 @@ function hydratePaperRows(rows: PaperRow[]): LibraryPaper[] {
   const paperIds = rows.map((row) => row.id);
   const collectionsMap = getCollectionsForPapers(paperIds);
   const tagsMap = getTagsForPapers(paperIds);
+  const embeddingStatusMap = getEmbeddingStatusForPapers(getDb(), paperIds);
 
-  return rows.map((row) => rowToLibraryPaper(row, collectionsMap.get(row.id) ?? [], tagsMap.get(row.id) ?? []));
+  return rows.map((row) =>
+    rowToLibraryPaper(
+      row,
+      collectionsMap.get(row.id) ?? [],
+      tagsMap.get(row.id) ?? [],
+      embeddingStatusMap.get(row.id) ?? 'pending',
+    ),
+  );
 }
 
 export function insertPaper(paper: {

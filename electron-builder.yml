@@ -10,6 +10,10 @@ asarUnpack:
   - "**/node_modules/better-sqlite3/**"
   - "**/node_modules/bindings/**"
   - "**/node_modules/file-uri-to-path/**"
+  - "**/node_modules/onnxruntime-node/**"
+  - "**/node_modules/onnxruntime-common/**"
+  - "**/node_modules/@huggingface/transformers/**"
+  - "**/dist/main/main/services/embedding-worker.js"
 icon: resources/icon.icns
 publish:
   provider: github

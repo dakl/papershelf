@@ -13,9 +13,9 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
     "build": "npm run build:main && npm run build:renderer",
-    "postinstall": "npx @electron/rebuild --force",
+    "postinstall": "npx @electron/rebuild --force --only better-sqlite3",
     "rebuild:node": "npm rebuild better-sqlite3",
-    "rebuild:electron": "npx @electron/rebuild --force",
+    "rebuild:electron": "npx @electron/rebuild --force --only better-sqlite3",
     "test": "npm run rebuild:node && (vitest run; TEST_EXIT=$?; npm run rebuild:electron; exit $TEST_EXIT)",
     "test:watch": "npm run rebuild:node && vitest",
     "test:e2e": "npm run rebuild:electron && npm run build && npx playwright test",
@@ -28,6 +28,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "better-sqlite3": "^12.6.2",
     "electron-log": "^5.4.3",

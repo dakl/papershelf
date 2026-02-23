@@ -23,11 +23,59 @@ interface PaperListItemProps {
   isSelected: boolean;
   isFavorite?: boolean;
   inLibrary?: boolean;
+  embeddingStatus?: 'pending' | 'indexing' | 'complete' | 'failed';
+  isActivelyIndexing?: boolean;
+  isQueuedForIndexing?: boolean;
   onClick: () => void;
   rightSlot?: React.ReactNode;
   paperId?: string;
   onTagDrop?: (tagId: string) => void;
   paperIndex?: number;
+}
+
+function EmbeddingStatusBadge({
+  status,
+  isActivelyIndexing,
+  isQueued,
+}: {
+  status: 'pending' | 'indexing' | 'complete' | 'failed';
+  isActivelyIndexing?: boolean;
+  isQueued?: boolean;
+}) {
+  if (isActivelyIndexing) {
+    return (
+      <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0" title="Indexing..." />
+    );
+  }
+
+  if (isQueued) {
+    return (
+      <span
+        className="inline-block w-2 h-2 rounded-full border-2 border-blue-400 dark:border-blue-500 shrink-0"
+        title="Queued for indexing"
+      />
+    );
+  }
+
+  switch (status) {
+    case 'complete':
+      return (
+        <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Indexed for semantic search" />
+      );
+    case 'failed':
+      return <span className="inline-block w-2 h-2 rounded-full bg-red-500 shrink-0" title="Indexing failed" />;
+    case 'indexing':
+      return (
+        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0" title="Indexing..." />
+      );
+    case 'pending':
+      return (
+        <span
+          className="inline-block w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0"
+          title="Not yet indexed"
+        />
+      );
+  }
 }
 
 export function PaperListItem({
@@ -38,6 +86,9 @@ export function PaperListItem({
   isSelected,
   isFavorite,
   inLibrary,
+  embeddingStatus,
+  isActivelyIndexing,
+  isQueuedForIndexing,
   onClick,
   rightSlot,
   paperId,
@@ -96,6 +147,13 @@ export function PaperListItem({
           <p className="text-mac-small text-gray-500 mt-0.5">{truncateAuthors(authors)}</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-mac-small text-gray-400">{formatDate(date)}</span>
+            {embeddingStatus && (
+              <EmbeddingStatusBadge
+                status={embeddingStatus}
+                isActivelyIndexing={isActivelyIndexing}
+                isQueued={isQueuedForIndexing}
+              />
+            )}
             {inLibrary && (
               <span className="px-1.5 py-0.5 rounded-sm text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">
                 In Library

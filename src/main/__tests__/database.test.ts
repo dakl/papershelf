@@ -212,6 +212,10 @@ describe('getPapers', () => {
 
     const papers = getPapers({ view: 'all-papers' });
     expect(papers).toHaveLength(2);
+    // Papers without embedding_status rows should default to 'pending'
+    for (const paper of papers) {
+      expect(paper.embeddingStatus).toBe('pending');
+    }
   });
 
   it('returns only favorites', () => {

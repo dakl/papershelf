@@ -29,6 +29,7 @@ export interface LibraryPaper {
   fullText: string | null;
   isFavorite: boolean;
   createdAt: string;
+  embeddingStatus?: 'pending' | 'indexing' | 'complete' | 'failed';
   collections: Collection[];
   tags: Tag[];
 }
@@ -101,6 +102,37 @@ export interface ViewerState {
   scale: number;
   scrollTop: number;
   scrollLeft: number;
+}
+
+// --- Semantic Search ---
+
+export interface SemanticSearchResult {
+  paper: LibraryPaper;
+  score: number;
+  matchType: 'hybrid' | 'keyword' | 'semantic';
+}
+
+export interface IndexingProgress {
+  paperId: string;
+  paperTitle: string;
+  current: number;
+  total: number;
+  status: 'indexing' | 'indexed' | 'complete' | 'error';
+  error?: string;
+}
+
+export interface EmbeddingProgress {
+  status: 'downloading' | 'loading' | 'ready' | 'error';
+  progress?: number;
+  file?: string;
+  error?: string;
+}
+
+export interface IndexingStats {
+  totalPapers: number;
+  indexed: number;
+  pending: number;
+  failed: number;
 }
 
 export type SortBy = 'created_at' | 'published_date' | 'title' | 'first_author';
@@ -187,6 +219,10 @@ export interface ElectronAPI {
   toggleFavorite: (id: string) => Promise<boolean>;
   checkPapersInLibrary: (arxivIds: string[]) => Promise<string[]>;
   searchLibrary: (query: string) => Promise<LibraryPaper[]>;
+  semanticSearch: (query: string) => Promise<SemanticSearchResult[]>;
+  getIndexingStats: () => Promise<IndexingStats>;
+  reindexAllPapers: () => Promise<void>;
+  reindexPaper: (paperId: string) => Promise<void>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<LibraryPaper>;
   resolveMetadata: (paperId: string) => Promise<{ success: boolean; source?: string; error?: string }>;
@@ -276,6 +312,8 @@ export interface ElectronAPI {
   onAnnotationsChanged: (callback: () => void) => () => void;
   onImportProgress: (callback: (progress: ImportProgress) => void) => () => void;
   onMetadataResolutionProgress: (callback: (progress: MetadataResolutionProgress) => void) => () => void;
+  onEmbeddingProgress: (callback: (progress: EmbeddingProgress) => void) => () => void;
+  onIndexingProgress: (callback: (progress: IndexingProgress) => void) => () => void;
 }
 
 declare global {

@@ -35,7 +35,8 @@ export function useSearch() {
         const results = await window.electronAPI.searchArxiv(query);
         setState((prev) => ({ ...prev, results, libraryResults: [], loading: false }));
       } else {
-        const libraryResults = await window.electronAPI.searchLibrary(query);
+        const semanticResults = await window.electronAPI.semanticSearch(query);
+        const libraryResults = semanticResults.map((r) => r.paper);
         setState((prev) => ({ ...prev, libraryResults, results: [], loading: false }));
       }
     } catch (err) {

@@ -109,11 +109,26 @@ import('electron').then(({ app, BrowserWindow, Menu }) => {
       });
     }
 
+    // Trigger background semantic indexing after startup
+    setTimeout(async () => {
+      try {
+        const { indexAllPapers } = await import('./services/indexing-service.js');
+        await indexAllPapers();
+      } catch (err) {
+        console.warn('Background indexing failed:', err instanceof Error ? err.message : err);
+      }
+    }, 5000);
+
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
       }
     });
+  });
+
+  app.on('will-quit', async () => {
+    const { shutdownEmbeddingService } = await import('./services/embedding-service.js');
+    shutdownEmbeddingService();
   });
 
   app.on('window-all-closed', () => {

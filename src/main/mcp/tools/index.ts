@@ -12,7 +12,7 @@ export { resolveCollectionId, resolvePaperId, resolveTagId } from './resolvers';
 
 export const TOOL_METADATA: { name: string; description: string }[] = [
   { name: 'search_arxiv', description: 'Search arXiv for papers by keyword, author, title, or topic' },
-  { name: 'search_library', description: 'Full-text search across saved papers with optional filters' },
+  { name: 'search_library', description: 'Hybrid keyword + semantic search across saved papers with optional filters' },
   { name: 'get_paper', description: 'Get detailed info about a paper by ID' },
   { name: 'list_papers', description: 'List papers in the library with optional collection/tag filters' },
   { name: 'save_paper', description: 'Save an arXiv paper to the library' },

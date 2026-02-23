@@ -4,6 +4,7 @@ import path from 'path';
 import type { Collection, LibraryPaper, PaperSource, Tag } from '../../shared/types';
 import { getDataDir } from '../paths';
 import { runMigrations } from './migrations';
+import { createVectorSchema } from './vector-store';
 
 let db: Database.Database;
 
@@ -19,6 +20,13 @@ export function initDatabase(customPath?: string): void {
   createSchema();
   runMigrations(db);
   createIndexes();
+
+  // Initialize vector store tables
+  try {
+    createVectorSchema(db);
+  } catch (err) {
+    console.warn('Vector store initialization failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 export function closeDatabase(): void {
@@ -171,7 +179,12 @@ export interface PaperRow {
   created_at: string;
 }
 
-export function rowToLibraryPaper(row: PaperRow, collections: Collection[] = [], tags: Tag[] = []): LibraryPaper {
+export function rowToLibraryPaper(
+  row: PaperRow,
+  collections: Collection[] = [],
+  tags: Tag[] = [],
+  embeddingStatus?: LibraryPaper['embeddingStatus'],
+): LibraryPaper {
   return {
     id: row.id,
     arxivId: row.arxiv_id,
@@ -189,6 +202,7 @@ export function rowToLibraryPaper(row: PaperRow, collections: Collection[] = [],
     fullText: row.full_text,
     isFavorite: row.is_favorite === 1,
     createdAt: row.created_at,
+    embeddingStatus,
     collections,
     tags,
   };
