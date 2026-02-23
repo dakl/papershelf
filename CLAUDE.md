@@ -61,7 +61,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
 ### Test Requirements
 
-Tests are **mandatory** for all code changes. Always run `npm run test` after making changes.
+Follow **test-driven development (TDD)**: write a failing test first, then implement the feature to make it pass. Tests are mandatory for all code changes. Always run `npm run test` after making changes.
 
 - **Data flow defaults**: When a DB query can return `undefined`/`null` for a field that the UI consumes, test that the hydration layer provides a sensible default. The UI should never receive `undefined` for a field it conditionally renders on.
 - **Event-driven UI state**: When backend events drive UI state changes (e.g., `INDEXING_PROGRESS` → badge states), test the full state machine: every event type must be covered, including transitions between states and the final/reset state.

@@ -32,10 +32,12 @@ export function LibraryList() {
       } else if (progress.status === 'complete') {
         setActivelyIndexingPaperId(null);
         setIndexingActive(false);
+        loadPapers(filter);
       } else {
+        // 'indexed' or 'error' — clear active paper, refresh to pick up new DB status
         setActivelyIndexingPaperId(null);
+        loadPapers(filter);
       }
-      loadPapers(filter);
     });
     return () => {
       unsubPapers();

@@ -242,6 +242,33 @@ describe('indexAllPapers', () => {
     expect(mockEmbed).not.toHaveBeenCalled();
   });
 
+  it('follow-up does not retry failed papers (only picks up pending)', async () => {
+    const paper = insertPaper(makePaper({ arxivId: '45', title: 'Will Fail', abstract: 'About failure.' }));
+    const db = getDb();
+
+    const mockEmbed = vi.mocked(embedDocumentTexts);
+    mockEmbed.mockRejectedValue(new Error('Sharp not found'));
+
+    const events: { status: string; paperId: string }[] = [];
+    eventEmitter.on(DataChangeEvent.INDEXING_PROGRESS, (event) => {
+      events.push({ status: event.status, paperId: event.paperId });
+    });
+
+    await indexAllPapers();
+
+    // Paper should have failed
+    const statusMap = getEmbeddingStatusForPapers(db, [paper.id]);
+    expect(statusMap.get(paper.id)).toBe('failed');
+
+    // The follow-up should NOT have re-triggered (paper is failed, not pending)
+    // We expect exactly: indexing, error, complete — no second round
+    const indexingEvents = events.filter((e) => e.status === 'indexing');
+    expect(indexingEvents).toHaveLength(1);
+
+    const completeEvents = events.filter((e) => e.status === 'complete');
+    expect(completeEvents).toHaveLength(1);
+  });
+
   it('re-indexes failed papers on subsequent call', async () => {
     const paper = insertPaper(makePaper({ arxivId: '50', title: 'Retry Me', abstract: 'About retry.' }));
     const db = getDb();

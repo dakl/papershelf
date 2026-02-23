@@ -5,6 +5,35 @@
  * SIGTRAP crashes from onnxruntime-node inside Electron's main process.
  */
 
+// Stub 'sharp' before loading @huggingface/transformers.
+// Transformers imports sharp for image processing which we don't need for text embeddings.
+// In the packaged app, sharp isn't available in the asar.unpacked path.
+// We use require() below (not import()) so transformers resolves to the CJS build,
+// which goes through Module._resolveFilename where we can intercept.
+import Module from 'node:module';
+
+// biome-ignore lint/suspicious/noExplicitAny: accessing private _resolveFilename API
+const ModuleInternal = Module as any;
+const _originalResolveFilename = ModuleInternal._resolveFilename;
+ModuleInternal._resolveFilename = function (...args: unknown[]) {
+  if (args[0] === 'sharp') {
+    return 'sharp-stub';
+  }
+  return _originalResolveFilename.apply(this, args);
+};
+require.cache['sharp-stub'] = {
+  id: 'sharp-stub',
+  filename: 'sharp-stub',
+  loaded: true,
+  exports: {},
+  children: [],
+  paths: [],
+  path: '',
+  parent: null,
+  isPreloading: false,
+  require: require,
+} as unknown as NodeModule;
+
 const MODEL_ID = 'nomic-ai/nomic-embed-text-v1.5';
 const EMBEDDING_DIMS = 256;
 const SEARCH_PREFIX = 'search_query: ';
@@ -30,7 +59,9 @@ function truncateAndNormalize(embedding: number[]): number[] {
 }
 
 async function loadPipeline(): Promise<void> {
-  const transformers = await import('@huggingface/transformers');
+  // Use require() so transformers resolves to the CJS build (where our sharp stub works)
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const transformers = require('@huggingface/transformers');
 
   send({ type: 'progress', status: 'downloading', progress: 0 });
 

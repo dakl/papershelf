@@ -121,8 +121,15 @@ export async function indexAllPapers(): Promise<void> {
     indexingInProgress = false;
   }
 
-  // Papers may have been added while we were indexing — pick them up
-  const remaining = getPapersNeedingEmbedding(db);
+  // Papers may have been added while we were indexing — pick them up.
+  // Only check for pending (new) papers, not failed ones (those need explicit re-index).
+  const remaining = db
+    .prepare(
+      `SELECT p.id FROM papers p
+       LEFT JOIN embedding_status es ON p.id = es.paper_id
+       WHERE es.paper_id IS NULL OR es.status = 'pending'`,
+    )
+    .all();
   if (remaining.length > 0) {
     indexAllPapers().catch((err) => {
       console.warn('Follow-up indexing failed:', err);
