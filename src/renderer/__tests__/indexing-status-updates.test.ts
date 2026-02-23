@@ -23,11 +23,7 @@ function applyProgressEvent(state: IndexingUIState, progress: IndexingProgress):
   return { activelyIndexingPaperId: null, indexingActive: state.indexingActive };
 }
 
-function isQueuedForIndexing(
-  state: IndexingUIState,
-  paperId: string,
-  embeddingStatus: string | undefined,
-): boolean {
+function isQueuedForIndexing(state: IndexingUIState, paperId: string, embeddingStatus: string | undefined): boolean {
   return state.indexingActive && embeddingStatus !== 'complete' && paperId !== state.activelyIndexingPaperId;
 }
 
@@ -120,43 +116,71 @@ describe('indexing progress state machine', () => {
 
     // Paper A: indexing
     state = applyProgressEvent(state, {
-      paperId: 'A', paperTitle: 'A', current: 1, total: 3, status: 'indexing',
+      paperId: 'A',
+      paperTitle: 'A',
+      current: 1,
+      total: 3,
+      status: 'indexing',
     });
     expect(state).toEqual({ activelyIndexingPaperId: 'A', indexingActive: true });
 
     // Paper A: indexed
     state = applyProgressEvent(state, {
-      paperId: 'A', paperTitle: 'A', current: 1, total: 3, status: 'indexed',
+      paperId: 'A',
+      paperTitle: 'A',
+      current: 1,
+      total: 3,
+      status: 'indexed',
     });
     expect(state).toEqual({ activelyIndexingPaperId: null, indexingActive: true });
 
     // Paper B: indexing
     state = applyProgressEvent(state, {
-      paperId: 'B', paperTitle: 'B', current: 2, total: 3, status: 'indexing',
+      paperId: 'B',
+      paperTitle: 'B',
+      current: 2,
+      total: 3,
+      status: 'indexing',
     });
     expect(state).toEqual({ activelyIndexingPaperId: 'B', indexingActive: true });
 
     // Paper B: indexed
     state = applyProgressEvent(state, {
-      paperId: 'B', paperTitle: 'B', current: 2, total: 3, status: 'indexed',
+      paperId: 'B',
+      paperTitle: 'B',
+      current: 2,
+      total: 3,
+      status: 'indexed',
     });
     expect(state).toEqual({ activelyIndexingPaperId: null, indexingActive: true });
 
     // Paper C: indexing
     state = applyProgressEvent(state, {
-      paperId: 'C', paperTitle: 'C', current: 3, total: 3, status: 'indexing',
+      paperId: 'C',
+      paperTitle: 'C',
+      current: 3,
+      total: 3,
+      status: 'indexing',
     });
     expect(state).toEqual({ activelyIndexingPaperId: 'C', indexingActive: true });
 
     // Paper C: indexed
     state = applyProgressEvent(state, {
-      paperId: 'C', paperTitle: 'C', current: 3, total: 3, status: 'indexed',
+      paperId: 'C',
+      paperTitle: 'C',
+      current: 3,
+      total: 3,
+      status: 'indexed',
     });
     expect(state).toEqual({ activelyIndexingPaperId: null, indexingActive: true });
 
     // Complete
     state = applyProgressEvent(state, {
-      paperId: '', paperTitle: '', current: 3, total: 3, status: 'complete',
+      paperId: '',
+      paperTitle: '',
+      current: 3,
+      total: 3,
+      status: 'complete',
     });
     expect(state).toEqual({ activelyIndexingPaperId: null, indexingActive: false });
   });
@@ -206,10 +230,14 @@ describe('badge visual state derivation', () => {
     if (isActivelyIndexingProp) return 'blue-pulsing';
     if (isQueuedProp) return 'blue-hollow';
     switch (embeddingStatus) {
-      case 'complete': return 'green';
-      case 'failed': return 'red';
-      case 'indexing': return 'blue-pulsing';
-      case 'pending': return 'gray';
+      case 'complete':
+        return 'green';
+      case 'failed':
+        return 'red';
+      case 'indexing':
+        return 'blue-pulsing';
+      case 'pending':
+        return 'gray';
     }
   }
 
