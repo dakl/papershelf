@@ -65,6 +65,9 @@ function generateRequestId(): string {
 }
 
 function rejectAllPending(error: Error): void {
+  if (pendingRequests.size > 0) {
+    console.warn(`[embedding-service] Rejecting ${pendingRequests.size} pending requests: ${error.message}`);
+  }
   for (const [id, request] of pendingRequests) {
     request.reject(error);
     pendingRequests.delete(id);
@@ -99,6 +102,7 @@ function spawnChild(): ChildProcess {
       }
 
       case 'loaded': {
+        console.log('[embedding-service] Model loaded successfully');
         modelLoaded = true;
         break;
       }
@@ -108,8 +112,11 @@ function spawnChild(): ChildProcess {
         if (request) {
           pendingRequests.delete(message.id!);
           const rawEmbeddings = message.embeddings as number[][];
+          console.log(`[embedding-service] Got ${rawEmbeddings.length} embeddings for request ${message.id}`);
           const result = rawEmbeddings.map((emb) => Float32Array.from(emb));
           request.resolve(result);
+        } else {
+          console.warn(`[embedding-service] No pending request for embeddings response ${message.id}`);
         }
         break;
       }
@@ -119,11 +126,14 @@ function spawnChild(): ChildProcess {
         if (request) {
           pendingRequests.delete(message.id!);
           request.resolve(Float32Array.from(message.embedding as number[]));
+        } else {
+          console.warn(`[embedding-service] No pending request for embedding response ${message.id}`);
         }
         break;
       }
 
       case 'error': {
+        console.error(`[embedding-service] Worker error for request ${message.id}: ${message.error}`);
         if (message.id) {
           const request = pendingRequests.get(message.id);
           if (request) {

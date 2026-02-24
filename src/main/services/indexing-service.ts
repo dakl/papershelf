@@ -15,6 +15,25 @@ export function isIndexingInProgress(): boolean {
   return indexingInProgress;
 }
 
+/**
+ * Reset any papers stuck in 'indexing' state back to 'pending'.
+ * This happens when the worker crashes mid-indexing.
+ */
+export function resetStaleIndexingPapers(): void {
+  const db = getDb();
+  const stale = db.prepare("SELECT paper_id FROM embedding_status WHERE status = 'indexing'").all() as {
+    paper_id: string;
+  }[];
+
+  if (stale.length > 0) {
+    console.log(`[indexing-service] Resetting ${stale.length} papers stuck in 'indexing' state`);
+    const reset = db.prepare(
+      "UPDATE embedding_status SET status = 'pending', error_message = NULL WHERE status = 'indexing'",
+    );
+    reset.run();
+  }
+}
+
 export async function indexPaper(paperId: string): Promise<void> {
   const db = getDb();
 
@@ -31,14 +50,17 @@ export async function indexPaper(paperId: string): Promise<void> {
     deleteChunksForPaper(db, paperId);
 
     const chunks = chunkPaper(paper.title, paper.abstract, paper.full_text);
+    console.log(`[indexing-service] Paper ${paperId}: ${chunks.length} chunks from "${paper.title.slice(0, 60)}"`);
 
     if (chunks.length === 0) {
+      console.log(`[indexing-service] Paper ${paperId}: no chunks, marking complete`);
       setEmbeddingStatus(db, paperId, 'complete', undefined, 0);
       return;
     }
 
     const chunkTexts = chunks.map((c) => c.text);
     const embeddings = await embedDocumentTexts(chunkTexts);
+    console.log(`[indexing-service] Paper ${paperId}: got ${embeddings.length} embeddings`);
 
     // Insert all chunks + embeddings in a transaction
     const insertAll = db.transaction(() => {
@@ -59,8 +81,10 @@ export async function indexPaper(paperId: string): Promise<void> {
 
     insertAll();
     setEmbeddingStatus(db, paperId, 'complete', undefined, chunks.length);
+    console.log(`[indexing-service] Paper ${paperId}: indexed successfully (${chunks.length} chunks)`);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`[indexing-service] Paper ${paperId}: failed — ${errorMessage}`);
     setEmbeddingStatus(db, paperId, 'failed', errorMessage);
     throw err;
   }
@@ -74,10 +98,19 @@ export async function indexAllPapers(): Promise<void> {
 
   try {
     const papersToIndex = getPapersNeedingEmbedding(db);
-    if (papersToIndex.length === 0) return;
+    if (papersToIndex.length === 0) {
+      console.log('[indexing-service] No papers need indexing');
+      return;
+    }
+
+    console.log(`[indexing-service] Starting indexing of ${papersToIndex.length} papers`);
 
     for (let i = 0; i < papersToIndex.length; i++) {
       const paper = papersToIndex[i];
+
+      console.log(
+        `[indexing-service] Indexing paper ${i + 1}/${papersToIndex.length}: ${paper.id} "${paper.title.slice(0, 60)}"`,
+      );
 
       eventEmitter.emit(DataChangeEvent.INDEXING_PROGRESS, {
         paperId: paper.id,
@@ -97,7 +130,7 @@ export async function indexAllPapers(): Promise<void> {
           status: 'indexed',
         });
       } catch (err) {
-        console.warn(`Failed to index paper ${paper.id}:`, err instanceof Error ? err.message : err);
+        console.warn(`[indexing-service] Failed to index paper ${paper.id}:`, err instanceof Error ? err.message : err);
         eventEmitter.emit(DataChangeEvent.INDEXING_PROGRESS, {
           paperId: paper.id,
           paperTitle: paper.title,
@@ -109,6 +142,8 @@ export async function indexAllPapers(): Promise<void> {
         // Continue with next paper
       }
     }
+
+    console.log(`[indexing-service] Indexing complete (${papersToIndex.length} papers processed)`);
 
     eventEmitter.emit(DataChangeEvent.INDEXING_PROGRESS, {
       paperId: '',
@@ -131,8 +166,9 @@ export async function indexAllPapers(): Promise<void> {
     )
     .all();
   if (remaining.length > 0) {
+    console.log(`[indexing-service] Follow-up: ${remaining.length} new papers to index`);
     indexAllPapers().catch((err) => {
-      console.warn('Follow-up indexing failed:', err);
+      console.warn('[indexing-service] Follow-up indexing failed:', err);
     });
   }
 }

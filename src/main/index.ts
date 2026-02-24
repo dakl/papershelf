@@ -112,7 +112,8 @@ import('electron').then(({ app, BrowserWindow, Menu }) => {
     // Trigger background semantic indexing after startup
     setTimeout(async () => {
       try {
-        const { indexAllPapers } = await import('./services/indexing-service.js');
+        const { resetStaleIndexingPapers, indexAllPapers } = await import('./services/indexing-service.js');
+        resetStaleIndexingPapers();
         await indexAllPapers();
       } catch (err) {
         console.warn('Background indexing failed:', err instanceof Error ? err.message : err);
