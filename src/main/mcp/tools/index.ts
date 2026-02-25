@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { dialog, Notification } from 'electron';
+import type { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { BrowserWindow, Notification } from 'electron';
 import type { ToolNotificationMode } from '../../../shared/types';
 import { logToolCall } from '../../db/tool-stats';
 import { setToolMode } from '../tool-config';
@@ -60,19 +60,58 @@ function formatNotificationBody(toolName: string, args: unknown): string {
   return detail ? `${label} — ${detail}` : label;
 }
 
-function createInstrumentedServer(server: McpServer, toolModes: Record<string, ToolNotificationMode>): McpServer {
+const APPROVAL_TIMEOUT_MS = 5 * 60 * 1000;
+const pendingNotifications = new Set<Notification>();
+
+function requestApprovalViaNotification(toolName: string, detail: string): Promise<'allow' | 'always' | 'deny'> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (result: 'allow' | 'always' | 'deny') => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      pendingNotifications.delete(notification);
+      resolve(result);
+    };
+
+    const notification = new Notification({
+      title: `Allow "${humanToolName(toolName)}"?`,
+      body: detail,
+      actions: [
+        { type: 'button' as const, text: 'Allow Once' },
+        { type: 'button' as const, text: 'Always Allow' },
+      ],
+      closeButtonText: 'Deny',
+    });
+
+    notification.on('action', (_event: Electron.Event, index: number) => {
+      settle(index === 0 ? 'allow' : 'always');
+    });
+
+    notification.on('close', () => {
+      settle('deny');
+    });
+
+    const timer = setTimeout(() => settle('deny'), APPROVAL_TIMEOUT_MS);
+
+    pendingNotifications.add(notification);
+    notification.show();
+  });
+}
+
+function createInstrumentedServer(
+  server: McpServer,
+  toolModes: Record<string, ToolNotificationMode>,
+  toolHandles: Map<string, RegisteredTool>,
+): McpServer {
   return new Proxy(server, {
     get(target, prop, receiver) {
-      if (prop === 'tool') {
-        return (...toolArgs: unknown[]) => {
-          const lastIndex = toolArgs.length - 1;
-          const originalHandler = toolArgs[lastIndex] as (...handlerArgs: unknown[]) => Promise<unknown>;
-          const toolName = toolArgs[0] as string;
-
-          toolArgs[lastIndex] = async (...handlerArgs: unknown[]) => {
-            const mode: ToolNotificationMode = toolModes[toolName] ?? 'notify';
+      if (prop === 'registerTool') {
+        return (name: string, config: Record<string, unknown>, cb: (...args: unknown[]) => Promise<unknown>) => {
+          const wrappedCb = async (...handlerArgs: unknown[]) => {
+            const mode: ToolNotificationMode = toolModes[name] ?? 'notify';
             const argsString = JSON.stringify(handlerArgs[0] ?? {});
-            const notificationBody = formatNotificationBody(toolName, handlerArgs[0]);
+            const notificationBody = formatNotificationBody(name, handlerArgs[0]);
 
             if (mode === 'confirm') {
               const argsDetail = humanizeArgs(handlerArgs[0]);
@@ -80,22 +119,16 @@ function createInstrumentedServer(server: McpServer, toolModes: Record<string, T
                 ? `An MCP client wants to call this tool with:\n${argsDetail}`
                 : 'An MCP client wants to call this tool.';
 
-              const response = dialog.showMessageBoxSync({
-                type: 'question',
-                buttons: ['Allow Once', 'Always Allow', 'Deny'],
-                defaultId: 0,
-                cancelId: 2,
-                title: 'MCP Tool Call',
-                message: `Allow "${humanToolName(toolName)}"?`,
-                detail,
-              });
+              const approval = await requestApprovalViaNotification(name, detail);
 
-              if (response === 1) {
-                // "Always Allow" — switch to notify mode and persist
-                setToolMode(toolName, 'notify');
-                toolModes[toolName] = 'notify';
-              } else if (response === 2) {
-                logToolCall(toolName, argsString, 0, 'denied');
+              if (approval === 'always') {
+                setToolMode(name, 'notify');
+                toolModes[name] = 'notify';
+                for (const window of BrowserWindow.getAllWindows()) {
+                  window.webContents.send('mcp:tools-changed');
+                }
+              } else if (approval === 'deny') {
+                logToolCall(name, argsString, 0, 'denied');
                 return {
                   content: [{ type: 'text' as const, text: 'Tool call denied by user' }],
                   isError: true,
@@ -105,8 +138,8 @@ function createInstrumentedServer(server: McpServer, toolModes: Record<string, T
 
             const start = Date.now();
             try {
-              const result = await originalHandler(...handlerArgs);
-              logToolCall(toolName, argsString, Date.now() - start, 'success');
+              const result = await cb(...handlerArgs);
+              logToolCall(name, argsString, Date.now() - start, 'success');
 
               if (mode !== 'silent') {
                 new Notification({
@@ -118,12 +151,14 @@ function createInstrumentedServer(server: McpServer, toolModes: Record<string, T
               return result;
             } catch (err) {
               const message = err instanceof Error ? err.message : 'Unknown error';
-              logToolCall(toolName, argsString, Date.now() - start, 'error', message);
+              logToolCall(name, argsString, Date.now() - start, 'error', message);
               throw err;
             }
           };
 
-          return (target.tool as (...args: unknown[]) => unknown)(...toolArgs);
+          const handle = (target.registerTool as (...args: unknown[]) => RegisteredTool)(name, config, wrappedCb);
+          toolHandles.set(name, handle);
+          return handle;
         };
       }
       return Reflect.get(target, prop, receiver);
@@ -135,12 +170,21 @@ export function registerTools(
   server: McpServer,
   disabledTools: Set<string> = new Set(),
   toolModes: Record<string, ToolNotificationMode> = {},
-): void {
-  const isEnabled = (name: string) => !disabledTools.has(name);
-  const instrumented = createInstrumentedServer(server, toolModes);
+): Map<string, RegisteredTool> {
+  const toolHandles = new Map<string, RegisteredTool>();
+  const instrumented = createInstrumentedServer(server, toolModes, toolHandles);
 
-  registerSearchTools(instrumented, isEnabled);
-  registerPaperTools(instrumented, isEnabled);
-  registerOrganizationTools(instrumented, isEnabled);
-  registerAnnotationTools(instrumented, isEnabled);
+  registerSearchTools(instrumented);
+  registerPaperTools(instrumented);
+  registerOrganizationTools(instrumented);
+  registerAnnotationTools(instrumented);
+
+  for (const toolName of disabledTools) {
+    const handle = toolHandles.get(toolName);
+    if (handle) {
+      handle.disable();
+    }
+  }
+
+  return toolHandles;
 }

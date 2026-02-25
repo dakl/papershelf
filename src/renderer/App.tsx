@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AboutDialog } from './components/AboutDialog';
+import { DropZoneOverlay } from './components/DropZoneOverlay';
 import { ImportProgressOverlay } from './components/ImportProgress';
 import { PaperDetail } from './components/PaperDetail';
 import { PaperList } from './components/PaperList';
@@ -43,6 +44,7 @@ export function App() {
       </div>
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       <ImportProgressOverlay />
+      <DropZoneOverlay />
       <ToastContainer />
     </div>
   );

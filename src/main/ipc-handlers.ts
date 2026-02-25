@@ -18,9 +18,10 @@ import * as db from './database';
 import { DataChangeEvent, eventEmitter } from './event-emitter';
 import {
   getMcpHttpServerStatus,
-  restartMcpHttpServerIfRunning,
   startMcpHttpServer,
   stopMcpHttpServer,
+  updateToolEnabled,
+  updateToolMode,
 } from './mcp/http-server';
 import { getDisabledTools, getToolModes, setDisabledTools, setMcpServerEnabled, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
@@ -38,6 +39,23 @@ import { readPdfForPaper } from './services/pdf-reader';
 import { resolveMetadata, resolveMetadataForPapers } from './services/resolve-metadata';
 import { savePaperFromArxivPaper } from './services/save-paper';
 import { getPdfLibraryPath, getShortcutOverrides, saveShortcutOverrides, setPdfLibraryPath } from './settings';
+
+async function importAndResolve(filePaths: string[]): Promise<ImportBatchResult> {
+  const importResult = await importLocalPdfs(filePaths);
+
+  if (importResult.imported.length > 0) {
+    const localPapers = importResult.imported
+      .filter((p) => p.source === 'local')
+      .map((p) => ({ id: p.id, title: p.title }));
+    if (localPapers.length > 0) {
+      resolveMetadataForPapers(localPapers).catch((err) => {
+        console.warn('Background metadata resolution failed:', err);
+      });
+    }
+  }
+
+  return importResult;
+}
 
 export function registerIpcHandlers(): void {
   // --- App ---
@@ -148,21 +166,13 @@ export function registerIpcHandlers(): void {
       return { imported: [], failed: [], totalCount: 0 };
     }
 
-    const importResult = await importLocalPdfs(result.filePaths);
+    return importAndResolve(result.filePaths);
+  });
 
-    // Fire-and-forget background metadata resolution for imported papers
-    if (importResult.imported.length > 0) {
-      const localPapers = importResult.imported
-        .filter((p) => p.source === 'local')
-        .map((p) => ({ id: p.id, title: p.title }));
-      if (localPapers.length > 0) {
-        resolveMetadataForPapers(localPapers).catch((err) => {
-          console.warn('Background metadata resolution failed:', err);
-        });
-      }
-    }
-
-    return importResult;
+  ipcMain.handle('papers:importFiles', async (_event, filePaths: string[]): Promise<ImportBatchResult> => {
+    const pdfPaths = filePaths.filter((p) => p.toLowerCase().endsWith('.pdf'));
+    if (pdfPaths.length === 0) return { imported: [], failed: [], totalCount: 0 };
+    return importAndResolve(pdfPaths);
   });
 
   ipcMain.handle('papers:updateMetadata', (_event, id: string, updates: PaperMetadataUpdate) => {
@@ -393,7 +403,7 @@ export function registerIpcHandlers(): void {
     return db.getToolStats();
   });
 
-  ipcMain.handle('mcp:setToolEnabled', async (_event, toolName: string, enabled: boolean) => {
+  ipcMain.handle('mcp:setToolEnabled', (_event, toolName: string, enabled: boolean) => {
     const disabled = new Set(getDisabledTools());
     if (enabled) {
       disabled.delete(toolName);
@@ -401,12 +411,12 @@ export function registerIpcHandlers(): void {
       disabled.add(toolName);
     }
     setDisabledTools([...disabled]);
-    await restartMcpHttpServerIfRunning();
+    updateToolEnabled(toolName, enabled);
   });
 
-  ipcMain.handle('mcp:setToolMode', async (_event, toolName: string, mode: ToolNotificationMode) => {
+  ipcMain.handle('mcp:setToolMode', (_event, toolName: string, mode: ToolNotificationMode) => {
     setToolMode(toolName, mode);
-    await restartMcpHttpServerIfRunning();
+    updateToolMode(toolName, mode);
   });
 
   // --- Viewer State ---

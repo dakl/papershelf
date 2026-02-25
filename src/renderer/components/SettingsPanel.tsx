@@ -468,6 +468,12 @@ export function SettingsPanel() {
   }, [loadMcpStatus, loadMcpTools, loadToolStats]);
 
   useEffect(() => {
+    return window.electronAPI.onMcpToolsChanged(() => {
+      loadMcpTools();
+    });
+  }, [loadMcpTools]);
+
+  useEffect(() => {
     setPortInput(String(mcpStatus.port));
   }, [mcpStatus.port]);
 

@@ -81,7 +81,7 @@ export async function createAnnotationLayer(page: PDFPageProxy, viewport: PageVi
     page,
     linkService: linkService as never,
     renderForms: false,
-    imageResourcesPath: '/pdfjs-images/',
+    imageResourcesPath: './pdfjs-images/',
   });
   return annotationLayer;
 }

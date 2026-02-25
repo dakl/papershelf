@@ -224,6 +224,8 @@ export interface ElectronAPI {
   reindexAllPapers: () => Promise<void>;
   reindexPaper: (paperId: string) => Promise<void>;
   importLocalPdfs: () => Promise<ImportBatchResult>;
+  importFiles: (filePaths: string[]) => Promise<ImportBatchResult>;
+  getPathForFile: (file: File) => string;
   updatePaperMetadata: (id: string, updates: PaperMetadataUpdate) => Promise<LibraryPaper>;
   resolveMetadata: (paperId: string) => Promise<{ success: boolean; source?: string; error?: string }>;
 
@@ -304,6 +306,9 @@ export interface ElectronAPI {
   onUpdaterError: (callback: (error: { error: string }) => void) => () => void;
   onUpdaterUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
+
+  // MCP event listeners
+  onMcpToolsChanged: (callback: () => void) => () => void;
 
   // Event listeners for real-time updates
   onCollectionsChanged: (callback: () => void) => () => void;

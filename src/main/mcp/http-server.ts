@@ -1,6 +1,9 @@
+import type { RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createServer as createHttpServer, type IncomingMessage, type Server, type ServerResponse } from 'http';
+import type { ToolNotificationMode } from '../../shared/types';
 import { createServer } from './server';
+import { getToolModes } from './tool-config';
 
 const PROD_PORT = 3847;
 const DEV_PORT = 13847;
@@ -13,16 +16,23 @@ function getMcpPort(): number {
   return isPackaged() ? PROD_PORT : DEV_PORT;
 }
 
+interface SessionEntry {
+  transport: StreamableHTTPServerTransport;
+  toolHandles: Map<string, RegisteredTool>;
+}
+
 let httpServer: Server | null = null;
-let activeSessions = new Map<string, StreamableHTTPServerTransport>();
+let activeSessions = new Map<string, SessionEntry>();
 let currentPort = getMcpPort();
+let sharedToolModes: Record<string, ToolNotificationMode> = {};
 
 export async function startMcpHttpServer(port?: number): Promise<void> {
   if (httpServer) return;
 
   currentPort = port ?? getMcpPort();
-  const sessions = new Map<string, StreamableHTTPServerTransport>();
+  const sessions = new Map<string, SessionEntry>();
   activeSessions = sessions;
+  sharedToolModes = getToolModes();
 
   const server = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
     const host = req.headers.host;
@@ -43,8 +53,8 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
       if (sessionId && sessions.has(sessionId)) {
-        const transport = sessions.get(sessionId)!;
-        await transport.handleRequest(req, res);
+        const session = sessions.get(sessionId)!;
+        await session.transport.handleRequest(req, res);
         return;
       }
 
@@ -57,19 +67,18 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
         if (sid) sessions.delete(sid);
       };
 
-      const mcpServer = createServer();
+      const { server: mcpServer, toolHandles } = createServer(sharedToolModes);
       await mcpServer.connect(transport);
       await transport.handleRequest(req, res);
 
-      // sessionId is generated during handleRequest when processing the initialize request
       if (transport.sessionId) {
-        sessions.set(transport.sessionId, transport);
+        sessions.set(transport.sessionId, { transport, toolHandles });
       }
     } else if (req.method === 'GET') {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
       if (sessionId && sessions.has(sessionId)) {
-        const transport = sessions.get(sessionId)!;
-        await transport.handleRequest(req, res);
+        const session = sessions.get(sessionId)!;
+        await session.transport.handleRequest(req, res);
       } else {
         res.writeHead(400);
         res.end('Missing or invalid session ID');
@@ -77,8 +86,8 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
     } else if (req.method === 'DELETE') {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
       if (sessionId && sessions.has(sessionId)) {
-        const transport = sessions.get(sessionId)!;
-        await transport.handleRequest(req, res);
+        const session = sessions.get(sessionId)!;
+        await session.transport.handleRequest(req, res);
       } else {
         res.writeHead(400);
         res.end('Missing or invalid session ID');
@@ -106,9 +115,9 @@ export async function startMcpHttpServer(port?: number): Promise<void> {
 export async function stopMcpHttpServer(): Promise<void> {
   if (!httpServer) return;
 
-  for (const transport of activeSessions.values()) {
+  for (const session of activeSessions.values()) {
     try {
-      await transport.close();
+      await session.transport.close();
     } catch {
       // ignore close errors
     }
@@ -128,10 +137,19 @@ export function getMcpHttpServerStatus(): { running: boolean; port: number } {
   return { running: httpServer !== null, port: currentPort };
 }
 
-export async function restartMcpHttpServerIfRunning(): Promise<void> {
-  const status = getMcpHttpServerStatus();
-  if (status.running) {
-    await stopMcpHttpServer();
-    await startMcpHttpServer(status.port);
+export function updateToolEnabled(toolName: string, enabled: boolean): void {
+  for (const session of activeSessions.values()) {
+    const handle = session.toolHandles.get(toolName);
+    if (handle) {
+      if (enabled) {
+        handle.enable();
+      } else {
+        handle.disable();
+      }
+    }
   }
+}
+
+export function updateToolMode(toolName: string, mode: ToolNotificationMode): void {
+  sharedToolModes[toolName] = mode;
 }

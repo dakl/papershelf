@@ -31,3 +31,5 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
   notarize: true
+  extendInfo:
+    NSUserNotificationAlertStyle: alert

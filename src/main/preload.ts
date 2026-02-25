@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { ElectronAPI } from '../shared/types';
 
 const api: ElectronAPI = {
@@ -29,6 +29,8 @@ const api: ElectronAPI = {
   reindexAllPapers: () => ipcRenderer.invoke('indexing:reindexAll'),
   reindexPaper: (paperId) => ipcRenderer.invoke('indexing:reindexPaper', paperId),
   importLocalPdfs: () => ipcRenderer.invoke('papers:importLocal'),
+  importFiles: (filePaths) => ipcRenderer.invoke('papers:importFiles', filePaths),
+  getPathForFile: (file) => webUtils.getPathForFile(file),
   updatePaperMetadata: (id, updates) => ipcRenderer.invoke('papers:updateMetadata', id, updates),
   resolveMetadata: (paperId) => ipcRenderer.invoke('papers:resolveMetadata', paperId),
 
@@ -78,6 +80,11 @@ const api: ElectronAPI = {
   setMcpToolEnabled: (toolName, enabled) => ipcRenderer.invoke('mcp:setToolEnabled', toolName, enabled),
   setMcpToolMode: (toolName, mode) => ipcRenderer.invoke('mcp:setToolMode', toolName, mode),
   getToolStats: () => ipcRenderer.invoke('mcp:getToolStats'),
+
+  onMcpToolsChanged: (callback) => {
+    ipcRenderer.on('mcp:tools-changed', callback);
+    return () => ipcRenderer.removeListener('mcp:tools-changed', callback);
+  },
 
   // Event listeners for data changes
   onCollectionsChanged: (callback) => {
