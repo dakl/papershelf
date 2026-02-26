@@ -92,6 +92,12 @@ The full path for surfacing new backend data in the renderer:
 - `DEFAULT_COLOR`: `#007AFF` (macOS system blue)
 - `COLOR_PALETTE`: 8 macOS system colors (renderer only)
 
+### Development Platforms
+
+- **macOS**: Install deps with `npm install` and run directly — no extra tooling needed
+- **Linux**: Use the Nix flake (`flake.nix`) which provides all Electron runtime deps (GTK, X11, Mesa, etc.) and native module build tools. Use `nix develop` for a dev shell or `nix run` to start dev mode directly
+- Releases are macOS-only (Apple Silicon) — no Linux distributable is built yet
+
 ### Commands
 
 - `npm run build` — build main + renderer
