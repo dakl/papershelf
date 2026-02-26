@@ -8,30 +8,6 @@ Download the latest `.dmg` from [Releases](https://github.com/dakl/papershelf/re
 
 > Requires macOS (Apple Silicon). The app is signed and notarized.
 
-### Run with Nix flake
-
-If you have [Nix](https://nixos.org/) with flakes enabled, you can run PaperShelf directly from the repository without installing system dependencies manually:
-
-```bash
-# Start the development environment
-nix run github:dakl/papershelf#default
-
-# Or drop into a dev shell with all dependencies available
-nix develop github:dakl/papershelf
-npm install
-npm run dev
-```
-
-Run from a local clone:
-
-```bash
-git clone https://github.com/dakl/papershelf.git
-cd papershelf
-nix run .#default      # start the app
-nix develop            # enter the dev shell
-```
-
-> Tested on Linux. macOS (Darwin) support is included but untested.
 
 ## Features
 
@@ -88,6 +64,8 @@ Port 3847 in production, 13847 in development.
 
 ## Development
 
+### macOS
+
 ```bash
 npm install          # also runs @electron/rebuild for better-sqlite3
 
@@ -98,6 +76,22 @@ npm run test         # run tests (vitest)
 npm run lint         # biome check
 npm run build        # build main + renderer
 ```
+
+### Linux (Nix)
+
+On Linux, use the [Nix flake](https://nixos.org/) to get all Electron runtime dependencies (GTK, X11, Mesa, etc.) and native module build tools:
+
+```bash
+# Option 1: run dev mode directly
+nix run github:dakl/papershelf
+
+# Option 2: enter a dev shell, then use npm as usual
+nix develop github:dakl/papershelf
+npm install
+PAPERSHELF_DATA_DIR=/tmp/papershelf-dev npm run dev
+```
+
+From a local clone, use `nix run .` or `nix develop` instead.
 
 ## Tech stack
 
