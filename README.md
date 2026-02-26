@@ -8,6 +8,31 @@ Download the latest `.dmg` from [Releases](https://github.com/dakl/papershelf/re
 
 > Requires macOS (Apple Silicon). The app is signed and notarized.
 
+### Run with Nix flake
+
+If you have [Nix](https://nixos.org/) with flakes enabled, you can run PaperShelf directly from the repository without installing system dependencies manually:
+
+```bash
+# Start the development environment
+nix run github:dakl/papershelf#default
+
+# Or drop into a dev shell with all dependencies available
+nix develop github:dakl/papershelf
+npm install
+npm run dev
+```
+
+Run from a local clone:
+
+```bash
+git clone https://github.com/dakl/papershelf.git
+cd papershelf
+nix run .#default      # start the app
+nix develop            # enter the dev shell
+```
+
+> Tested on Linux. macOS (Darwin) support is included but untested.
+
 ## Features
 
 - **arXiv search** -- find papers and save them to your library with one click
