@@ -49,7 +49,7 @@
 
         # Common dependencies for both platforms
         commonDeps = with pkgs; [
-          nodejs_22
+          nodejs_20
           python3
           gnumake
           pkg-config
@@ -90,7 +90,7 @@
           cd "$PROJECT_DIR"
 
           # Set up environment
-          export PATH="${pkgs.nodejs_22}/bin:$PROJECT_DIR/node_modules/.bin:$PATH"
+          export PATH="${pkgs.nodejs_20}/bin:$PROJECT_DIR/node_modules/.bin:$PATH"
           export npm_config_build_from_source=true
           export SQLITE3_INCLUDE_DIR="${pkgs.sqlite.dev}/include"
           export SQLITE3_LIB_DIR="${pkgs.sqlite.out}/lib"
@@ -102,12 +102,12 @@
           # Install dependencies if needed
           if [ ! -d "node_modules" ]; then
             echo "Installing dependencies..."
-            ${pkgs.nodejs_22}/bin/npm install
+            ${pkgs.nodejs_20}/bin/npm install
           fi
 
           # Run the app
           echo "Starting PaperShelf..."
-          exec ${pkgs.nodejs_22}/bin/npm run dev
+          exec ${pkgs.nodejs_20}/bin/npm run dev
         '';
 
         # Build script (builds but doesn't run)
@@ -122,7 +122,7 @@
 
           cd "$PROJECT_DIR"
 
-          export PATH="${pkgs.nodejs_22}/bin:$PROJECT_DIR/node_modules/.bin:$PATH"
+          export PATH="${pkgs.nodejs_20}/bin:$PROJECT_DIR/node_modules/.bin:$PATH"
           export npm_config_build_from_source=true
           export SQLITE3_INCLUDE_DIR="${pkgs.sqlite.dev}/include"
           export SQLITE3_LIB_DIR="${pkgs.sqlite.out}/lib"
@@ -132,11 +132,11 @@
 
           if [ ! -d "node_modules" ]; then
             echo "Installing dependencies..."
-            ${pkgs.nodejs_22}/bin/npm install
+            ${pkgs.nodejs_20}/bin/npm install
           fi
 
           echo "Building PaperShelf..."
-          ${pkgs.nodejs_22}/bin/npm run build
+          ${pkgs.nodejs_20}/bin/npm run build
           echo "Build complete! Output in dist/"
         '';
       in
