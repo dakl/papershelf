@@ -2,11 +2,12 @@ import { expect, test } from './fixtures';
 
 test('Cmd+F opens search bar in PDF viewer', async ({ electronApp, window }) => {
   // Create a test PDF and seed a paper — all inside the main process to avoid path issues
+  // Main process is CJS so we must use require(), not dynamic import()
   await electronApp.evaluate(async () => {
-    const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
-    const fs = await import('fs');
-    const path = await import('path');
-    const os = await import('os');
+    const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
 
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
