@@ -56,21 +56,9 @@ test('Cmd+F opens search bar in PDF viewer', async ({ electronApp, window }) => 
   await expect(window.getByText('Attention Is All You Need').first()).toBeVisible({ timeout: 5000 });
   await window.getByText('Attention Is All You Need').first().click();
 
-  // Wait for PDF to fully render — "Loading PDF..." should disappear
-  await expect(window.getByText('Loading PDF...')).toBeVisible({ timeout: 5000 });
-  await expect(window.getByText('Loading PDF...')).not.toBeVisible({ timeout: 15000 });
-
-  // Verify we didn't get an error (e.g., "PDF file not found")
-  const errorVisible = await window
-    .getByText('PDF file not found')
-    .isVisible()
-    .catch(() => false);
-  if (errorVisible) {
-    throw new Error('PDF failed to load — file not found');
-  }
-
-  // Wait for text layer to render
-  await window.locator('.textLayer span').first().waitFor({ timeout: 15000 });
+  // Wait for PDF to fully render — the loading indicator is transient and may
+  // disappear before we can assert on it, so just wait for the text layer
+  await window.locator('.textLayer span').first().waitFor({ timeout: 30000 });
 
   // Take a screenshot of the PDF viewer before search
   await window.screenshot({ path: 'test-results/pdf-viewer-before-search.png' });
