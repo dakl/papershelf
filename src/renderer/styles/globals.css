@@ -88,6 +88,29 @@
   font-size: 12px;
 }
 
+/* PDF text search highlights */
+.pdf-search-highlight {
+  background: rgba(255, 200, 0, 0.35);
+  border-radius: 1px;
+  mix-blend-mode: multiply;
+}
+
+.pdf-search-highlight-current {
+  background: rgba(255, 150, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  .pdf-search-highlight {
+    background: rgba(255, 200, 0, 0.3);
+    mix-blend-mode: screen;
+  }
+
+  .pdf-search-highlight-current {
+    background: rgba(255, 150, 0, 0.5);
+    mix-blend-mode: screen;
+  }
+}
+
 @keyframes toast-slide-up {
   from {
     opacity: 0;

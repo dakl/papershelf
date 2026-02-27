@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { ConfirmPopup } from './ConfirmPopup';
 import { HighlightIcon, StickyNoteIcon } from './Icons';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
+import { PdfSearchBar } from './pdf/PdfSearchBar';
 import { usePdfDocument } from './pdf/usePdfDocument';
 import { ShortcutHint } from './ShortcutHint';
 
@@ -198,6 +199,7 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
   const [highlightToolbar, setHighlightToolbar] = useState<HighlightToolbarState | null>(null);
   const [stickyNotePopup, setStickyNotePopup] = useState<StickyNotePopupState | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   const isPinching = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -409,10 +411,16 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     setVisualScale(1.0);
   }, [prepareScaleCommit]);
 
+  const closeSearch = useCallback(() => setShowSearch(false), []);
+
   // Cmd+/Cmd- keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (showSearch) {
+          setShowSearch(false);
+          return;
+        }
         setAnnotationMode('read');
         setHighlightToolbar(null);
         setStickyNotePopup(null);
@@ -420,7 +428,10 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
         return;
       }
       if (!event.metaKey) return;
-      if (event.key === '=' || event.key === '+') {
+      if (event.key === 'f') {
+        event.preventDefault();
+        setShowSearch(true);
+      } else if (event.key === '=' || event.key === '+') {
         event.preventDefault();
         zoomIn();
       } else if (event.key === '-') {
@@ -433,7 +444,7 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoomIn, zoomOut, zoomReset]);
+  }, [zoomIn, zoomOut, zoomReset, showSearch]);
 
   // Pinch-to-zoom
   useEffect(() => {
@@ -745,7 +756,8 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
         )}
       </div>
 
-      <div ref={containerRef} className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900">
+      <div ref={containerRef} className="relative flex-1 overflow-auto bg-gray-100 dark:bg-gray-900">
+        {showSearch && <PdfSearchBar containerRef={containerRef} onClose={closeSearch} />}
         <div ref={contentRef} style={{ willChange: 'transform' }}>
           {pages.map((page, index) => (
             <PdfPage
