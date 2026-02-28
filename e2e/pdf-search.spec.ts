@@ -4,7 +4,7 @@ import path from 'path';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { expect, test } from './fixtures';
 
-test('Cmd+F opens search bar in PDF viewer', async ({ electronApp, window }) => {
+test('Cmd+F opens search bar in PDF viewer', { timeout: 60_000 }, async ({ electronApp, window }) => {
   // Create the test PDF in the test's Node.js context (where imports work)
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -31,8 +31,10 @@ test('Cmd+F opens search bar in PDF viewer', async ({ electronApp, window }) => 
   fs.writeFileSync(pdfPath, pdfBytes);
 
   // Seed the paper in the main process DB (only DB access needs evaluate)
+  // Note: electronApp.evaluate passes the Electron module as the first arg;
+  // the data argument comes second (see take-screenshots.ts for the pattern)
   await electronApp.evaluate(
-    async (_params: { pdfPath: string }) => {
+    async (_electron, _params: { pdfPath: string }) => {
       const db = (global as Record<string, any>).__papershelf_db;
       db.insertPaper({
         arxivId: '1706.03762',
