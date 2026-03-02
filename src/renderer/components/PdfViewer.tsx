@@ -427,7 +427,17 @@ export function PdfViewer({
     setVisualScale(1.0);
   }, [prepareScaleCommit]);
 
-  const closeSearch = useCallback(() => setShowSearch(false), []);
+  const closeSearch = useCallback(() => {
+    setShowSearch(false);
+    searchNavRef.current = null;
+  }, []);
+  const searchNavRef = useRef<{ goToNext: () => void; goToPrev: () => void } | null>(null);
+  const handleSearchNavigate = useCallback(
+    (handlers: { goToNext: () => void; goToPrev: () => void }) => {
+      searchNavRef.current = handlers;
+    },
+    [],
+  );
 
   // Pinch-to-zoom
   useEffect(() => {
@@ -697,6 +707,16 @@ export function PdfViewer({
           return;
         }
       }
+      // Cmd+G / Cmd+Shift+G — find next/prev (window-level so it works without search bar focus)
+      if (event.metaKey && event.key === 'g') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          searchNavRef.current?.goToPrev();
+        } else {
+          searchNavRef.current?.goToNext();
+        }
+        return;
+      }
       // Remappable shortcuts via store
       const keyString = buildKeyString(event);
       if (!keyString) return;
@@ -831,7 +851,7 @@ export function PdfViewer({
       </div>
 
       <div className="relative flex-1">
-        {showSearch && <PdfSearchBar containerRef={containerRef} onClose={closeSearch} />}
+        {showSearch && <PdfSearchBar key={paperId} containerRef={containerRef} onClose={closeSearch} onNavigate={handleSearchNavigate} />}
         <div ref={containerRef} className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-gray-900">
         <div ref={contentRef} style={{ willChange: 'transform' }}>
           {pages.map((page, index) => (

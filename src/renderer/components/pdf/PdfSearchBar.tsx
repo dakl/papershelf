@@ -14,6 +14,7 @@ interface SearchMatch {
 interface PdfSearchBarProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
+  onNavigate?: (handlers: { goToNext: () => void; goToPrev: () => void }) => void;
 }
 
 function findMatchesInTextLayers(container: HTMLElement, query: string): SearchMatch[] {
@@ -97,7 +98,7 @@ function highlightMatches(matches: SearchMatch[], currentIndex: number) {
   }
 }
 
-export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
+export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBarProps) {
   const [query, setQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
   const [matches, setMatches] = useState<SearchMatch[]>([]);
@@ -160,6 +161,30 @@ export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
     if (matches.length === 0) return;
     setCurrentIndex((prev) => (prev - 1 + matches.length) % matches.length);
   }, [matches.length]);
+
+  // Expose navigation handlers to parent for window-level Cmd+G
+  useEffect(() => {
+    onNavigate?.({ goToNext, goToPrev });
+  }, [onNavigate, goToNext, goToPrev]);
+
+  // Re-run search when text layers are rebuilt (e.g. after zoom commit)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !activeQuery) return;
+
+    const observer = new MutationObserver((mutations) => {
+      const hasChildListChange = mutations.some((m) => m.type === 'childList');
+      if (!hasChildListChange) return;
+      const current = containerRef.current;
+      if (!current) return;
+      const found = findMatchesInTextLayers(current, activeQuery);
+      setMatches(found);
+      setCurrentIndex((prev) => Math.min(prev, Math.max(0, found.length - 1)));
+    });
+
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activeQuery, containerRef]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
