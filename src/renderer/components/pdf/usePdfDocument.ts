@@ -1,6 +1,9 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+// PDF.js appends CMap filenames to this URL prefix to fetch them on demand.
+import cMapSample from 'pdfjs-dist/cmaps/78-H.bcmap?url';
+const cMapUrl = cMapSample.replace(/[^/]+$/, '');
 import { useEffect, useRef, useState } from 'react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
@@ -53,7 +56,7 @@ export function usePdfDocument(paperId: string | null, pdfVersion: number, pdfUr
         try {
           const prevDoc = documentRef.current;
 
-          const doc = await pdfjsLib.getDocument({ data: copy }).promise;
+          const doc = await pdfjsLib.getDocument({ data: copy, cMapUrl, cMapPacked: true }).promise;
           if (cancelled) {
             doc.destroy();
             return;

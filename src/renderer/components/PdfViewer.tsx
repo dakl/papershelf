@@ -5,10 +5,11 @@ import { HighlightIcon, StickyNoteIcon } from './Icons';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { PdfSearchBar } from './pdf/PdfSearchBar';
 import { usePdfDocument } from './pdf/usePdfDocument';
-import { ShortcutHint } from './ShortcutHint';
+import { ShortcutHint, Tooltip } from './ShortcutHint';
+import { buildKeyString, useShortcutStore } from '../stores/shortcutStore';
 
 const MIN_SCALE = 0.5;
-const MAX_SCALE = 3.0;
+const MAX_SCALE = 10.0;
 const SCALE_STEP = 0.25;
 const PINCH_COMMIT_DELAY_MS = 150;
 const VIEWER_STATE_SAVE_DELAY_MS = 500;
@@ -188,8 +189,23 @@ function StickyNotePopup({
   );
 }
 
-export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfUrl?: string; arxivId?: string }) {
+export function PdfViewer({
+  paperId,
+  pdfUrl,
+  arxivId,
+  authors,
+  headerTitle,
+  headerActions,
+}: {
+  paperId?: string;
+  pdfUrl?: string;
+  arxivId?: string;
+  authors?: string[];
+  headerTitle?: React.ReactNode;
+  headerActions?: React.ReactNode;
+}) {
   const readOnly = !paperId;
+  const commandDown = useShortcutStore((s) => s.commandDown);
   const [scale, setScale] = useState(1.0);
   const [visualScale, setVisualScale] = useState(1.0);
   const [pdfVersion, setPdfVersion] = useState(0);
@@ -412,39 +428,6 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
   }, [prepareScaleCommit]);
 
   const closeSearch = useCallback(() => setShowSearch(false), []);
-
-  // Cmd+/Cmd- keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (showSearch) {
-          setShowSearch(false);
-          return;
-        }
-        setAnnotationMode('read');
-        setHighlightToolbar(null);
-        setStickyNotePopup(null);
-        setDeleteConfirm(null);
-        return;
-      }
-      if (!event.metaKey) return;
-      if (event.key === 'f') {
-        event.preventDefault();
-        setShowSearch(true);
-      } else if (event.key === '=' || event.key === '+') {
-        event.preventDefault();
-        zoomIn();
-      } else if (event.key === '-') {
-        event.preventDefault();
-        zoomOut();
-      } else if (event.key === '0') {
-        event.preventDefault();
-        zoomReset();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoomIn, zoomOut, zoomReset, showSearch]);
 
   // Pinch-to-zoom
   useEffect(() => {
@@ -685,6 +668,55 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
     setDeleteConfirm(null);
   }, []);
 
+  // Keyboard shortcuts (reads from shortcut store so remapping works)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (showSearch) {
+          setShowSearch(false);
+          return;
+        }
+        setAnnotationMode('read');
+        setHighlightToolbar(null);
+        setStickyNotePopup(null);
+        setDeleteConfirm(null);
+        return;
+      }
+      // Zoom: fixed Cmd+/- shortcuts (not remappable)
+      if (event.metaKey) {
+        if (event.key === '=' || event.key === '+') {
+          zoomIn();
+          return;
+        }
+        if (event.key === '-') {
+          zoomOut();
+          return;
+        }
+        if (event.key === '0') {
+          zoomReset();
+          return;
+        }
+      }
+      // Remappable shortcuts via store
+      const keyString = buildKeyString(event);
+      if (!keyString) return;
+      const shortcut = useShortcutStore.getState().shortcuts.find((s) => s.keys === keyString);
+      if (!shortcut) return;
+      switch (shortcut.id) {
+        case 'findInPdf':
+          event.preventDefault();
+          setShowSearch(true);
+          break;
+        case 'highlightSelection':
+          event.preventDefault();
+          toggleHighlightMode();
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch, toggleHighlightMode, zoomIn, zoomOut, zoomReset]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -703,61 +735,104 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="shrink-0 flex items-center justify-center gap-3 px-4 py-2 border-b border-mac-separator bg-white/60 dark:bg-black/20">
-        <button
-          onClick={zoomOut}
-          disabled={scale <= MIN_SCALE}
-          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
-        >
-          -
-        </button>
-        <button
-          onClick={zoomReset}
-          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-16 text-center"
-        >
-          {Math.round(visualScale * 100)}%
-        </button>
-        <button
-          onClick={zoomIn}
-          disabled={scale >= MAX_SCALE}
-          className="no-drag px-2 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
-        >
-          +
-        </button>
-        {numPages > 0 && <span className="text-mac-small text-gray-400 ml-2">{numPages} pages</span>}
-
-        {!readOnly && (
-          <div className="ml-4 border-l border-mac-separator pl-4 flex items-center gap-1">
-            <ShortcutHint shortcutId="highlightSelection" label="highlight">
+      <div className="shrink-0 px-4 pt-2 pb-1.5 border-b border-mac-separator flex flex-col gap-0.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex-1 min-w-0">{headerTitle}</div>
+          <div className="shrink-0 flex items-center gap-0.5 text-gray-400">
+            <button
+              onClick={zoomOut}
+              disabled={scale <= MIN_SCALE}
+              className="no-drag px-1 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+            >
+              -
+            </button>
+            <button
+              onClick={zoomReset}
+              className="no-drag px-0.5 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-center"
+            >
+              {Math.round(visualScale * 100)}%
+            </button>
+            <button
+              onClick={zoomIn}
+              disabled={scale >= MAX_SCALE}
+              className="no-drag px-1 py-0.5 rounded-sm text-mac-small font-medium hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+            >
+              +
+            </button>
+            {numPages > 0 && <span className="text-mac-small ml-0.5">{numPages}p</span>}
+          </div>
+        </div>
+        <div className="flex items-center min-w-0">
+          {authors && authors.length > 0 && (
+            <p className="flex-1 text-mac-small text-gray-500 truncate min-w-0">{authors.join(', ')}</p>
+          )}
+          {commandDown && (
+            <div className="shrink-0 flex items-center gap-1.5 mr-2" style={{ animation: 'shortcut-fade-in 100ms ease-out' }}>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
+                <span>⌘+/⌘−</span>
+                <span className="opacity-70">Zoom</span>
+              </span>
+              {showSearch && (
+                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
+                  <span>⌘G</span>
+                  <span className="opacity-70">Find Next/Prev</span>
+                </span>
+              )}
+            </div>
+          )}
+          <div className="shrink-0 flex items-center gap-0.5 ml-auto">
+            {headerActions}
+            <div className="w-px h-4 bg-mac-separator mx-1" />
+            <ShortcutHint shortcutId="findInPdf" label="Find In PDF">
               <button
-                onClick={toggleHighlightMode}
+                onClick={() => setShowSearch(true)}
                 className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
-                  annotationMode === 'highlight'
+                  showSearch
                     ? 'bg-blue-500 text-white'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
-                title={annotationMode === 'highlight' ? 'Exit highlight mode' : 'Enter highlight mode'}
               >
-                <HighlightIcon />
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="6" cy="6" r="4.25" />
+                  <path d="M9 9L12.5 12.5" />
+                </svg>
               </button>
             </ShortcutHint>
-            <button
-              onClick={toggleNoteMode}
-              className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
-                annotationMode === 'note'
-                  ? 'bg-blue-500 text-white'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
-              }`}
-              title={annotationMode === 'note' ? 'Exit note mode' : 'Enter note mode'}
-            >
-              <StickyNoteIcon />
-            </button>
+            {!readOnly && (
+              <>
+                <ShortcutHint shortcutId="highlightSelection" label="Highlight">
+                  <button
+                    onClick={toggleHighlightMode}
+                    className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
+                      annotationMode === 'highlight'
+                        ? 'bg-blue-500 text-white'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}
+                  >
+                    <HighlightIcon />
+                  </button>
+                </ShortcutHint>
+                <Tooltip label={annotationMode === 'note' ? 'Exit Sticky Note Mode' : 'Sticky Note'} position="below" align="end">
+                  <button
+                    onClick={toggleNoteMode}
+                    className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
+                      annotationMode === 'note'
+                        ? 'bg-blue-500 text-white'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}
+                  >
+                    <StickyNoteIcon />
+                  </button>
+                </Tooltip>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      <div ref={containerRef} className="relative flex-1 overflow-auto bg-gray-100 dark:bg-gray-900">
+      <div className="relative flex-1">
         {showSearch && <PdfSearchBar containerRef={containerRef} onClose={closeSearch} />}
+        <div ref={containerRef} className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-gray-900">
         <div ref={contentRef} style={{ willChange: 'transform' }}>
           {pages.map((page, index) => (
             <PdfPage
@@ -775,6 +850,7 @@ export function PdfViewer({ paperId, pdfUrl, arxivId }: { paperId?: string; pdfU
               pdfVersion={pdfVersion}
             />
           ))}
+        </div>
         </div>
       </div>
 

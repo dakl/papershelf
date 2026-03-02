@@ -99,6 +99,7 @@ function highlightMatches(matches: SearchMatch[], currentIndex: number) {
 
 export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
   const [query, setQuery] = useState('');
+  const [activeQuery, setActiveQuery] = useState('');
   const [matches, setMatches] = useState<SearchMatch[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,21 +110,30 @@ export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
     inputRef.current?.select();
   }, []);
 
-  // Find matches when query changes
+  // Auto-commit query when 2+ characters; clear when empty
+  useEffect(() => {
+    if (query.length >= 2) {
+      setActiveQuery(query);
+    } else if (query.length === 0) {
+      setActiveQuery('');
+    }
+  }, [query]);
+
+  // Find matches when activeQuery changes
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    if (!query) {
+    if (!activeQuery) {
       setMatches([]);
       setCurrentIndex(0);
       return;
     }
 
-    const found = findMatchesInTextLayers(container, query);
+    const found = findMatchesInTextLayers(container, activeQuery);
     setMatches(found);
     setCurrentIndex(0);
-  }, [query, containerRef]);
+  }, [activeQuery, containerRef]);
 
   // Highlight matches and scroll to current
   useEffect(() => {
@@ -159,10 +169,18 @@ export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
         onClose();
       } else if (event.key === 'Enter' && event.shiftKey) {
         event.preventDefault();
-        goToPrev();
+        if (query.length === 1 && activeQuery !== query) {
+          setActiveQuery(query);
+        } else {
+          goToPrev();
+        }
       } else if (event.key === 'Enter') {
         event.preventDefault();
-        goToNext();
+        if (query.length === 1 && activeQuery !== query) {
+          setActiveQuery(query);
+        } else {
+          goToNext();
+        }
       } else if (event.key === 'g' && event.metaKey && event.shiftKey) {
         event.preventDefault();
         goToPrev();
@@ -171,7 +189,7 @@ export function PdfSearchBar({ containerRef, onClose }: PdfSearchBarProps) {
         goToNext();
       }
     },
-    [onClose, goToNext, goToPrev],
+    [onClose, goToNext, goToPrev, query, activeQuery],
   );
 
   // Clean up highlights on unmount
