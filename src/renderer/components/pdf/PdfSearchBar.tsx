@@ -236,6 +236,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Find in PDF..."
+        aria-label="Search PDF text"
         className="w-48 text-mac-small bg-transparent border-none outline-none placeholder-gray-400"
       />
       {query && (

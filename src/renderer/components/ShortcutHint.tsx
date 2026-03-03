@@ -134,15 +134,23 @@ export function Tooltip({ label, children, position = 'below', align = 'center' 
   }, []);
 
   const isEnd = align === 'end';
-  const posClass = position === 'above'
-    ? (isEnd ? 'bottom-full right-0 mb-0.5' : 'bottom-full left-1/2 mb-0.5')
-    : (isEnd ? 'top-full right-0 mt-0.5' : 'top-full left-1/2 mt-0.5');
-  const transform = position === 'above' || position === 'below'
-    ? (isEnd ? undefined : 'translateX(-50%)')
-    : undefined;
-  const flexClass = position === 'above'
-    ? (isEnd ? 'flex-col items-end' : 'flex-col items-center')
-    : (isEnd ? 'flex-col items-end' : 'flex-col items-center');
+  const posClass =
+    position === 'above'
+      ? isEnd
+        ? 'bottom-full right-0 mb-0.5'
+        : 'bottom-full left-1/2 mb-0.5'
+      : isEnd
+        ? 'top-full right-0 mt-0.5'
+        : 'top-full left-1/2 mt-0.5';
+  const transform = position === 'above' || position === 'below' ? (isEnd ? undefined : 'translateX(-50%)') : undefined;
+  const flexClass =
+    position === 'above'
+      ? isEnd
+        ? 'flex-col items-end'
+        : 'flex-col items-center'
+      : isEnd
+        ? 'flex-col items-end'
+        : 'flex-col items-center';
   const arrow = position === 'above' ? ARROW_DOWN : ARROW;
 
   return (

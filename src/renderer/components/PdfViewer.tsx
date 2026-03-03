@@ -1,12 +1,12 @@
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { buildKeyString, useShortcutStore } from '../stores/shortcutStore';
 import { ConfirmPopup } from './ConfirmPopup';
 import { HighlightIcon, StickyNoteIcon } from './Icons';
 import { PdfPage, selectionRectsToQuadPoints } from './pdf/PdfPage';
 import { PdfSearchBar } from './pdf/PdfSearchBar';
 import { usePdfDocument } from './pdf/usePdfDocument';
 import { ShortcutHint, Tooltip } from './ShortcutHint';
-import { buildKeyString, useShortcutStore } from '../stores/shortcutStore';
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 10.0;
@@ -432,12 +432,9 @@ export function PdfViewer({
     searchNavRef.current = null;
   }, []);
   const searchNavRef = useRef<{ goToNext: () => void; goToPrev: () => void } | null>(null);
-  const handleSearchNavigate = useCallback(
-    (handlers: { goToNext: () => void; goToPrev: () => void }) => {
-      searchNavRef.current = handlers;
-    },
-    [],
-  );
+  const handleSearchNavigate = useCallback((handlers: { goToNext: () => void; goToPrev: () => void }) => {
+    searchNavRef.current = handlers;
+  }, []);
 
   // Pinch-to-zoom
   useEffect(() => {
@@ -695,14 +692,17 @@ export function PdfViewer({
       // Zoom: fixed Cmd+/- shortcuts (not remappable)
       if (event.metaKey) {
         if (event.key === '=' || event.key === '+') {
+          event.preventDefault();
           zoomIn();
           return;
         }
         if (event.key === '-') {
+          event.preventDefault();
           zoomOut();
           return;
         }
         if (event.key === '0') {
+          event.preventDefault();
           zoomReset();
           return;
         }
@@ -728,14 +728,16 @@ export function PdfViewer({
           setShowSearch(true);
           break;
         case 'highlightSelection':
-          event.preventDefault();
-          toggleHighlightMode();
+          if (!readOnly) {
+            event.preventDefault();
+            toggleHighlightMode();
+          }
           break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch, toggleHighlightMode, zoomIn, zoomOut, zoomReset]);
+  }, [showSearch, readOnly, toggleHighlightMode, zoomIn, zoomOut, zoomReset]);
 
   if (loading) {
     return (
@@ -787,7 +789,10 @@ export function PdfViewer({
             <p className="flex-1 text-mac-small text-gray-500 truncate min-w-0">{authors.join(', ')}</p>
           )}
           {commandDown && (
-            <div className="shrink-0 flex items-center gap-1.5 mr-2" style={{ animation: 'shortcut-fade-in 100ms ease-out' }}>
+            <div
+              className="shrink-0 flex items-center gap-1.5 mr-2"
+              style={{ animation: 'shortcut-fade-in 100ms ease-out' }}
+            >
               <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
                 <span>⌘+/⌘−</span>
                 <span className="opacity-70">Zoom</span>
@@ -812,7 +817,16 @@ export function PdfViewer({
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="6" cy="6" r="4.25" />
                   <path d="M9 9L12.5 12.5" />
                 </svg>
@@ -832,7 +846,11 @@ export function PdfViewer({
                     <HighlightIcon />
                   </button>
                 </ShortcutHint>
-                <Tooltip label={annotationMode === 'note' ? 'Exit Sticky Note Mode' : 'Sticky Note'} position="below" align="end">
+                <Tooltip
+                  label={annotationMode === 'note' ? 'Exit Sticky Note Mode' : 'Sticky Note'}
+                  position="below"
+                  align="end"
+                >
                   <button
                     onClick={toggleNoteMode}
                     className={`no-drag w-7 h-7 flex items-center justify-center rounded transition-colors ${
@@ -851,26 +869,33 @@ export function PdfViewer({
       </div>
 
       <div className="relative flex-1">
-        {showSearch && <PdfSearchBar key={paperId} containerRef={containerRef} onClose={closeSearch} onNavigate={handleSearchNavigate} />}
+        {showSearch && (
+          <PdfSearchBar
+            key={paperId ?? arxivId ?? pdfUrl}
+            containerRef={containerRef}
+            onClose={closeSearch}
+            onNavigate={handleSearchNavigate}
+          />
+        )}
         <div ref={containerRef} className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-gray-900">
-        <div ref={contentRef} style={{ willChange: 'transform' }}>
-          {pages.map((page, index) => (
-            <PdfPage
-              key={`page-${index + 1}`}
-              page={page}
-              paperId={paperId}
-              pageNumber={index + 1}
-              scale={scale}
-              annotationMode={annotationMode}
-              onPageLoaded={handlePageLoaded}
-              onTextSelected={handleTextSelected}
-              onPageClicked={handlePageClicked}
-              onAnnotationClicked={handleAnnotationClicked}
-              annotationMap={annotationMapRef}
-              pdfVersion={pdfVersion}
-            />
-          ))}
-        </div>
+          <div ref={contentRef} style={{ willChange: 'transform' }}>
+            {pages.map((page, index) => (
+              <PdfPage
+                key={`page-${index + 1}`}
+                page={page}
+                paperId={paperId}
+                pageNumber={index + 1}
+                scale={scale}
+                annotationMode={annotationMode}
+                onPageLoaded={handlePageLoaded}
+                onTextSelected={handleTextSelected}
+                onPageClicked={handlePageClicked}
+                onAnnotationClicked={handleAnnotationClicked}
+                annotationMap={annotationMapRef}
+                pdfVersion={pdfVersion}
+              />
+            ))}
+          </div>
         </div>
       </div>
 

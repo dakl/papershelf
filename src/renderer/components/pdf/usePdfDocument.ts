@@ -3,7 +3,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 // PDF.js appends CMap filenames to this URL prefix to fetch them on demand.
 import cMapSample from 'pdfjs-dist/cmaps/78-H.bcmap?url';
+
 const cMapUrl = cMapSample.replace(/[^/]+$/, '');
+
 import { useEffect, useRef, useState } from 'react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;

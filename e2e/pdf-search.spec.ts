@@ -30,6 +30,7 @@ test('Cmd+F opens search bar in PDF viewer', { timeout: 60_000 }, async ({ elect
   const pdfPath = path.join(tmpDir, 'test-paper.pdf');
   fs.writeFileSync(pdfPath, pdfBytes);
 
+  try {
   // Seed the paper in the main process DB (only DB access needs evaluate)
   // Note: electronApp.evaluate passes the Electron module as the first arg;
   // the data argument comes second (see take-screenshots.ts for the pattern)
@@ -94,4 +95,7 @@ test('Cmd+F opens search bar in PDF viewer', { timeout: 60_000 }, async ({ elect
 
   // Take screenshot after closing search (highlights should be gone)
   await window.screenshot({ path: 'test-results/pdf-search-closed.png' });
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 });
