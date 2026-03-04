@@ -218,7 +218,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
 
     const currentHighlight = container.querySelector('.pdf-search-highlight-current');
     if (currentHighlight) {
-      currentHighlight.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      currentHighlight.scrollIntoView({ block: 'center', behavior: 'auto' });
     }
   }, [currentIndex, matches, containerRef]);
 
@@ -249,7 +249,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
       if (!current) return;
       const found = findMatchesInTextLayers(current, activeQuery);
       setMatches(found);
-      setCurrentIndex((prev) => Math.min(prev, Math.max(0, found.length - 1)));
+      setCurrentIndex(0);
     });
 
     observer.observe(container, { childList: true, subtree: true });
@@ -320,6 +320,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
           disabled={matches.length === 0}
           className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
           title="Previous match (Shift+Enter)"
+          aria-label="Previous match"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M2 8L6 4L10 8" />
@@ -330,6 +331,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
           disabled={matches.length === 0}
           className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
           title="Next match (Enter)"
+          aria-label="Next match"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M2 4L6 8L10 4" />
