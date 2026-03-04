@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface SearchMatch {
+export const MAX_HIGHLIGHT_COUNT = 500;
+export const DEBOUNCE_MS = 150;
+
+export interface SearchMatch {
   /** The text layer <span> containing this match */
   span: HTMLElement;
   /** Character offset within the span's textContent where the match starts */
@@ -17,7 +20,7 @@ interface PdfSearchBarProps {
   onNavigate?: (handlers: { goToNext: () => void; goToPrev: () => void }) => void;
 }
 
-function findMatchesInTextLayers(container: HTMLElement, query: string): SearchMatch[] {
+export function findMatchesInTextLayers(container: HTMLElement, query: string): SearchMatch[] {
   if (!query) return [];
 
   const lowerQuery = query.toLowerCase();
@@ -49,13 +52,13 @@ function findMatchesInTextLayers(container: HTMLElement, query: string): SearchM
   return matches;
 }
 
-function clearHighlights(container: HTMLElement) {
+export function clearHighlights(container: HTMLElement) {
   for (const el of container.querySelectorAll('.pdf-search-highlight')) {
     el.remove();
   }
 }
 
-function highlightMatches(matches: SearchMatch[], currentIndex: number) {
+export function highlightMatches(matches: SearchMatch[], currentIndex: number) {
   // Group by page wrapper to batch DOM reads
   for (let i = 0; i < matches.length; i++) {
     const match = matches[i];
@@ -98,6 +101,64 @@ function highlightMatches(matches: SearchMatch[], currentIndex: number) {
   }
 }
 
+/**
+ * Return the [start, end) slice of matches to highlight,
+ * centered around currentIndex and capped at maxCount.
+ */
+export function getHighlightWindow(
+  matchCount: number,
+  currentIndex: number,
+  maxCount: number,
+): { start: number; end: number } {
+  if (matchCount <= maxCount) return { start: 0, end: matchCount };
+
+  const half = Math.floor(maxCount / 2);
+  let start = currentIndex - half;
+  let end = start + maxCount;
+
+  if (start < 0) {
+    start = 0;
+    end = maxCount;
+  } else if (end > matchCount) {
+    end = matchCount;
+    start = end - maxCount;
+  }
+
+  return { start, end };
+}
+
+/**
+ * Create a debounced setter with flush (for Enter) and cancel (for cleanup).
+ */
+export function createDebouncedSetter(
+  setter: (value: string) => void,
+  delayMs: number,
+): { update: (value: string) => void; flush: (value: string) => void; cancel: () => void } {
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+
+  function cancel() {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+  }
+
+  function update(value: string) {
+    cancel();
+    timerId = setTimeout(() => {
+      setter(value);
+      timerId = null;
+    }, delayMs);
+  }
+
+  function flush(value: string) {
+    cancel();
+    setter(value);
+  }
+
+  return { update, flush, cancel };
+}
+
 export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBarProps) {
   const [query, setQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
@@ -105,19 +166,24 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
   const [currentIndex, setCurrentIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Stable debounced setter for activeQuery
+  const debouncedRef = useRef(createDebouncedSetter(setActiveQuery, DEBOUNCE_MS));
+
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
     inputRef.current?.select();
   }, []);
 
-  // Auto-commit query when 2+ characters; clear when empty
+  // Debounced auto-commit query when 2+ characters; clear immediately when empty
   useEffect(() => {
     if (query.length >= 2) {
-      setActiveQuery(query);
+      debouncedRef.current.update(query);
     } else if (query.length === 0) {
+      debouncedRef.current.cancel();
       setActiveQuery('');
     }
+    return () => debouncedRef.current.cancel();
   }, [query]);
 
   // Find matches when activeQuery changes
@@ -136,7 +202,7 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
     setCurrentIndex(0);
   }, [activeQuery, containerRef]);
 
-  // Highlight matches and scroll to current
+  // Highlight matches (capped) and scroll to current
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -144,7 +210,11 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
     clearHighlights(container);
     if (matches.length === 0) return;
 
-    highlightMatches(matches, currentIndex);
+    const { start, end } = getHighlightWindow(matches.length, currentIndex, MAX_HIGHLIGHT_COUNT);
+    const windowMatches = matches.slice(start, end);
+    const adjustedIndex = currentIndex - start;
+
+    highlightMatches(windowMatches, adjustedIndex);
 
     const currentHighlight = container.querySelector('.pdf-search-highlight-current');
     if (currentHighlight) {
@@ -195,14 +265,14 @@ export function PdfSearchBar({ containerRef, onClose, onNavigate }: PdfSearchBar
       } else if (event.key === 'Enter' && event.shiftKey) {
         event.preventDefault();
         if (query.length === 1 && activeQuery !== query) {
-          setActiveQuery(query);
+          debouncedRef.current.flush(query);
         } else {
           goToPrev();
         }
       } else if (event.key === 'Enter') {
         event.preventDefault();
         if (query.length === 1 && activeQuery !== query) {
-          setActiveQuery(query);
+          debouncedRef.current.flush(query);
         } else {
           goToNext();
         }
