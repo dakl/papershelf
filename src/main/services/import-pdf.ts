@@ -5,6 +5,7 @@ import type { ImportBatchResult, LibraryPaper } from '../../shared/types';
 import { insertPaper } from '../db/papers';
 import { DataChangeEvent, eventEmitter } from '../event-emitter';
 import { extractText, getPapersDir } from '../pdf-processor';
+import { indexAllPapers } from './indexing-service';
 
 function titleFromFilename(filename: string): string {
   return path.basename(filename, '.pdf').replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -62,6 +63,13 @@ export async function importLocalPdfs(filePaths: string[]): Promise<ImportBatchR
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     }
+  }
+
+  // Trigger batch indexer after all imports complete
+  if (imported.length > 0) {
+    indexAllPapers().catch((err) => {
+      console.warn('Background indexing failed:', err);
+    });
   }
 
   return { imported, failed, totalCount: filePaths.length };

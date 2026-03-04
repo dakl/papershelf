@@ -107,7 +107,8 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   // --- Papers ---
 
   loadPapers: async (filter) => {
-    set({ loading: true });
+    const isInitialLoad = get().papers.length === 0;
+    if (isInitialLoad) set({ loading: true });
     const papers = await window.electronAPI.getPapers(filter);
     set({ papers, loading: false });
   },

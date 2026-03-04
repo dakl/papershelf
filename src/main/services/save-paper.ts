@@ -1,6 +1,7 @@
 import type { ArxivPaper, LibraryPaper } from '../../shared/types';
 import * as db from '../database';
 import { downloadAndExtractPdf } from '../pdf-processor';
+import { indexAllPapers } from './indexing-service';
 
 export interface SavePaperFromArxivResult {
   paper: LibraryPaper;
@@ -40,6 +41,11 @@ export async function savePaperFromArxivPaper(paper: ArxivPaper): Promise<SavePa
     pdfUrl: paper.pdfUrl,
     pdfPath,
     fullText,
+  });
+
+  // Trigger batch indexer (handles progress events and sequential processing)
+  indexAllPapers().catch((err) => {
+    console.warn('Background indexing failed:', err);
   });
 
   return { paper: saved, alreadyExisted: false, pdfDownloaded: pdfPath !== null, textExtracted: fullText !== null };

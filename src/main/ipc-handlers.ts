@@ -26,7 +26,9 @@ import {
 import { getDisabledTools, getToolModes, setDisabledTools, setMcpServerEnabled, setToolMode } from './mcp/tool-config';
 import { TOOL_METADATA } from './mcp/tools';
 import { fetchAndCachePdf, getDefaultPapersDir } from './pdf-processor';
+import { embedQuery } from './services/embedding-service';
 import { importLocalPdfs } from './services/import-pdf';
+import { indexAllPapers, indexPaper } from './services/indexing-service';
 import {
   addHighlightAnnotation,
   addStickyNoteAnnotation,
@@ -188,6 +190,32 @@ export function registerIpcHandlers(): void {
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Resolution failed' };
     }
+  });
+
+  // --- Semantic Search & Indexing ---
+  ipcMain.handle('search:semantic', async (_event, query: string) => {
+    try {
+      const queryEmbedding = await embedQuery(query);
+      return db.hybridSearch(query, queryEmbedding);
+    } catch {
+      // Fallback to FTS-only on embedding failure
+      const papers = db.searchLibrary(query);
+      return papers.map((paper) => ({ paper, score: 1, matchType: 'keyword' as const }));
+    }
+  });
+
+  ipcMain.handle('indexing:stats', () => {
+    return db.getIndexingStatsFromDb();
+  });
+
+  ipcMain.handle('indexing:reindexAll', () => {
+    indexAllPapers().catch((err) => {
+      console.warn('Reindex all failed:', err);
+    });
+  });
+
+  ipcMain.handle('indexing:reindexPaper', async (_event, paperId: string) => {
+    await indexPaper(paperId);
   });
 
   // --- Collections ---
@@ -518,6 +546,18 @@ export function registerIpcHandlers(): void {
   eventEmitter.on(DataChangeEvent.METADATA_RESOLUTION_PROGRESS, (progress) => {
     BrowserWindow.getAllWindows().forEach((window) => {
       window.webContents.send('data:metadata-resolution-progress', progress);
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.EMBEDDING_PROGRESS, (progress) => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send('data:embedding-progress', progress);
+    });
+  });
+
+  eventEmitter.on(DataChangeEvent.INDEXING_PROGRESS, (progress) => {
+    BrowserWindow.getAllWindows().forEach((window) => {
+      window.webContents.send('data:indexing-progress', progress);
     });
   });
 }

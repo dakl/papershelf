@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { PaperFilter } from '../../shared/types';
 import { usePaperStore } from '../stores/paperStore';
 import { toast } from '../stores/toastStore';
@@ -9,6 +9,8 @@ export function LibraryList() {
   const { sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder } = useUIStore();
   const { papers, selectedLibraryPaper, setSelectedLibraryPaper, loadPapers, loading, addTagToPaper, tags } =
     usePaperStore();
+  const [activelyIndexingPaperId, setActivelyIndexingPaperId] = useState<string | null>(null);
+  const [indexingActive, setIndexingActive] = useState(false);
 
   useEffect(() => {
     const filter: PaperFilter = { view: sidebarView as PaperFilter['view'], sortBy, sortOrder };
@@ -20,10 +22,27 @@ export function LibraryList() {
     }
     loadPapers(filter);
 
-    const unsubscribe = window.electronAPI.onPapersChanged(() => {
+    const unsubPapers = window.electronAPI.onPapersChanged(() => {
       loadPapers(filter);
     });
-    return unsubscribe;
+    const unsubIndexing = window.electronAPI.onIndexingProgress((progress) => {
+      if (progress.status === 'indexing') {
+        setActivelyIndexingPaperId(progress.paperId);
+        setIndexingActive(true);
+      } else if (progress.status === 'complete') {
+        setActivelyIndexingPaperId(null);
+        setIndexingActive(false);
+        loadPapers(filter);
+      } else {
+        // 'indexed' or 'error' — clear active paper, refresh to pick up new DB status
+        setActivelyIndexingPaperId(null);
+        loadPapers(filter);
+      }
+    });
+    return () => {
+      unsubPapers();
+      unsubIndexing();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarView, selectedCollectionId, selectedTagId, sortBy, sortOrder, loadPapers]);
 
@@ -77,6 +96,11 @@ export function LibraryList() {
           categories={paper.categories}
           isSelected={selectedLibraryPaper?.id === paper.id}
           isFavorite={paper.isFavorite}
+          embeddingStatus={paper.embeddingStatus}
+          isActivelyIndexing={paper.id === activelyIndexingPaperId}
+          isQueuedForIndexing={
+            indexingActive && paper.embeddingStatus !== 'complete' && paper.id !== activelyIndexingPaperId
+          }
           onClick={() => {
             setSelectedLibraryPaper(paper);
             useUIStore.getState().setFocusedPaperIndex(index);

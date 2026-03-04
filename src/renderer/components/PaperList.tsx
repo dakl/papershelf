@@ -1,6 +1,7 @@
 import { useSearch } from '../hooks/useSearch';
 import { usePaperStore } from '../stores/paperStore';
 import { useUIStore } from '../stores/uiStore';
+import { IndexNewButton } from './IndexNewButton';
 import { LibraryList } from './LibraryList';
 import { LibrarySearchResults } from './LibrarySearchResults';
 import { NavigationHints } from './NavigationHints';
@@ -66,6 +67,7 @@ export function PaperList({ width }: { width: number }) {
               {getViewTitle(sidebarView, collections, tags, selectedCollectionId, selectedTagId)}
             </h2>
             <NavigationHints panel="list" />
+            <IndexNewButton />
             <SortControl
               sortBy={sortBy}
               sortOrder={sortOrder}

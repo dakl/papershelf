@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (e.g. 0.1.0)"
+        description: "Release version (e.g. 1.2.0 or 1.2.0-beta.1)"
         required: true
         type: string
+      prerelease:
+        description: "Mark as pre-release (beta)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -62,7 +67,12 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --mac --arm64 --publish always
+        run: |
+          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+            npx electron-builder --mac --arm64 --publish always -c.publish.releaseType=prerelease
+          else
+            npx electron-builder --mac --arm64 --publish always
+          fi
 
       - name: Add release notes
         env:
@@ -72,3 +82,9 @@ jobs:
             -f tag_name="v${{ github.event.inputs.version }}" \
             --jq '.body')
           gh release edit "v${{ github.event.inputs.version }}" --notes "$NOTES"
+
+      - name: Mark as pre-release
+        if: ${{ github.event.inputs.prerelease == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "v${{ github.event.inputs.version }}" --prerelease
