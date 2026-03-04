@@ -5,8 +5,8 @@ import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 import { useUIStore } from '../stores/uiStore';
 import { ConfirmPopup } from './ConfirmPopup';
 import { FolderPlusIcon, InfoCircleIcon, StarIcon, StarOutlineIcon, TagPlusIcon } from './Icons';
-
 import { PdfViewer } from './PdfViewer';
+import { Tooltip } from './ShortcutHint';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -117,124 +117,6 @@ export function PaperDetail() {
 
   return (
     <div className="flex-1 flex flex-col bg-white/40 dark:bg-black/20 overflow-hidden">
-      {/* Compact header */}
-      <div className="shrink-0 px-4 py-2 border-b border-mac-separator">
-        <div className="flex items-center gap-2 min-w-0">
-          {isLibraryPaper && (
-            <button
-              onClick={handleToggleFavorite}
-              className="no-drag shrink-0 text-sm hover:scale-110 transition-transform"
-              title={`${(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}${favoriteHint}`}
-            >
-              {(paper as { isFavorite: boolean }).isFavorite ? (
-                <StarIcon className="text-yellow-500" />
-              ) : (
-                <StarOutlineIcon className="text-gray-400" />
-              )}
-            </button>
-          )}
-
-          <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
-
-          {isLibraryPaper && (
-            <>
-              <div ref={headerCollectionRef} className="relative">
-                <button
-                  onClick={() => {
-                    setShowHeaderCollectionPicker((v) => !v);
-                    setShowHeaderTagPicker(false);
-                    setShowInfoPopover(false);
-                    setShowCollectionPicker(false);
-                    setShowTagPicker(false);
-                  }}
-                  className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
-                  title="Add to collection"
-                >
-                  <FolderPlusIcon />
-                </button>
-                {showHeaderCollectionPicker && collections.length > 0 && (
-                  <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
-                    {collections.map((col) => {
-                      const isIn = paperCollections.some((c) => c.id === col.id);
-                      return (
-                        <button
-                          key={col.id}
-                          onClick={() => handleToggleCollection(col.id)}
-                          className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
-                        >
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
-                          <span className="flex-1">{col.name}</span>
-                          {isIn && <span className="text-mac-accent">✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div ref={headerTagRef} className="relative">
-                <button
-                  onClick={() => {
-                    setShowHeaderTagPicker((v) => !v);
-                    setShowHeaderCollectionPicker(false);
-                    setShowInfoPopover(false);
-                    setShowCollectionPicker(false);
-                    setShowTagPicker(false);
-                  }}
-                  className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
-                  title="Add tag"
-                >
-                  <TagPlusIcon />
-                </button>
-                {showHeaderTagPicker && tags.length > 0 && (
-                  <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
-                    {tags.map((tag) => {
-                      const has = paperTags.some((t) => t.id === tag.id);
-                      return (
-                        <button
-                          key={tag.id}
-                          onClick={() => handleToggleTag(tag.id)}
-                          className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
-                        >
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                          <span className="flex-1">{tag.name}</span>
-                          {has && <span className="text-mac-accent">✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          <InfoPopoverButton
-            open={showInfoPopover}
-            onToggle={() => {
-              setShowInfoPopover((v) => !v);
-              setShowHeaderCollectionPicker(false);
-              setShowHeaderTagPicker(false);
-            }}
-            onClose={closeInfoPopover}
-            paper={paper}
-            isLibraryPaper={isLibraryPaper}
-            paperCollections={paperCollections}
-            paperTags={paperTags}
-            collections={collections}
-            tags={tags}
-            showCollectionPicker={showCollectionPicker}
-            setShowCollectionPicker={setShowCollectionPicker}
-            showTagPicker={showTagPicker}
-            setShowTagPicker={setShowTagPicker}
-            handleToggleCollection={handleToggleCollection}
-            handleToggleTag={handleToggleTag}
-            onDelete={paperId ? () => deletePaper(paperId) : undefined}
-          />
-        </div>
-
-        <p className="text-mac-small text-gray-500 truncate mt-0.5">{paper.authors.join(', ')}</p>
-      </div>
-
       {/* Content: always PDF */}
       <div className="flex-1 min-h-0 flex flex-col">
         {hasPdf ? (
@@ -242,6 +124,125 @@ export function PaperDetail() {
             paperId={paperId ?? undefined}
             pdfUrl={hasPdfUrl ? paper.pdfUrl : undefined}
             arxivId={hasPdfUrl ? paper.id : undefined}
+            authors={paper.authors}
+            headerTitle={
+              <div className="flex items-center gap-2 min-w-0">
+                {isLibraryPaper && (
+                  <button
+                    onClick={handleToggleFavorite}
+                    className="no-drag shrink-0 text-sm hover:scale-110 transition-transform"
+                    title={`${(paper as { isFavorite: boolean }).isFavorite ? 'Remove from favorites' : 'Add to favorites'}${favoriteHint}`}
+                  >
+                    {(paper as { isFavorite: boolean }).isFavorite ? (
+                      <StarIcon className="text-yellow-500" />
+                    ) : (
+                      <StarOutlineIcon className="text-gray-400" />
+                    )}
+                  </button>
+                )}
+                <h1 className="flex-1 text-mac-body font-semibold truncate min-w-0">{paper.title}</h1>
+              </div>
+            }
+            headerActions={
+              <>
+                {isLibraryPaper && (
+                  <>
+                    <div ref={headerCollectionRef} className="relative">
+                      <Tooltip label="Add To Collection" position="below" align="end">
+                        <button
+                          onClick={() => {
+                            setShowHeaderCollectionPicker((v) => !v);
+                            setShowHeaderTagPicker(false);
+                            setShowInfoPopover(false);
+                            setShowCollectionPicker(false);
+                            setShowTagPicker(false);
+                          }}
+                          className="no-drag w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+                        >
+                          <FolderPlusIcon />
+                        </button>
+                      </Tooltip>
+                      {showHeaderCollectionPicker && collections.length > 0 && (
+                        <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
+                          {collections.map((col) => {
+                            const isIn = paperCollections.some((c) => c.id === col.id);
+                            return (
+                              <button
+                                key={col.id}
+                                onClick={() => handleToggleCollection(col.id)}
+                                className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
+                                <span className="flex-1">{col.name}</span>
+                                {isIn && <span className="text-mac-accent">✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div ref={headerTagRef} className="relative">
+                      <Tooltip label="Add Tag" position="below" align="end">
+                        <button
+                          onClick={() => {
+                            setShowHeaderTagPicker((v) => !v);
+                            setShowHeaderCollectionPicker(false);
+                            setShowInfoPopover(false);
+                            setShowCollectionPicker(false);
+                            setShowTagPicker(false);
+                          }}
+                          className="no-drag w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+                        >
+                          <TagPlusIcon />
+                        </button>
+                      </Tooltip>
+                      {showHeaderTagPicker && tags.length > 0 && (
+                        <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-gray-900 rounded-md shadow-lg border border-mac-separator z-10 py-1">
+                          {tags.map((tag) => {
+                            const has = paperTags.some((t) => t.id === tag.id);
+                            return (
+                              <button
+                                key={tag.id}
+                                onClick={() => handleToggleTag(tag.id)}
+                                className="w-full text-left px-3 py-1.5 text-mac-small hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                                <span className="flex-1">{tag.name}</span>
+                                {has && <span className="text-mac-accent">✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <InfoPopoverButton
+                  open={showInfoPopover}
+                  onToggle={() => {
+                    setShowInfoPopover((v) => !v);
+                    setShowHeaderCollectionPicker(false);
+                    setShowHeaderTagPicker(false);
+                  }}
+                  onClose={closeInfoPopover}
+                  paper={paper}
+                  isLibraryPaper={isLibraryPaper}
+                  paperCollections={paperCollections}
+                  paperTags={paperTags}
+                  collections={collections}
+                  tags={tags}
+                  showCollectionPicker={showCollectionPicker}
+                  setShowCollectionPicker={setShowCollectionPicker}
+                  showTagPicker={showTagPicker}
+                  setShowTagPicker={setShowTagPicker}
+                  handleToggleCollection={handleToggleCollection}
+                  handleToggleTag={handleToggleTag}
+                  onDelete={paperId ? () => deletePaper(paperId) : undefined}
+                />
+              </>
+            }
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400 text-mac-body">No PDF available</div>
@@ -375,14 +376,15 @@ function InfoPopoverButton({
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={onToggle}
-        className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
-        title="Paper info"
-      >
-        <InfoCircleIcon width={16} height={16} />
-      </button>
+      <Tooltip label="Paper Info" position="below" align="end">
+        <button
+          ref={buttonRef}
+          onClick={onToggle}
+          className="no-drag shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500"
+        >
+          <InfoCircleIcon width={16} height={16} />
+        </button>
+      </Tooltip>
 
       {open && (
         <div

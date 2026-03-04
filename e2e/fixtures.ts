@@ -13,7 +13,10 @@ export const test = base.extend<TestFixtures>({
     const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'papershelf-e2e-'));
 
     const electronApp = await _electron.launch({
-      args: [path.join(__dirname, '..', 'dist', 'main', 'main', 'index.js')],
+      args: [
+        path.join(__dirname, '..', 'dist', 'main', 'main', 'index.js'),
+        '--disable-gpu',
+      ],
       env: {
         ...process.env,
         PAPERSHELF_DATA_DIR: testDataDir,

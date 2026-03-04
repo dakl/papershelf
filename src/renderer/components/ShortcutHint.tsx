@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useRef, useState } from 'react';
 import { formatKeys, useShortcutStore } from '../stores/shortcutStore';
 
-const HOVER_DELAY_MS = 600;
+const HOVER_DELAY_MS = 400;
 
 interface ShortcutHintProps {
   shortcutId: string;
@@ -105,6 +105,75 @@ export function ShortcutHint({
             <>
               {arrowFor(position)}
               {showShortcut ? shortcutPill : hoverTooltip}
+            </>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
+interface TooltipProps {
+  label: string;
+  children: ReactNode;
+  position?: 'below' | 'above';
+  align?: 'center' | 'end';
+}
+
+export function Tooltip({ label, children, position = 'below', align = 'center' }: TooltipProps) {
+  const [hovered, setHovered] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onMouseEnter = useCallback(() => {
+    timerRef.current = setTimeout(() => setHovered(true), HOVER_DELAY_MS);
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setHovered(false);
+  }, []);
+
+  const isEnd = align === 'end';
+  const posClass =
+    position === 'above'
+      ? isEnd
+        ? 'bottom-full right-0 mb-0.5'
+        : 'bottom-full left-1/2 mb-0.5'
+      : isEnd
+        ? 'top-full right-0 mt-0.5'
+        : 'top-full left-1/2 mt-0.5';
+  const transform = position === 'above' || position === 'below' ? (isEnd ? undefined : 'translateX(-50%)') : undefined;
+  const flexClass =
+    position === 'above'
+      ? isEnd
+        ? 'flex-col items-end'
+        : 'flex-col items-center'
+      : isEnd
+        ? 'flex-col items-end'
+        : 'flex-col items-center';
+  const arrow = position === 'above' ? ARROW_DOWN : ARROW;
+
+  return (
+    <span className="relative inline-flex" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {children}
+      {hovered && (
+        <span
+          className={`absolute ${posClass} pointer-events-none z-50 flex ${flexClass}`}
+          style={{ transform, animation: 'shortcut-fade-in 100ms ease-out' }}
+        >
+          {position === 'above' ? (
+            <>
+              <span className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
+                {label}
+              </span>
+              {arrow}
+            </>
+          ) : (
+            <>
+              {arrow}
+              <span className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium leading-none bg-gray-800/90 text-white dark:bg-gray-200/90 dark:text-gray-900 shadow-xs">
+                {label}
+              </span>
             </>
           )}
         </span>
