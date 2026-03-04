@@ -85,12 +85,14 @@ test('Cmd+F opens search bar in PDF viewer', { timeout: 60_000 }, async ({ elect
   // Take screenshot showing search results with highlights
   await window.screenshot({ path: 'test-results/pdf-search-results.png' });
 
-  // Navigate to next match with Enter
-  await searchInput.press('Enter');
+  // Navigate to next match with Enter.
+  // Use page.keyboard instead of locator.press — Electron's input handling
+  // can hang on locator.press when the keydown handler triggers scrollIntoView.
+  await window.keyboard.press('Enter');
   await window.screenshot({ path: 'test-results/pdf-search-next-match.png' });
 
   // Close search with Escape
-  await searchInput.press('Escape');
+  await window.keyboard.press('Escape');
   await expect(searchInput).not.toBeVisible();
 
   // Take screenshot after closing search (highlights should be gone)
