@@ -1,0 +1,377 @@
+{
+  "papers": [
+    {
+      "arxivId": "1706.03762",
+      "title": "Attention Is All You Need",
+      "authors": ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit", "Llion Jones", "Aidan N. Gomez", "Lukasz Kaiser", "Illia Polosukhin"],
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs.",
+      "categories": ["cs.CL", "cs.LG"],
+      "bodyExcerpt": "The Transformer follows an encoder-decoder structure using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder. The encoder maps an input sequence of symbol representations to a sequence of continuous representations. Given these continuous representations, the decoder then generates an output sequence of symbols one element at a time. At each step the model is auto-regressive, consuming the previously generated symbols as additional input when generating the next.\n\nThe encoder is composed of a stack of N=6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple, position-wise fully connected feed-forward network. We employ a residual connection around each of the two sub-layers, followed by layer normalization.\n\nAn attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is computed as a weighted sum of the values, where the weight assigned to each value is computed by a compatibility function of the query with the corresponding key. We call our particular attention Scaled Dot-Product Attention. The input consists of queries and keys of dimension d_k, and values of dimension d_v.",
+      "publishedDate": "2017-06-12"
+    },
+    {
+      "arxivId": "1810.04805",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "authors": ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"],
+      "abstract": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT obtains new state-of-the-art results on eleven natural language processing tasks, pushing the GLUE score to 80.5%, MultiNLI accuracy to 86.7%, SQuAD v1.1 question answering F1 to 93.2 and SQuAD v2.0 F1 to 83.1.",
+      "categories": ["cs.CL"],
+      "bodyExcerpt": "BERT uses a multi-layer bidirectional Transformer encoder. We use a WordPiece embedding with a 30,000 token vocabulary. The first token of every sequence is always a special classification token [CLS]. The final hidden state corresponding to this token is used as the aggregate sequence representation for classification tasks. Sentence pairs are packed together into a single sequence, differentiated with a special token [SEP] and a learned embedding.\n\nWe pre-train BERT using two unsupervised tasks. The first is Masked Language Model (MLM): we randomly mask some percentage of the input tokens, and then predict only those masked tokens. We mask 15% of all WordPiece tokens in each sequence at random. The second task is Next Sentence Prediction (NSP). Specifically, when choosing the sentences A and B for each pre-training example, 50% of the time B is the actual next sentence that follows A, and 50% of the time it is a random sentence from the corpus.\n\nTo fine-tune for each downstream task, we simply plug in the task-specific inputs and outputs into BERT and fine-tune all the parameters end-to-end. For token-level tasks like sequence tagging or question answering, the token representations are fed into an output layer.",
+      "publishedDate": "2018-10-11"
+    },
+    {
+      "arxivId": "2005.14165",
+      "title": "Language Models are Few-Shot Learners",
+      "authors": ["Tom B. Brown", "Benjamin Mann", "Nick Ryder", "Melanie Subbiah", "Jared Kaplan", "Prafulla Dhariwal", "Arvind Neelakantan", "Pranav Shyam", "Girish Sastry", "Amanda Askell", "Sandhini Agarwal", "Ariel Herbert-Voss", "Gretchen Krueger", "Tom Henighan", "Rewon Child", "Aditya Ramesh", "Daniel M. Ziegler", "Jeffrey Wu", "Clemens Winter", "Christopher Hesse", "Mark Chen", "Eric Sigler", "Mateusz Litwin", "Scott Gray", "Benjamin Chess", "Jack Clark", "Christopher Berner", "Sam McCandlish", "Alec Radford", "Ilya Sutskever", "Dario Amodei"],
+      "abstract": "Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task. While typically task-agnostic in architecture, this method still requires task-specific fine-tuning datasets of thousands or tens of thousands of examples. By contrast, humans can generally perform a new language task from only a few examples or from simple instructions. Here we show that scaling up language models greatly improves task-agnostic, few-shot performance, sometimes even reaching competitiveness with prior state-of-the-art fine-tuning approaches. We train GPT-3, an autoregressive language model with 175 billion parameters, and test its performance in the few-shot setting. GPT-3 achieves strong performance on many NLP datasets including translation, question-answering, and cloze tasks, as well as several tasks that require on-the-fly reasoning or domain adaptation.",
+      "categories": ["cs.CL"],
+      "bodyExcerpt": "We train GPT-3, an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model, and test its performance in the few-shot setting. For all tasks, GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction with the model. GPT-3 achieves strong performance on many NLP datasets, including translation, question-answering, and cloze tasks.\n\nWe study few-shot learning in the context of in-context learning: the model is given a natural language instruction and/or a few demonstrations of the task at inference time as conditioning, but no gradient updates are performed. We evaluate in three settings: few-shot, one-shot, and zero-shot. Few-shot learning involves giving the model K examples of the task at inference time.\n\nWe find that GPT-3 achieves promising results in the zero-shot and one-shot settings, and in the few-shot setting is sometimes competitive with or even surpasses state-of-the-art results. Scaling generally improves performance: larger models are significantly more proficient at in-context learning.",
+      "publishedDate": "2020-05-28"
+    },
+    {
+      "arxivId": "2302.13971",
+      "title": "LLaMA: Open and Efficient Foundation Language Models",
+      "authors": ["Hugo Touvron", "Thibaut Lavril", "Gautier Izacard", "Xavier Martinet", "Marie-Anne Lachaux", "Timothée Lacroix", "Baptiste Rozière", "Naman Goyal", "Eric Hambro", "Faisal Azhar", "Aurelien Rodriguez", "Armand Joulin", "Edouard Grave", "Guillaume Lample"],
+      "abstract": "We introduce LLaMA, a collection of foundation language models ranging from 7B to 65B parameters. We train our models on trillions of tokens, and show that it is possible to train state-of-the-art models using publicly available datasets exclusively, without resorting to proprietary and inaccessible datasets. In particular, LLaMA-13B outperforms GPT-3 (175B) on most benchmarks, and LLaMA-65B is competitive with the best models, Chinchilla-70B and PaLM-540B. We release all our models to the research community.",
+      "categories": ["cs.CL"],
+      "bodyExcerpt": "We present LLaMA, a series of language models that achieve competitive performance with the best existing large language models while being more efficient. Our largest model, LLaMA-65B, is competitive with Chinchilla-70B and PaLM-540B. We train our models exclusively on publicly available data, making our work compatible with open-sourcing.\n\nWe train transformers on a large set of data using a standard optimizer. We make several modifications to the original transformer architecture: pre-normalization (RMSNorm), SwiGLU activation function, and rotary positional embeddings (RoPE). These modifications have been proposed in various prior works and are used here together.\n\nOur approach is similar to the scaling laws approach of Chinchilla, which recommends training smaller models on more data rather than training very large models on less data. The resulting models require less compute at inference time, making them more practical for real applications.",
+      "publishedDate": "2023-02-27"
+    },
+    {
+      "arxivId": "2303.08774",
+      "title": "GPT-4 Technical Report",
+      "authors": ["OpenAI"],
+      "abstract": "We report the development of GPT-4, a large-scale, multimodal model which can accept image and text inputs and produce text outputs. While less capable than humans in many real-world scenarios, GPT-4 exhibits human-level performance on various professional and academic benchmarks, including passing a simulated bar exam with a score around the top 10% of test takers. GPT-4 is a Transformer-based model pre-trained to predict the next token in a document. The post-training alignment process results in improved performance on measures of factuality and adherence to desired behavior.",
+      "categories": ["cs.CL", "cs.AI"],
+      "bodyExcerpt": "GPT-4 is a large multimodal model capable of processing image and text inputs to produce text outputs. We find GPT-4 achieves human-level performance on various professional and academic benchmarks. For example, it passes a simulated bar exam with a score around the top 10% of test takers; in contrast, GPT-3.5's score was around the bottom 10%.\n\nA core component of this project was developing infrastructure and optimization methods that behave predictably across a wide range of scales. This allowed us to accurately predict some aspects of GPT-4's performance based on models trained with no more than 1/1,000th the compute of GPT-4.\n\nWe also describe a range of methods for improving the factuality and behavior of GPT-4, including reinforcement learning from human feedback (RLHF). Post-training alignment improves performance on measures of factuality, steerability, and refusing requests outside guardrails.",
+      "publishedDate": "2023-03-15"
+    },
+    {
+      "arxivId": "2010.11929",
+      "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+      "authors": ["Alexey Dosovitskiy", "Lucas Beyer", "Alexander Kolesnikov", "Dirk Weissenborn", "Xiaohua Zhai", "Thomas Unterthiner", "Mostafa Dehghani", "Matthias Minderer", "Georg Heigold", "Sylvain Gelly", "Jakob Uszkoreit", "Neil Houlsby"],
+      "abstract": "While the Transformer architecture has become the de-facto standard for natural language processing tasks, its applications to computer vision remain limited. In vision, attention is either applied in conjunction with convolutional networks, or used to replace certain components of convolutional networks while keeping their overall structure in place. We show that this reliance on CNNs is not necessary and a pure transformer applied directly to sequences of image patches can perform very well on image classification tasks. When pre-trained on large amounts of data and transferred to multiple mid-sized or small image recognition benchmarks (ImageNet, CIFAR-100, VTAB, etc.), Vision Transformer (ViT) attains excellent results compared to state-of-the-art convolutional networks while requiring substantially fewer computational resources to train.",
+      "categories": ["cs.CV", "cs.AI", "cs.LG"],
+      "bodyExcerpt": "We split an image into fixed-size patches, linearly embed each of them, add position embeddings, and feed the resulting sequence of vectors to a standard Transformer encoder. In order to perform classification, we use the standard approach of adding an extra learnable classification token to the sequence.\n\nThe Vision Transformer (ViT) applies a standard Transformer directly to images, with the fewest possible modifications. To do so, we split an image into patches and provide the sequence of linear embeddings of these patches as an input to a Transformer. Image patches are treated the same way as tokens (words) in an NLP application. We train the model on image classification in supervised fashion.\n\nWhen trained on mid-sized datasets such as ImageNet without strong regularization, ViT yields modest accuracies a few percentage points below ResNets of comparable size. However, the picture changes if the models are trained on larger datasets. We find that large scale training trumps inductive bias. ViT attains excellent results when pre-trained at sufficient scale.",
+      "publishedDate": "2020-10-22"
+    },
+    {
+      "arxivId": "1512.03385",
+      "title": "Deep Residual Learning for Image Recognition",
+      "authors": ["Kaiming He", "Xiangyu Zhang", "Shaoqing Ren", "Jian Sun"],
+      "abstract": "Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously. We explicitly reformulate the layers as learning residual functions with reference to the layer inputs, instead of learning unreferenced functions. We provide comprehensive empirical evidence showing that these residual networks are easier to optimize, and can gain accuracy from considerably increased depth. On the ImageNet dataset we evaluate residual nets with a depth of up to 152 layers, 8x deeper than VGG nets but still having lower complexity. An ensemble of these residual nets achieves 3.57% error on the ImageNet test set. This result won the 1st place on the ILSVRC 2015 classification task.",
+      "categories": ["cs.CV"],
+      "bodyExcerpt": "We address the degradation problem by introducing a deep residual learning framework. Instead of hoping each few stacked layers directly fit a desired underlying mapping, we explicitly let these layers fit a residual mapping. Formally, denoting the desired underlying mapping as H(x), we let the stacked nonlinear layers fit another mapping of F(x) := H(x) - x. The original mapping is recast into F(x) + x. We hypothesize that it is easier to optimize the residual mapping than to optimize the original, unreferenced mapping.\n\nThe formulation of F(x) + x can be realized by feedforward neural networks with shortcut connections. Shortcut connections are those skipping one or more layers. In our case, the shortcut connections simply perform identity mapping, and their outputs are added to the outputs of the stacked layers.\n\nWe present comprehensive experiments on ImageNet to show the degradation problem and evaluate our method. We show that: 1) our extremely deep residual nets are easy to optimize, but the counterpart plain nets exhibit higher training error when the depth increases; 2) our deep residual nets can easily enjoy accuracy gains from greatly increased depth.",
+      "publishedDate": "2015-12-10"
+    },
+    {
+      "arxivId": "2006.11239",
+      "title": "Denoising Diffusion Probabilistic Models",
+      "authors": ["Jonathan Ho", "Ajay Jain", "Pieter Abbeel"],
+      "abstract": "We present high quality image synthesis results using diffusion probabilistic models, a class of latent variable models inspired by considerations from nonequilibrium thermodynamics. Our best results are obtained by training on a weighted variational bound designed according to a novel connection between diffusion probabilistic models and denoising score matching with Langevin dynamics, and our models naturally admit a progressive lossy decompression scheme that can be interpreted as a generalization of autoregressive decoding. On the unconditional CIFAR10 dataset, we obtain an Inception score of 9.46 and a state-of-the-art FID score of 3.17. On 256x256 LSUN, our sample quality is similar to ProgressiveGAN.",
+      "categories": ["cs.LG", "stat.ML"],
+      "bodyExcerpt": "Diffusion probabilistic models are latent variable models of the form p(x_0) = integral p(x_0:T) dx_1:T. The joint distribution p(x_0:T) is called the reverse process, and it is defined as a Markov chain with learned Gaussian transitions starting at p(x_T) = N(x_T; 0, I). The forward process or diffusion process is a Markov chain that gradually adds Gaussian noise to the data according to a variance schedule.\n\nOur neural network model predicts the noise that was added at each step. We find that predicting the noise (rather than directly predicting the denoised image) leads to better sample quality. This parameterization resembles denoising score matching over multiple noise levels and resembles Langevin dynamics during sampling.\n\nWe set up the diffusion process variances to constants increasing linearly from beta_1 = 10^-4 to beta_T = 0.02. The T = 1000 step forward process ensures that x_T is nearly an isotropic Gaussian distribution for any data distribution.",
+      "publishedDate": "2020-06-19"
+    },
+    {
+      "arxivId": "2112.10752",
+      "title": "High-Resolution Image Synthesis with Latent Diffusion Models",
+      "authors": ["Robin Rombach", "Andreas Blattmann", "Dominik Lorenz", "Patrick Esser", "Björn Ommer"],
+      "abstract": "By decomposing the image formation process into a sequential application of denoising autoencoders, diffusion models (DMs) achieve state-of-the-art synthesis results on image data and beyond. Additionally, their formulation allows for a guiding mechanism to control the image generation process without retraining. However, since these models typically operate directly in pixel space, optimization of powerful DMs often consumes hundreds of GPU days and inference is expensive due to sequential evaluations. To enable DM training on limited computational resources while retaining their quality and flexibility, we apply them in the latent space of powerful pretrained autoencoders. In contrast to previous work, training diffusion models on such a representation allows for the first time to reach a near-optimal point between complexity reduction and detail preservation.",
+      "categories": ["cs.CV"],
+      "bodyExcerpt": "We propose latent diffusion models (LDMs) as a flexible and computationally efficient approach for high-resolution image synthesis. In contrast to pixel-based diffusion approaches, our method first trains an autoencoder which provides a lower-dimensional representational space. We then train diffusion models in this latent space, which drastically reduces computational requirements.\n\nOur perceptual compression model is based on an autoencoder trained with a combination of a perceptual loss and a patch-based adversarial objective. This ensures that the reconstructions are confined to the image manifold by enforcing local realism. The learned latent space is of lower dimensionality than the pixel space, which makes the diffusion model more efficient.\n\nWe additionally condition the model via cross-attention on various inputs including text, bounding boxes, and semantic maps. This is a unified architecture achieving state-of-the-art or competitive performance on image inpainting, class-conditional image generation, text-to-image synthesis, and super-resolution.",
+      "publishedDate": "2021-12-20"
+    },
+    {
+      "arxivId": "1707.06347",
+      "title": "Proximal Policy Optimization Algorithms",
+      "authors": ["John Schulman", "Filip Wolski", "Prafulla Dhariwal", "Alec Radford", "Oleg Klimov"],
+      "abstract": "We propose a new family of policy gradient methods for reinforcement learning, which alternate between sampling data through interaction with the environment, and optimizing a surrogate objective function using stochastic gradient ascent. Whereas standard policy gradient methods perform one gradient update per data sample, we propose a novel objective function that enables multiple epochs of minibatch updates. The new methods, which we call proximal policy optimization (PPO), have some of the benefits of trust region policy optimization (TRPO), but they are much simpler to implement, more general, and have better sample complexity. Our experiments test PPO on a collection of benchmark tasks, including simulated robotic locomotion and Atari game playing, and we show that PPO outperforms other online policy gradient methods.",
+      "categories": ["cs.LG"],
+      "bodyExcerpt": "We propose a novel policy gradient method called Proximal Policy Optimization (PPO), which has the stability and reliability of trust-region methods but is much simpler to implement. The main idea is to use a clipped surrogate objective which forms a lower bound of the actual performance objective. This clipping removes incentives for moving the policy too far from the old policy.\n\nOur algorithm alternates between sampling data from the policy and performing several epochs of optimization on the sampled data. The surrogate objective is maximized subject to a constraint on the size of the policy update. We propose two surrogate objectives: a clipped surrogate objective, and an adaptive KL penalty.\n\nWe compare PPO to several other policy gradient methods on continuous control tasks and Atari games. PPO outperforms TRPO, CEM, vanilla policy gradient, and A2C on most tasks. The key advantage of PPO is that it achieves similar or better performance to TRPO with a first-order optimizer, making it much simpler to implement.",
+      "publishedDate": "2017-07-20"
+    },
+    {
+      "arxivId": "1312.5602",
+      "title": "Playing Atari with Deep Reinforcement Learning",
+      "authors": ["Volodymyr Mnih", "Koray Kavukcuoglu", "David Silver", "Alex Graves", "Ioannis Antonoglou", "Daan Wierstra", "Martin Riedmiller"],
+      "abstract": "We present the first deep learning model to successfully learn control policies directly from high-dimensional sensory input using reinforcement learning. The model is a convolutional neural network, trained with a variant of Q-learning, whose input is raw pixels and whose output is a value function estimating future rewards. We apply our method to seven Atari 2600 games from the Arcade Learning Environment, with no adjustment of the architecture or learning algorithm. We find that it outperforms all previous approaches on six of the games and surpasses a human expert on three of them.",
+      "categories": ["cs.LG"],
+      "bodyExcerpt": "We present a deep reinforcement learning approach, which we call Deep Q-Network (DQN), that uses a convolutional neural network to approximate the optimal action-value function Q*(s, a) = max_pi E[R_t | s_t=s, a_t=a, pi]. The network takes as input raw pixel images from Atari games and outputs a value for each possible action.\n\nWe use an experience replay mechanism which stores the agent's experiences at each time-step in a data-set, pooled over many episodes into a replay memory. During the inner loop of the algorithm, we apply Q-learning updates to samples of experience drawn at random from the pool of stored samples. This approach has several advantages over standard online Q-learning.\n\nWe tested our approach on seven popular Atari 2600 games. We used the same network architecture, learning algorithm and hyperparameters across all seven games, demonstrating that our approach can successfully learn different game strategies from raw pixel observations.",
+      "publishedDate": "2013-12-19"
+    },
+    {
+      "arxivId": "1609.02907",
+      "title": "Semi-Supervised Classification with Graph Convolutional Networks",
+      "authors": ["Thomas N. Kipf", "Max Welling"],
+      "abstract": "We present a scalable approach for semi-supervised learning on graph-structured data that is based on an efficient variant of convolutional neural networks which operate directly on graphs. We motivate the choice of our convolutional architecture via a localized first-order approximation of spectral graph convolutions. Our model scales linearly in the number of graph edges and learns hidden layer representations that encode both local graph structure and features of nodes. In a number of experiments on citation networks and on a knowledge graph dataset, we demonstrate that our approach outperforms related methods by a significant margin.",
+      "categories": ["cs.LG", "stat.ML"],
+      "bodyExcerpt": "We consider the problem of classifying nodes in a graph, where labels are only available for a small subset of nodes. This problem can be framed as graph-based semi-supervised learning, where label information is smoothed over the graph via some form of explicit graph-based regularization.\n\nWe propose a simple and well-behaved layer-wise propagation rule for neural network models which operate on graphs. This model (GCN) can be motivated from a first-order approximation of spectral graph convolutions. Intuitively, our model learns features by aggregating neighborhood information: each node aggregates feature vectors from its neighbors to compute its own new feature vector.\n\nWe demonstrate the effectiveness of our model on multiple semi-supervised classification benchmarks, including the Cora, Citeseer, and Pubmed citation networks. Our approach significantly outperforms recent related methods and achieves state-of-the-art classification results on all datasets.",
+      "publishedDate": "2016-09-09"
+    },
+    {
+      "arxivId": "2005.11401",
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "authors": ["Patrick Lewis", "Ethan Perez", "Aleksandra Piktus", "Fabio Petroni", "Vladimir Karpukhin", "Naman Goyal", "Heinrich Küttler", "Mike Lewis", "Wen-tau Yih", "Tim Rocktäschel", "Sebastian Riedel", "Douwe Kiela"],
+      "abstract": "Large pre-trained language models have been shown to store factual knowledge in their parameters, and achieve state-of-the-art results when fine-tuned on downstream NLP tasks. However, their ability to access and precisely manipulate knowledge is still limited, and hence on knowledge-intensive tasks, their performance lags behind task-specific architectures. Additionally, providing provenance for their decisions and updating their world knowledge remain open research problems. Pre-trained models with a differentiable access mechanism to explicit non-parametric memory can overcome some of these issues. We explore a general-purpose fine-tuning recipe for retrieval-augmented generation (RAG) — models which combine pre-trained parametric and non-parametric memory for language generation.",
+      "categories": ["cs.CL", "cs.LG"],
+      "bodyExcerpt": "We build RAG models where the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia, accessed with a pre-trained neural retriever. We combine these components in a probabilistic model trained end-to-end.\n\nThe retriever component uses a bi-encoder architecture based on Dense Passage Retrieval (DPR). For a given input query, the retriever returns the top-K documents from the Wikipedia index. These documents are then combined with the input and fed to the generator (BART), which produces the final output.\n\nWe investigate two formulations: RAG-Sequence, where the model uses the same retrieved document to generate the complete sequence, and RAG-Token, where the model can use different documents for each target token. We test on open-domain question answering, abstractive QA, Jeopardy question generation, and fact verification, achieving state-of-the-art results on three of these tasks.",
+      "publishedDate": "2020-05-22"
+    },
+    {
+      "arxivId": "2307.09288",
+      "title": "Llama 2: Open Foundation and Fine-Tuned Chat Models",
+      "authors": ["Hugo Touvron", "Louis Martin", "Kevin Stone", "Peter Albert", "Amjad Almahairi", "Yasmine Babaei", "Nikolay Bashlykov", "Soumya Batra", "Prajjwal Bhargava", "Shruti Bhosale"],
+      "abstract": "In this work, we develop and release Llama 2, a collection of pretrained and fine-tuned large language models (LLMs) ranging in scale from 7B to 70B parameters. Our fine-tuned LLMs, called Llama 2-Chat, are optimized for dialogue use cases. Our models outperform open-source chat models on most benchmarks we tested, and based on our human evaluations for helpfulness and safety, may be a suitable substitute for closed-source models. We provide a detailed description of our approach to fine-tuning and safety improvements of Llama 2-Chat, to enable the community to build on our work and contribute to the responsible development of LLMs.",
+      "categories": ["cs.CL", "cs.AI"],
+      "bodyExcerpt": "Llama 2 is trained on 2 trillion tokens of data from publicly available sources. Compared to Llama 1, Llama 2 uses 40% more pretraining data, has a longer context length of 4096 tokens, and uses grouped-query attention for improved inference scalability.\n\nLlama 2-Chat models are fine-tuned using both supervised fine-tuning (SFT) and reinforcement learning from human feedback (RLHF). We start with publicly available instruction tuning data, then iteratively improve through rounds of RLHF. We use rejection sampling and proximal policy optimization (PPO) to align the model with human preferences.\n\nWe describe our approach to safety fine-tuning, including safety-specific data annotation and training, red-teaming, and iterative evaluations. We find that RLHF effectively improves both the helpfulness and safety of the models. In our human evaluations, Llama 2-Chat models are on par with some closed-source models on both helpfulness and safety.",
+      "publishedDate": "2023-07-18"
+    },
+    {
+      "arxivId": "2203.02155",
+      "title": "Training language models to follow instructions with human feedback",
+      "authors": ["Long Ouyang", "Jeff Wu", "Xu Jiang", "Diogo Almeida", "Carroll L. Wainwright", "Pamela Mishkin", "Chong Zhang", "Sandhini Agarwal", "Katarina Slama", "Alex Ray", "John Schulman", "Jacob Hilton", "Fraser Kelton", "Luke Miller", "Maddie Simens", "Amanda Askell", "Peter Welinder", "Paul Christiano", "Jan Leike", "Ryan Lowe"],
+      "abstract": "Making language models bigger does not inherently make them better at following a user's intent. For example, large language models can generate outputs that are untruthful, toxic, or simply not helpful to the user. In other words, these models are not aligned with their users. In this paper, we show an avenue for aligning language models with user intent on a wide range of tasks by fine-tuning with human feedback. Starting with a set of labeler-written prompts and prompts submitted through an API, we collect a dataset of labeler demonstrations of the desired model behavior, which we use to fine-tune GPT-3 using supervised learning. We then collect a dataset of rankings of model outputs, which we use to further fine-tune this supervised model using reinforcement learning from human feedback (RLHF). We call the resulting models InstructGPT.",
+      "categories": ["cs.CL", "cs.AI", "cs.LG"],
+      "bodyExcerpt": "Our methodology follows three steps. First, we collect demonstration data and train a supervised policy (SFT). We hire a team of 40 contractors to write demonstrations of the desired output behavior for our input prompt distribution. We fine-tune GPT-3 on this data using supervised learning.\n\nSecond, we collect comparison data and train a reward model (RM). We collect a dataset of comparisons between model outputs, where labelers indicate which output they prefer. We train a reward model on this data to predict the human-preferred output.\n\nThird, we optimize a policy against the reward model using PPO. We use the output of the RM as a scalar reward to fine-tune the supervised policy using reinforcement learning. The resulting InstructGPT models (1.3B parameters) produce outputs preferred to those of the 175B GPT-3, demonstrating that alignment techniques can compensate for much smaller model size. InstructGPT shows improved truthfulness and reduced toxic output generation.",
+      "publishedDate": "2022-03-04"
+    }
+  ],
+  "queries": [
+    {
+      "id": "q1",
+      "query": "transformer architecture self-attention",
+      "description": "Find papers about the transformer architecture and self-attention mechanisms",
+      "judgments": [
+        { "paperId": "1706.03762", "relevance": 3 },
+        { "paperId": "2010.11929", "relevance": 2 },
+        { "paperId": "1810.04805", "relevance": 1 },
+        { "paperId": "2005.14165", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q2",
+      "query": "large language model scaling laws",
+      "description": "Find papers about scaling laws and large language models",
+      "judgments": [
+        { "paperId": "2005.14165", "relevance": 3 },
+        { "paperId": "2302.13971", "relevance": 3 },
+        { "paperId": "2303.08774", "relevance": 2 },
+        { "paperId": "2307.09288", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q3",
+      "query": "image classification convolutional neural networks",
+      "description": "Find papers about image classification using CNNs or related architectures",
+      "judgments": [
+        { "paperId": "1512.03385", "relevance": 3 },
+        { "paperId": "2010.11929", "relevance": 3 },
+        { "paperId": "2006.11239", "relevance": 0 },
+        { "paperId": "2112.10752", "relevance": 0 }
+      ]
+    },
+    {
+      "id": "q4",
+      "query": "reinforcement learning from human feedback",
+      "description": "Find papers about RLHF for aligning language models",
+      "judgments": [
+        { "paperId": "2203.02155", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 3 },
+        { "paperId": "1707.06347", "relevance": 2 },
+        { "paperId": "2303.08774", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q5",
+      "query": "text generation with retrieval augmented generation",
+      "description": "Find papers about retrieval-augmented text generation",
+      "judgments": [
+        { "paperId": "2005.11401", "relevance": 3 },
+        { "paperId": "1810.04805", "relevance": 0 },
+        { "paperId": "2005.14165", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q6",
+      "query": "diffusion models for image generation",
+      "description": "Find papers about diffusion-based generative models for images",
+      "judgments": [
+        { "paperId": "2006.11239", "relevance": 3 },
+        { "paperId": "2112.10752", "relevance": 3 },
+        { "paperId": "1512.03385", "relevance": 0 }
+      ]
+    },
+    {
+      "id": "q7",
+      "query": "graph neural network node classification",
+      "description": "Find papers about GNNs for node classification tasks",
+      "judgments": [
+        { "paperId": "1609.02907", "relevance": 3 }
+      ]
+    },
+    {
+      "id": "q8",
+      "query": "pre-training and fine-tuning language models",
+      "description": "Find papers about pre-training and fine-tuning approaches for language models",
+      "judgments": [
+        { "paperId": "1810.04805", "relevance": 3 },
+        { "paperId": "2005.14165", "relevance": 2 },
+        { "paperId": "2203.02155", "relevance": 2 },
+        { "paperId": "2302.13971", "relevance": 1 },
+        { "paperId": "2303.08774", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q9",
+      "query": "vision transformer image patches",
+      "description": "Find papers about vision transformers that process images as patches",
+      "judgments": [
+        { "paperId": "2010.11929", "relevance": 3 },
+        { "paperId": "1706.03762", "relevance": 1 },
+        { "paperId": "1512.03385", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q10",
+      "query": "deep Q-network Atari games",
+      "description": "Find papers about deep Q-learning applied to Atari games",
+      "judgments": [
+        { "paperId": "1312.5602", "relevance": 3 },
+        { "paperId": "1707.06347", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q11",
+      "query": "open source language models",
+      "description": "Find papers about openly released language models",
+      "judgments": [
+        { "paperId": "2302.13971", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 3 },
+        { "paperId": "1810.04805", "relevance": 0 }
+      ]
+    },
+    {
+      "id": "q12",
+      "query": "residual connections skip connections deep networks",
+      "description": "Find papers about residual/skip connections in deep neural networks",
+      "judgments": [
+        { "paperId": "1512.03385", "relevance": 3 },
+        { "paperId": "1706.03762", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q13",
+      "query": "alignment training safety",
+      "description": "Paraphrase of RLHF concepts — papers say 'human feedback' not 'alignment'",
+      "judgments": [
+        { "paperId": "2203.02155", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 3 },
+        { "paperId": "2303.08774", "relevance": 2 },
+        { "paperId": "1707.06347", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q14",
+      "query": "noise prediction generative models",
+      "description": "Diffusion papers describe 'denoising' not 'noise prediction' literally",
+      "judgments": [
+        { "paperId": "2006.11239", "relevance": 3 },
+        { "paperId": "2112.10752", "relevance": 3 }
+      ]
+    },
+    {
+      "id": "q15",
+      "query": "learning game strategy from pixels",
+      "description": "Paraphrase of DQN — no shared keywords with 'deep Q-network'",
+      "judgments": [
+        { "paperId": "1312.5602", "relevance": 3 },
+        { "paperId": "1707.06347", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q16",
+      "query": "efficient inference smaller models",
+      "description": "LLaMA is about this but keywords don't overlap well",
+      "judgments": [
+        { "paperId": "2302.13971", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 2 },
+        { "paperId": "2005.14165", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q17",
+      "query": "bidirectional context word representations",
+      "description": "Paraphrase of BERT's core idea with unusual phrasing",
+      "judgments": [
+        { "paperId": "1810.04805", "relevance": 3 },
+        { "paperId": "2005.14165", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q18",
+      "query": "reward model proximal policy optimization",
+      "description": "Exact technical terms spanning PPO + RLHF papers",
+      "judgments": [
+        { "paperId": "1707.06347", "relevance": 3 },
+        { "paperId": "2203.02155", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 2 }
+      ]
+    },
+    {
+      "id": "q19",
+      "query": "stochastic iterative refinement image synthesis",
+      "description": "Describes diffusion process without the words 'diffusion' or 'denoising'",
+      "judgments": [
+        { "paperId": "2006.11239", "relevance": 3 },
+        { "paperId": "2112.10752", "relevance": 3 }
+      ]
+    },
+    {
+      "id": "q20",
+      "query": "teaching machines to follow human instructions",
+      "description": "InstructGPT paraphrase — 'instructions' appears in title so keyword may partially match",
+      "judgments": [
+        { "paperId": "2203.02155", "relevance": 3 },
+        { "paperId": "2307.09288", "relevance": 2 },
+        { "paperId": "2303.08774", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q21",
+      "query": "grounding language models with external knowledge sources",
+      "description": "RAG paraphrase without the word 'retrieval'",
+      "judgments": [
+        { "paperId": "2005.11401", "relevance": 3 },
+        { "paperId": "2005.14165", "relevance": 0 }
+      ]
+    },
+    {
+      "id": "q22",
+      "query": "training representations without labeled examples",
+      "description": "Self-supervised learning — BERT says 'unsupervised', not 'self-supervised'",
+      "judgments": [
+        { "paperId": "1810.04805", "relevance": 3 },
+        { "paperId": "2005.14165", "relevance": 2 },
+        { "paperId": "2302.13971", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q23",
+      "query": "multi-task benchmark evaluation zero-shot",
+      "description": "Cross-concept query — GPT-3 and GPT-4 both test zero-shot on many benchmarks",
+      "judgments": [
+        { "paperId": "2005.14165", "relevance": 3 },
+        { "paperId": "2303.08774", "relevance": 3 },
+        { "paperId": "1810.04805", "relevance": 1 }
+      ]
+    },
+    {
+      "id": "q24",
+      "query": "spectral convolution neighborhood features semi-supervised",
+      "description": "Exact GCN jargon — keyword-favorable since these terms appear in GCN body text",
+      "judgments": [
+        { "paperId": "1609.02907", "relevance": 3 }
+      ]
+    }
+  ]
+}
