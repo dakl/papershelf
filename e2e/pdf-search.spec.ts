@@ -86,12 +86,11 @@ test('Cmd+F opens search bar in PDF viewer', { timeout: 60_000 }, async ({ elect
   await window.screenshot({ path: 'test-results/pdf-search-results.png' });
 
   // Navigate to next match with Enter
-  await searchInput.focus();
-  await window.keyboard.press('Enter');
+  await searchInput.press('Enter');
   await window.screenshot({ path: 'test-results/pdf-search-next-match.png' });
 
   // Close search with Escape
-  await window.keyboard.press('Escape');
+  await searchInput.press('Escape');
   await expect(searchInput).not.toBeVisible();
 
   // Take screenshot after closing search (highlights should be gone)
